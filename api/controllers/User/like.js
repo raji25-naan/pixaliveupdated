@@ -1,5 +1,6 @@
 const Like = require('../../models/User/like');
 const Post = require('../../models/User/Post');
+const TagPost = require('../../models/User/userTagpost');
 
 exports.add_like = async (req, res, next) => {
 
@@ -79,3 +80,31 @@ exports.add_like = async (req, res, next) => {
     }
     
     }
+
+exports.liked_post = async (req,res,next) => {
+      try {
+          let {userId} = req.body;
+     
+          const likedPostId = await Like.distinct("post_id",{user_id:userId}).exec();
+          //getPosts
+          const getPosts = await Post.find({_id:likedPostId}).exec();
+            if(getPosts){
+              return res.json({
+                success:true,
+                results:getPosts,
+                message:"Liked posts fetched successfully"
+              })
+            }
+            else{
+              return res.json({
+                success:false,
+                message:"No data found"
+              })
+            }
+      } catch (error) {
+          return res.json({
+              success:false,
+              message:'error occured',error
+          })
+      }
+  }

@@ -1,5 +1,5 @@
 const express = require("express");
-const { add_like } = require("../../controllers/User/like");
+const { add_like, liked_post } = require("../../controllers/User/like");
 const { checkSession } = require("../../middlewares/checkAuth");
 const { checkRequestBodyParams,validateRequest } = require("../../middlewares/validator");
 const router = express.Router();
@@ -11,6 +11,13 @@ router.post('/likePost',
             checkRequestBodyParams('user_id'),
             validateRequest,
             add_like
+)
+
+router.post('/getLikedPosts',
+            // checkSession,
+            checkRequestBodyParams('userId'),
+            validateRequest,
+            liked_post
 )
 
 

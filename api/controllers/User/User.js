@@ -8,6 +8,7 @@ const jwt = require("jsonwebtoken");
 const { verifyGCMToken } = require("../../helpers/notification");
 const twillio = require("../../helpers/smsManager");
 let Twillio = new twillio();
+const emailValidator = require("email-validator");
 
 //signup
 exports.signup = async (req, res, next) => {
@@ -22,14 +23,44 @@ exports.signup = async (req, res, next) => {
       last_name,
       avatar,
     } = req.body;
-    let country_code = "+91";
-    if (password != confirm_password) {
+    const validEmail = emailValidator.validate(email);
+    if(!validEmail)
+    {
       return res.json({
         success: false,
-        message: "Passwords must be the same!",
+        message: "Please enter valid email"
       });
     }
-
+    const validPhoneno = phone;
+    if(validPhoneno.length != 10)
+    {
+      return res.json({
+        success: false,
+        message: "Please enter valid phone number"
+      });
+    }
+    let checkRegisterEmail = await Users.findOne({email:email,otp_verified: false}).exec();
+    if(checkRegisterEmail)
+    {
+      let otp = Math.floor(1000 + Math.random() * 9000);
+      let otpExpirationTime = moment().add(5, "m");
+      //updateOtp
+      const updateOtp = await Users.findByIdAndUpdate(
+        {_id : checkRegisterEmail._id},
+        {
+          $set : {
+            otp : otp,
+            otpExpirationTime : otpExpirationTime.toISOString()
+          }
+        },{new : true}
+      );
+      Twillio.sendOtp(otp, checkRegisterEmail.country_code + checkRegisterEmail.phone);
+      return res.json({
+        success: true,
+        message: "You are already registered with us! Please verify OTP."
+      });
+    }
+    let country_code = "+91";
     const userInfo = await Users.findOne({
       $or: [{ username: username }, { email: email }, { phone: phone }],
     });
@@ -49,6 +80,13 @@ exports.signup = async (req, res, next) => {
         return res.json({
           success: false,
           message: "Phone number already regitered!",
+        });
+      }
+      //checkPassword
+      if (password != confirm_password) {
+        return res.json({
+          success: false,
+          message: "Passwords must be the same!",
         });
       }
     } else {
@@ -151,6 +189,15 @@ exports.resendotp = async (req, res, next) => {
     let { user_id } = req.body;
     let otp = Math.floor(1000 + Math.random() * 9000);
     let otpExpirationTime = moment().add(5, "m");
+    //checkOtpverified
+    const checkOtpverified = await Users.findOne({_id:user_id,otp_verified:true}).exec();
+    if(checkOtpverified)
+    {
+      return res.json({
+        success: false,
+        message: "Your OTP was already verified!Please login"
+      });
+    }
     //findUserAndUpdate
     const findUserAndUpdate = await Users.findByIdAndUpdate(
       { _id: user_id },
