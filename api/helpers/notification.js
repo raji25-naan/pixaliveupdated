@@ -1,6 +1,14 @@
 const Users = require("../models/User/Users");
+global.admin = require("firebase-admin");
+const serviceAccount = require("../serviceAccountkey.json");
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: "https://pixalive-fa208-default-rtdb.firebaseio.com/",
+});
+
 
 module.exports.verifyGCMToken = function(fcmToken) {
+    console.log(1);
     return admin.messaging().send({
         token: fcmToken
     }, true)

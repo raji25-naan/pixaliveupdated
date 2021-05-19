@@ -24,6 +24,9 @@ const postSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  hastag : {
+    type : String
+  }
 });
 
 module.exports = mongoose.model("Posts", postSchema);

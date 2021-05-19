@@ -73,7 +73,13 @@ const user_schema = new mongoose.Schema({
     follow : {
         type : Number,
         default : 0
-    }
+    },
+    followedHashtag : [
+        {
+            _id : {type: mongoose.Schema.Types.ObjectId},
+            hashtag : {type:String}
+        }
+    ]
 });
 
 module.exports = mongoose.model("users",user_schema)

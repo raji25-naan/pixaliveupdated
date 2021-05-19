@@ -1,4 +1,5 @@
 const express = require("express");
+const { oneOf } = require("express-validator/check");
 const {
   signup,
   verifyOtp,
@@ -16,6 +17,7 @@ const {
   search_user,
   upload_avatar,
   change_avatar,
+  search_user_hashtag,
 } = require("../../controllers/User/User");
 const { checkSession } = require("../../middlewares/checkAuth");
 const router = express.Router();
@@ -164,5 +166,15 @@ router.post("/upload_avatar",checkSession, upload_avatar);
 
 // update avatar
 router.post("/change_avatar",checkSession, change_avatar);
+
+
+// search_user_hashtag
+router.get(
+  "/search_user_hashtag",
+  // checkSession,
+  checkQuery("user_id"),
+  oneOf([checkQuery("search_user"),checkQuery("search_hashtag")]),
+  search_user_hashtag
+);
 
 module.exports = router;

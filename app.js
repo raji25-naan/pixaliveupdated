@@ -13,6 +13,8 @@ var postRouter = require("./api/routes/User/post.routes");
 const follow_unfollowRouter = require("./api/routes/User/follow_unfollow");
 const likeRouter = require("./api/routes/User/like.routes");
 const commentRouter = require("./api/routes/User/comment.routes");
+const storyRouter = require("./api/routes/User/story");
+const hashtagRouter = require("./api/routes/User/hashtag");
 const fileUpload = require("express-fileupload");
 
 
@@ -20,12 +22,12 @@ const fileUpload = require("express-fileupload");
 const registerRouter = require("./api/routes/Admin/register.routes");
 
 //firebaseAdmin
-global.admin = require("firebase-admin");
-const serviceAccount = require("./api/serviceAccountkey.json");
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://pixalive-fa208-default-rtdb.firebaseio.com/",
-});
+// global.admin = require("firebase-admin");
+// const serviceAccount = require("./api/serviceAccountkey.json");
+// global.admin.initializeApp({
+//   credential: admin.credential.cert(serviceAccount),
+//   databaseURL: "https://pixalive-fa208-default-rtdb.firebaseio.com/",
+// });
 
 app.use(timeout("20s"));
 
@@ -56,6 +58,9 @@ app.use("/api/User/posts", postRouter);
 app.use("/api/User/follow_unfollow", follow_unfollowRouter);
 app.use("/api/User/like", likeRouter);
 app.use("/api/User/comments", commentRouter);
+app.use("/api/User/story",storyRouter);
+app.use("/api/User/hashtag",hashtagRouter);
+
 
 //admin router
 app.use("/api/Admin/register",registerRouter);
