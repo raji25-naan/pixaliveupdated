@@ -1,9 +1,12 @@
 const moment = require("moment");
 const Users = require("../../models/User/Users");
 const followSchema = require("../../models/User/follow_unfollow");
+const postSchema = require("../../models/User/Post");
 const Hashtag = require("../../models/User/hashtags");
 const bcrypt = require("bcrypt");
-const { SendEmailVerificationLink } = require("../../helpers/UniversalFunctions");
+const {
+  SendEmailVerificationLink,
+} = require("../../helpers/UniversalFunctions");
 const jwt = require("jsonwebtoken");
 const { verifyGCMToken } = require("../../helpers/notification");
 const twillio = require("../../helpers/smsManager");
@@ -24,40 +27,44 @@ exports.signup = async (req, res, next) => {
       avatar,
     } = req.body;
     const validEmail = emailValidator.validate(email);
-    if(!validEmail)
-    {
+    if (!validEmail) {
       return res.json({
         success: false,
-        message: "Please enter valid email"
+        message: "Please enter valid email",
       });
     }
     const validPhoneno = phone;
-    if(validPhoneno.length != 10)
-    {
+    if (validPhoneno.length != 10) {
       return res.json({
         success: false,
-        message: "Please enter valid phone number"
+        message: "Please enter valid phone number",
       });
     }
-    let checkRegisterEmail = await Users.findOne({email:email,otp_verified: false}).exec();
-    if(checkRegisterEmail)
-    {
+    let checkRegisterEmail = await Users.findOne({
+      email: email,
+      otp_verified: false,
+    }).exec();
+    if (checkRegisterEmail) {
       let otp = Math.floor(1000 + Math.random() * 9000);
       let otpExpirationTime = moment().add(5, "m");
       //updateOtp
       const updateOtp = await Users.findByIdAndUpdate(
-        {_id : checkRegisterEmail._id},
+        { _id: checkRegisterEmail._id },
         {
-          $set : {
-            otp : otp,
-            otpExpirationTime : otpExpirationTime.toISOString()
-          }
-        },{new : true}
+          $set: {
+            otp: otp,
+            otpExpirationTime: otpExpirationTime.toISOString(),
+          },
+        },
+        { new: true }
       );
-      Twillio.sendOtp(otp, checkRegisterEmail.country_code + checkRegisterEmail.phone);
+      Twillio.sendOtp(
+        otp,
+        checkRegisterEmail.country_code + checkRegisterEmail.phone
+      );
       return res.json({
         success: true,
-        message: "You are already registered with us! Please verify OTP."
+        message: "You are already registered with us! Please verify OTP.",
       });
     }
     let country_code = "+91";
@@ -190,12 +197,14 @@ exports.resendotp = async (req, res, next) => {
     let otp = Math.floor(1000 + Math.random() * 9000);
     let otpExpirationTime = moment().add(5, "m");
     //checkOtpverified
-    const checkOtpverified = await Users.findOne({_id:user_id,otp_verified:true}).exec();
-    if(checkOtpverified)
-    {
+    const checkOtpverified = await Users.findOne({
+      _id: user_id,
+      otp_verified: true,
+    }).exec();
+    if (checkOtpverified) {
       return res.json({
         success: false,
-        message: "Your OTP was already verified!Please login"
+        message: "Your OTP was already verified!Please login",
       });
     }
     //findUserAndUpdate
@@ -654,34 +663,34 @@ exports.gcm_token_updation = async (req, res, next) => {
   try {
     const { token, user_id } = req.body;
     const verifyToken = await verifyGCMToken(token);
-    console.log(verifyToken)
+    console.log(verifyToken);
     // if (error.name == "ReferenceError") {
     //   return res.json({
     //     success: false,y
-    
+
     //     message: "registeration token is not valid",
     //   });awaitt
     // } else {
-      const updateGcmtoken = await Users.findByIdAndUpdate(
-        { _id: user_id },
-        {
-          $set: {
-            gcm_token: token,
-          },
+    const updateGcmtoken = await Users.findByIdAndUpdate(
+      { _id: user_id },
+      {
+        $set: {
+          gcm_token: token,
         },
-        { new: true }
-      );
-      if (updateGcmtoken) {
-        return res.json({
-          success: true,
-          message: "gcm_token updated",
-        });
-      } else {
-        return res.json({
-          success: false,
-          message: "Error",
-        });
-      }
+      },
+      { new: true }
+    );
+    if (updateGcmtoken) {
+      return res.json({
+        success: true,
+        message: "gcm_token updated",
+      });
+    } else {
+      return res.json({
+        success: false,
+        message: "Error",
+      });
+    }
     // }
   } catch (error) {
     // if (error.name == "ReferenceError") {
@@ -690,11 +699,11 @@ exports.gcm_token_updation = async (req, res, next) => {
     //     message: "registeration token is not valid",
     //   });
     // } else {
-      return res.json({
-        success: false,
-        message: "Error occured" + error,
-      });
-    }
+    return res.json({
+      success: false,
+      message: "Error occured" + error,
+    });
+  }
   // }
 };
 
@@ -708,8 +717,7 @@ exports.search_user = async (req, res, next) => {
       $or: [{ username: reg }, { first_name: reg }, { email: reg }],
     });
     console.log(all_feeds);
-    if(all_feeds)
-    {
+    if (all_feeds) {
       const user_id = req.query.user_id;
       const data_follower = await followSchema.distinct("followingId", {
         followerId: user_id,
@@ -719,7 +727,7 @@ exports.search_user = async (req, res, next) => {
       });
       var array3 = data_follower.concat(data_following);
       var uniq_id = [...new Set(array3)];
-  
+
       all_feeds.forEach((data) => {
         uniq_id.forEach((main_data) => {
           if (main_data == data.user_id) {
@@ -731,12 +739,44 @@ exports.search_user = async (req, res, next) => {
         success: true,
         feeds: all_feeds,
       });
-    }
-    else
-    {
+    } else {
       return res.json({
         success: false,
-        message: "user not found "
+        message: "user not found ",
+      });
+    }
+  } catch (error) {
+    return res.json({
+      success: false,
+      message: "Error occured! " + error,
+    });
+  }
+};
+
+// search place
+
+exports.search_place = async (req, res, next) => {
+  try {
+    const search = req.query.place;
+    const user_id = req.query.user_id;
+    const get_post = await postSchema.find("followingId", {
+      place: search,
+    });
+    if (get_post) {
+      const data_follower = await followSchema.distinct("followingId", {
+        followerId: user_id,
+      });
+
+      get_post.forEach((postdata) => {
+        data_follower.forEach((following_id) => {
+          if (following_id == postdata.user_id) {
+            postdata.follow = true;
+          }
+        });
+      });
+      return res.json({
+        success: true,
+        feeds: get_post,
       });
     }
   } catch (error) {
@@ -805,20 +845,16 @@ exports.change_avatar = async (req, res, next) => {
 };
 
 exports.search_user_hashtag = async (req, res, next) => {
-
-  try 
-  {
+  try {
     const search_user = req.query.search_user;
     const search_hashtag = req.query.search_hashtag;
-    if(search_user)
-    {
+    if (search_user) {
       let reg = new RegExp(search_user);
       const all_feeds = await Users.find({
         $or: [{ username: reg }, { first_name: reg }, { email: reg }],
       });
       console.log(all_feeds);
-      if(all_feeds.length>0)
-      {
+      if (all_feeds.length > 0) {
         const user_id = req.query.user_id;
         const data_follower = await followSchema.distinct("followingId", {
           followerId: user_id,
@@ -840,46 +876,40 @@ exports.search_user_hashtag = async (req, res, next) => {
           success: true,
           feeds: all_feeds,
         });
-      }
-      else
-      {
+      } else {
         return res.json({
           success: false,
-          message: "user not found "
+          message: "user not found ",
         });
       }
-    }
-    else if(search_hashtag)
-    {
+    } else if (search_hashtag) {
       let reg = new RegExp(search_hashtag);
-      const getHashtags = await Hashtag.find({hashtag:reg});
-      if(getHashtags.length>0)
-      {
-        let userFollowedHashtagList  = await Users.distinct("followedHashtag._id",{_id:req.query.user_id}).exec();
+      const getHashtags = await Hashtag.find({ hashtag: reg });
+      if (getHashtags.length > 0) {
+        let userFollowedHashtagList = await Users.distinct(
+          "followedHashtag._id",
+          { _id: req.query.user_id }
+        ).exec();
         userFollowedHashtagList = userFollowedHashtagList.map(String);
         var followedHashtagId = [...new Set(userFollowedHashtagList)];
         getHashtags.forEach((data) => {
           followedHashtagId.forEach((hashId) => {
             console.log(hashId == data._id);
-            if(hashId == data._id)
-            {
+            if (hashId == data._id) {
               data["follow"] = 1;
             }
-          })
+          });
         });
         return res.json({
           success: true,
-          result: getHashtags
+          result: getHashtags,
         });
-      }
-      else
-      {
+      } else {
         return res.json({
           success: false,
-          message: "hashtag not found "
+          message: "hashtag not found ",
         });
       }
-      
     }
   } catch (error) {
     return res.json({

@@ -15,6 +15,7 @@ const {
   resetPasswordVerifyOtp,
   gcm_token_updation,
   search_user,
+  search_place,
   upload_avatar,
   change_avatar,
   search_user_hashtag,
@@ -160,20 +161,27 @@ router.get(
   checkQuery("search_word"),
   search_user
 );
+// Search place
+router.get(
+  "/search_user",
+  checkSession,
+  checkQuery("user_id"),
+  checkQuery("place"),
+  search_place
+);
 
 // #1 - Upload avatar
-router.post("/upload_avatar",checkSession, upload_avatar);
+router.post("/upload_avatar", checkSession, upload_avatar);
 
 // update avatar
-router.post("/change_avatar",checkSession, change_avatar);
-
+router.post("/change_avatar", checkSession, change_avatar);
 
 // search_user_hashtag
 router.get(
   "/search_user_hashtag",
   // checkSession,
   checkQuery("user_id"),
-  oneOf([checkQuery("search_user"),checkQuery("search_hashtag")]),
+  oneOf([checkQuery("search_user"), checkQuery("search_hashtag")]),
   search_user_hashtag
 );
 

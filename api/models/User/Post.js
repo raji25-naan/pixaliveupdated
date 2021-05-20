@@ -17,6 +17,14 @@ const postSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  place: {
+    type: String,
+    default: "",
+  },
+  follow: {
+    type: Number,
+    default: 0,
+  },
   created_at: {
     type: Date,
   },
@@ -24,9 +32,9 @@ const postSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-  hastag : {
-    type : String
-  }
+  hastag: {
+    type: String,
+  },
 });
 
 module.exports = mongoose.model("Posts", postSchema);
