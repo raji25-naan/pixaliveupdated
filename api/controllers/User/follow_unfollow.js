@@ -1,6 +1,7 @@
 const follow_unfollow = require("../../models/User/follow_unfollow");
 const Users = require("../../models/User/Users");
-var ObjectId = require("mongodb").ObjectId;
+const viewPost = require("../../models/User/viewPost");
+
 
 exports.createFollow = async(req,res,next) => {
 
@@ -15,6 +16,10 @@ exports.createFollow = async(req,res,next) => {
             followingId : followingId,
             status : 1,
             created_at : Date.now()
+
+
+
+            
         });
         const saveData = await data.save();
         if(saveData)
@@ -205,3 +210,63 @@ exports.get_following = async (req, res, next) => {
       });
     }
   };
+
+  exports.suggestionFriendList = async(req,res,next)=> {
+
+    try 
+    {
+      let {userId,lat,lng} = req.query;
+      console.log(req.query);
+      const getFollowerId = await follow_unfollow.distinct("followerId",{followingId:userId}).exec();
+      const getFollowingId = await follow_unfollow.distinct("followingId",{followerId:userId}).exec();
+      let all_ID = getFollowerId.concat(getFollowingId).map(String);
+      let totalId = [...new Set(all_ID)];
+      //getFriendsId
+      const getfriendFollowerId = await follow_unfollow.distinct("followerId",{followingId:totalId}).exec();
+      const getfriendFollowingId = await follow_unfollow.distinct("followingId",{followerId:totalId}).exec();
+      let friends_ID = getfriendFollowerId.concat(getfriendFollowingId).map(String);
+      let totalFriendsId = [...new Set(friends_ID)];
+      //filterId
+      let ids = new Set(totalId.map((id) => id));
+      const filteredFriendoffriends = totalFriendsId.filter((id) => !ids.has(id));
+
+      //getNearbyUserids
+      const getNearbyUser = await Users.distinct("_id",{lat:lat,lng:lng}).exec();
+      let getNearbyUserids = getNearbyUser.map(String);
+      const filteredNearbyusers = getNearbyUserids.filter((id) => !ids.has(id));
+      let joinedIds = filteredFriendoffriends.concat(filteredNearbyusers);
+      //getViewedPost
+      const getViewedPost = await viewPost.distinct("post_userID",{viewed_userId:userId}).exec();
+      var filteredArray = getViewedPost.filter(
+        (item) => (this[item] = ++this[item] || 1) === 3,
+        {}
+      );
+      const filteredViewedpostIds = filteredArray.filter((id) => !ids.has(id));
+      let combinedIds = joinedIds.concat(filteredViewedpostIds).map(String);
+      let SuggestedIds = [...new Set(combinedIds)];
+      console.log(SuggestedIds);
+      let totalSuggestedIds = arrayRemove(SuggestedIds,userId);
+      console.log(totalSuggestedIds);
+      //getSuggestedList
+      const getSuggestedList = await Users.find(
+        {_id:totalSuggestedIds},
+        {_id:1, username:1, email:1,avatar:1,phone:1,followersCount:1,followingCount:1}
+      ).exec();
+      return res.json({
+        success : true,
+        result : getSuggestedList
+      })
+    }
+    catch (error) {
+      return res.json({
+        success: false,
+        message: "Error Occured!!!" + error,
+      });
+    }
+  }
+
+  function arrayRemove(arr, id) {  
+    return arr.filter(function(user_id){ 
+        return user_id!= id; 
+    });
+}

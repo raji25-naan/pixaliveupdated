@@ -1,5 +1,5 @@
 const postSchema = require("../../models/User/Post");
-
+const viewPost = require("../../models/User/viewPost");
 // ************* Create post Using user_Id ***************//
 
 exports.create_post = async (req, res, next) => {
@@ -163,4 +163,44 @@ function sortFunction(a, b) {
   var dateA = new Date(a.date).getTime();
   var dateB = new Date(b.date).getTime();
   return dateA > dateB ? 1 : -1;
+}
+
+//updateviewPost
+exports.updateviewpost = async(req,res,next)=> {
+
+  try 
+  {
+    let{user_id,post_id,postUserId} = req.body;
+    //getViewdata
+    const getViewdata = await viewPost.find({post_id:post_id,viewed_userId:user_id,post_userID:postUserId}).exec();
+    if(getViewdata.length>0)
+    {
+      return res.json({
+        success: false,
+        message: "Already viewed"
+      });
+    }
+    else
+    {
+      const data = new viewPost({
+        post_id:post_id,
+        viewed_userId:user_id,
+        post_userID:postUserId
+      });
+      const saveData = await data.save();
+      if(saveData)
+      {
+        return res.json({
+          success: true,
+          message: "Post viewed successfully"
+        });
+      }
+    }
+  } 
+  catch (error) {
+    return res.json({
+      success: false,
+      message: "Error occured! " + error,
+    });
+  }
 }

@@ -1,5 +1,5 @@
 const express = require("express");
-const { createFollow, mutualFriendList, get_following, get_followers } = require("../../controllers/User/follow_unfollow");
+const { createFollow, mutualFriendList, get_following, get_followers, suggestionFriendList } = require("../../controllers/User/follow_unfollow");
 const { checkSession } = require("../../middlewares/checkAuth");
 const { checkRequestBodyParams, validateRequest, checkParam, checkQuery } = require("../../middlewares/validator");
 const router = express.Router();
@@ -36,5 +36,14 @@ router.get('/get_followers',
             validateRequest,
             get_followers
             )
+
+router.get('/suggestionFriendList',
+            // checkSession,
+            checkQuery('userId'),
+            checkQuery('lat'),
+            checkQuery('lng'),
+            validateRequest,
+            suggestionFriendList
+)
 
 module.exports = router

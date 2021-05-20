@@ -6,6 +6,10 @@ const viewPost = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref : "Posts"
   },
+  post_userID :{
+    type: mongoose.Schema.Types.ObjectId,
+    ref : "postusers"
+  },
   viewed_userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref : "users"

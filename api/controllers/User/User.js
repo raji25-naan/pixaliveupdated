@@ -240,7 +240,7 @@ exports.resendotp = async (req, res, next) => {
       message: "Error occured!",
     });
   }
-};
+}; 
 
 //facebook_signin
 exports.facebook_sign = async (req, res, next) => {
@@ -255,16 +255,52 @@ exports.facebook_sign = async (req, res, next) => {
       last_name,
       avatar,
     } = req.body;
-    if (password != confirm_password) {
+    const validEmail = emailValidator.validate(email);
+    if (!validEmail) {
       return res.json({
         success: false,
-        message: "Passwords must be the same!",
+        message: "Please enter valid email",
       });
     }
-
+    const validPhoneno = phone;
+    if (validPhoneno.length != 10) {
+      return res.json({
+        success: false,
+        message: "Please enter valid phone number",
+      });
+    }
+    let checkRegisterEmail = await Users.findOne({
+      email: email,
+      otp_verified: false,
+    }).exec();
+    if (checkRegisterEmail) {
+      let otp = Math.floor(1000 + Math.random() * 9000);
+      let otpExpirationTime = moment().add(5, "m");
+      //updateOtp
+      const updateOtp = await Users.findByIdAndUpdate(
+        { _id: checkRegisterEmail._id },
+        {
+          $set: {
+            otp: otp,
+            otpExpirationTime: otpExpirationTime.toISOString(),
+          },
+        },
+        { new: true }
+      );
+      Twillio.sendOtp(
+        otp,
+        checkRegisterEmail.country_code + checkRegisterEmail.phone
+      );
+      return res.json({
+        success: true,
+        message: "You are already registered with us! Please verify OTP.",
+      });
+    }
+    let country_code = "+91";
     const userInfo = await Users.findOne({
       $or: [{ username: username }, { email: email }, { phone: phone }],
     });
+
     if (userInfo) {
       if (username.toLowerCase() == userInfo.username.toLowerCase()) {
         return res.json({
@@ -282,40 +318,53 @@ exports.facebook_sign = async (req, res, next) => {
           message: "Phone number already regitered!",
         });
       }
+      //checkPassword
+      if (password != confirm_password) {
+        return res.json({
+          success: false,
+          message: "Passwords must be the same!",
+        });
+      }
     } else {
+      // let otp = Math.floor(1000 + Math.random() * 9000);
+      // let otpExpirationTime = moment().add(5, "m");
       let userData = {
         username: username,
         email: email,
         password: bcrypt.hashSync(password, 12),
-        country_code: "+91",
+        country_code: country_code,
         phone: phone,
         first_name: first_name,
         last_name: last_name,
-        otp_verified: true,
         avatar: avatar,
+        // otp: otp,
+        otp_verified: true,
+        // otpExpirationTime: otpExpirationTime.toISOString(),
         gcm_token: "",
         created_At: Date.now(),
-        facebook_signin: true,
+        facebook_signin: true
       };
 
       const data = new Users(userData);
       const saveData = await data.save();
       if (saveData) {
+        // Twillio.sendOtp(otp, country_code + phone);
+        // SendEmailVerificationLink(otp, req, saveData);
         return res.json({
           success: true,
-          message: "Account registered! You can now login from same email.",
+          message: "Account registered successfully"
         });
       } else {
         return res.json({
           success: false,
-          message: "Error occured!",
+          message: "Error occured!" + error,
         });
       }
     }
   } catch (error) {
     return res.json({
       success: false,
-      message: "Error occured!",
+      message: "Error occured!" + error,
     });
   }
 };

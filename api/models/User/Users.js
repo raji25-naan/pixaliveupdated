@@ -79,7 +79,15 @@ const user_schema = new mongoose.Schema({
             _id : {type: mongoose.Schema.Types.ObjectId},
             hashtag : {type:String}
         }
-    ]
+    ],
+    lat:{
+        type : String,
+        default : ''
+    },
+    lng : {
+        type : String,
+        default : ''
+    }
 });
 
 module.exports = mongoose.model("users",user_schema)

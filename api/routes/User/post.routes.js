@@ -14,6 +14,7 @@ const {
   search_user,
   feeds,
   all_feeds,
+  updateviewpost,
 } = require("../../controllers/User/Post");
 const { checkSession } = require("../../middlewares/checkAuth");
 
@@ -58,5 +59,15 @@ router.get("/feeds",
 
 // Get feed posts
 router.get("/all_feeds",checkSession, all_feeds);
+
+//updateviewpost
+router.post("/updateviewpost",
+          // checkSession,
+          checkRequestBodyParams("post_id"),
+          checkRequestBodyParams("user_id"),
+          checkRequestBodyParams("postUserId"),
+          validateRequest,
+          updateviewpost
+          );
 
 module.exports = router;
