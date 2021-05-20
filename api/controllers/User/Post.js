@@ -1,9 +1,9 @@
 const postSchema = require("../../models/User/Post");
 const viewPost = require("../../models/User/viewPost");
+const hashtagSchema = require("../../models/User/hashtags");
 // ************* Create post Using user_Id ***************//
 
 exports.create_post = async (req, res, next) => {
-
   try {
     let { image, body, thumbnail, user_id } = req.body;
     const updateFavourtie = new postSchema({
@@ -34,6 +34,140 @@ exports.create_post = async (req, res, next) => {
     });
   }
 };
+
+exports.create_postNew = async (req, res, next) => {
+  try {
+    const { text, url, body, thumbnail, user_id, place, type } = req.body;
+    // string.match(/#\w+/g)
+    var arr_hash = body.match(/(^|\s)#(\w+)/g);
+    console.log(arr_hash);
+    var hash_tag = [];
+    if (arr_hash) {
+      console.log(arr_hash);
+      arr_hash = arr_hash.map(function (v) {
+        return v.trim().substring(1);
+      });
+      hash_tag.push(...arr_hash);
+      const get_hashtag = await hashtagSchema.distinct("hashtag", {
+        hashtag: arr_hash,
+      });
+      console.log(get_hashtag);
+      hash_tags = new Set(get_hashtag.map((tag) => tag));
+
+      arr_hash = arr_hash.filter((id) => !hash_tags.has(id));
+
+      console.log(arr_hash);
+
+      arr_hash.forEach(async (element) => {
+        const hashtag = new hashtagSchema({
+          hashtag: element,
+          created_at: new Date(),
+        }).save();
+      });
+    }
+    if (type == 1)
+      update_postwithType(
+        user_id,
+        url,
+        "",
+        "",
+        "",
+        thumbnail,
+        body,
+        place,
+        type,
+        hash_tag,
+        res
+      );
+    if (type == 2)
+      update_postwithType(
+        user_id,
+        "",
+        "",
+        url,
+        "",
+        thumbnail,
+        body,
+        place,
+        type,
+        hash_tag,
+        res
+      );
+    if (type == 3)
+      update_postwithType(
+        user_id,
+        "",
+        url,
+        "",
+        "",
+        thumbnail,
+        body,
+        place,
+        type,
+        hash_tag,
+        res
+      );
+    if (type == 4)
+      update_postwithType(
+        user_id,
+        "",
+        "",
+        "",
+        text,
+        thumbnail,
+        body,
+        place,
+        type,
+        hash_tag,
+        res
+      );
+  } catch (error) {
+    return res.json({
+      success: false,
+      message: "Error adding post" + error,
+    });
+  }
+};
+
+async function update_postwithType(
+  userId,
+  video,
+  image,
+  audio,
+  text,
+  thumbnail,
+  body,
+  place,
+  type,
+  hashtag,
+  res
+) {
+  console.log("text", video, image, audio, text);
+  try {
+    var createdPost = await new postSchema({
+      user_id: userId,
+      video_url: video,
+      image_url: image,
+      audio_url: audio,
+      text_content: text,
+      thumbnail: thumbnail,
+      body: body,
+      place: place,
+      post_type: type,
+      hastag: hashtag,
+      created_at: Date.now(),
+    }).save();
+    return res.json({
+      success: true,
+      message: createdPost,
+    });
+  } catch (error) {
+    return res.json({
+      success: false,
+      message: "Error adding post" + error,
+    });
+  }
+}
 
 // ************* Get post Using Post_id ***************//
 
@@ -145,7 +279,9 @@ exports.all_feeds = async (req, res, next) => {
     var { offset } = req.query;
     var row = 20;
 
-    const all_feeds = await (await postSchema.find()).reverse().splice(offset == undefined ? 0 : offset, row);
+    const all_feeds = await (await postSchema.find())
+      .reverse()
+      .splice(offset == undefined ? 0 : offset, row);
     return res.json({
       success: true,
       feeds: all_feeds,
@@ -166,41 +302,40 @@ function sortFunction(a, b) {
 }
 
 //updateviewPost
-exports.updateviewpost = async(req,res,next)=> {
-
-  try 
-  {
-    let{user_id,post_id,postUserId} = req.body;
+exports.updateviewpost = async (req, res, next) => {
+  try {
+    let { user_id, post_id, postUserId } = req.body;
     //getViewdata
-    const getViewdata = await viewPost.find({post_id:post_id,viewed_userId:user_id,post_userID:postUserId}).exec();
-    if(getViewdata.length>0)
-    {
+    const getViewdata = await viewPost
+      .find({
+        post_id: post_id,
+        viewed_userId: user_id,
+        post_userID: postUserId,
+      })
+      .exec();
+    if (getViewdata.length > 0) {
       return res.json({
         success: false,
-        message: "Already viewed"
+        message: "Already viewed",
       });
-    }
-    else
-    {
+    } else {
       const data = new viewPost({
-        post_id:post_id,
-        viewed_userId:user_id,
-        post_userID:postUserId
+        post_id: post_id,
+        viewed_userId: user_id,
+        post_userID: postUserId,
       });
       const saveData = await data.save();
-      if(saveData)
-      {
+      if (saveData) {
         return res.json({
           success: true,
-          message: "Post viewed successfully"
+          message: "Post viewed successfully",
         });
       }
     }
-  } 
-  catch (error) {
+  } catch (error) {
     return res.json({
       success: false,
       message: "Error occured! " + error,
     });
   }
-}
+};

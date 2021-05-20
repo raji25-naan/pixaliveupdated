@@ -1,25 +1,32 @@
 const mongoose = require("mongoose");
 
 const postSchema = new mongoose.Schema({
-  image: {
+  image_url: {
     type: String,
-    default: "",
+  },
+  audio_url: {
+    type: String,
+  },
+  video_url: {
+    type: String,
+  },
+  text_content: {
+    type: String,
+  },
+  thumbnail: {
+    type: String,
+  },
+  post_type: {
+    type: Number,
   },
   body: {
     type: String,
-    default: "",
   },
   user_id: {
     type: String,
-    default: "",
-  },
-  url: {
-    type: String,
-    default: "",
   },
   place: {
     type: String,
-    default: "",
   },
   follow: {
     type: Number,
@@ -33,7 +40,7 @@ const postSchema = new mongoose.Schema({
     default: 0,
   },
   hastag: {
-    type: String,
+    type: Array,
   },
 });
 

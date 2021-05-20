@@ -8,10 +8,10 @@ const {
 
 const {
   create_post,
+  create_postNew,
   get_post,
   user_posts,
   delete_post,
-  search_user,
   feeds,
   all_feeds,
   updateviewpost,
@@ -29,45 +29,56 @@ router.post(
   create_post
 );
 
+router.post("/post", create_postNew);
+
 // Get post by id
-router.get("/getPost",
-          checkSession,
-          checkQuery("post_id"),
-          validateRequest,
-          get_post);
+router.get(
+  "/getPost",
+  checkSession,
+  checkQuery("post_id"),
+  validateRequest,
+  get_post
+);
 
 // Get user posts
-router.get("/postbyUid",
-          checkSession,
-          checkQuery("user_id"),
-          validateRequest,
-          user_posts);
+router.get(
+  "/postbyUid",
+  checkSession,
+  checkQuery("user_id"),
+  validateRequest,
+  user_posts
+);
 
 // Delete user Post
-router.post("/delete_post",
-          checkSession,
-          checkRequestBodyParams("post_id"),
-          validateRequest,
-          delete_post);
+router.post(
+  "/delete_post",
+  checkSession,
+  checkRequestBodyParams("post_id"),
+  validateRequest,
+  delete_post
+);
 
 // get single user feed
-router.get("/feeds",
-          checkSession,
-          checkQuery("user_id"),
-          validateRequest,
-          feeds);
+router.get(
+  "/feeds",
+  checkSession,
+  checkQuery("user_id"),
+  validateRequest,
+  feeds
+);
 
 // Get feed posts
-router.get("/all_feeds",checkSession, all_feeds);
+router.get("/all_feeds", checkSession, all_feeds);
 
 //updateviewpost
-router.post("/updateviewpost",
-          // checkSession,
-          checkRequestBodyParams("post_id"),
-          checkRequestBodyParams("user_id"),
-          checkRequestBodyParams("postUserId"),
-          validateRequest,
-          updateviewpost
-          );
+router.post(
+  "/updateviewpost",
+  // checkSession,
+  checkRequestBodyParams("post_id"),
+  checkRequestBodyParams("user_id"),
+  checkRequestBodyParams("postUserId"),
+  validateRequest,
+  updateviewpost
+);
 
 module.exports = router;
