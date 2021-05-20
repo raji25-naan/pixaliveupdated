@@ -29,7 +29,7 @@ router.post(
   create_post
 );
 
-router.post("/post", create_postNew);
+router.post("/post_new", create_postNew);
 
 // Get post by id
 router.get(
