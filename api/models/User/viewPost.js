@@ -9,6 +9,9 @@ const viewPost = new mongoose.Schema({
   viewed_userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref : "users"
+  },
+  created_At : {
+    type : Date
   }
 });
 

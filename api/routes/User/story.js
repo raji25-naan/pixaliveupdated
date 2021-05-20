@@ -1,5 +1,5 @@
 const express = require("express");
-const { StoriesUpload, updateViewedStories } = require("../../controllers/User/story");
+const { StoriesUpload, updateViewedStories, getStory } = require("../../controllers/User/story");
 const router = express.Router();
 const {
   checkRequestBodyParams,
@@ -23,6 +23,14 @@ router.post(
     checkRequestBodyParams("storyId"),
     validateRequest,
     updateViewedStories
+  );
+
+  router.get(
+    "/getStory",
+    // checkSession,
+    checkRequestBodyParams("userId"),
+    validateRequest,
+    getStory
   );
   
 

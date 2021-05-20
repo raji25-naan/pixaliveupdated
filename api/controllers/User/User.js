@@ -494,7 +494,7 @@ exports.updateProfile = async (req, res, next) => {
 exports.forgotpassword = async (req, res, next) => {
   try {
     let email = req.body.email;
-    let getUserInfo = await Users.findOne({ email: email });
+    let getUserInfo = await Users.findOne({ email: email,otp_verified:true }).exec();
     if (getUserInfo) {
       let otp = Math.floor(1000 + Math.random() * 9000);
       let otpExpirationTime = moment().add(10, "m");
@@ -535,7 +535,7 @@ exports.forgotpassword = async (req, res, next) => {
     } else {
       return res.json({
         success: false,
-        message: "Error occured" + error,
+        message: "You are not registered with us!"
       });
     }
   } catch (error) {
