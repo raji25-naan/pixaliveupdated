@@ -106,9 +106,9 @@ router.post(
   is_user
 );
 
-router.put(
+router.post(
   "/updateProfile",
-  checkSession,
+  // checkSession,
   checkRequestBodyParams("user_id"),
   validateRequest,
   updateProfile

@@ -511,6 +511,95 @@ exports.updateProfile = async (req, res, next) => {
   try {
     let user_id = req.body.user_id;
     let editData = {};
+    //checkOurData
+    const myUserData = await Users.findOne({_id:user_id});
+    if(req.body.email || req.body.phone || req.body.username)
+    {
+      if(req.body.email !== undefined)
+      {
+        const validateEmail = emailValidator.validate(req.body.email);
+        if(!validateEmail)
+        {
+          return res.json({
+            success: false,
+            message: "Please enter valid email",
+          });
+        }
+        const userEmailDetail = await Users.findOne({email:req.body.email});
+        if(req.body.email == myUserData.email)
+        {
+          editData["email"] = req.body.email;
+        }
+        else if(userEmailDetail)
+        {
+          return res.json({
+                  success: false,
+                  message: "Email already regitered!",
+                });
+        }
+      }
+
+      // let validatePhone = req.body.phone;
+      if(req.body.phone !== undefined)
+      {
+        if(req.body.phone.length != 10)
+        {
+          return res.json({
+            success: false,
+            message: "Please enter valid phone number",
+          });
+        }
+        const userPhoneNoDetail = await Users.findOne({phone:req.body.phone});
+        if(req.body.phone == myUserData.phone)
+        {
+          editData["phone"] = req.body.phone;
+        }
+        else if(userPhoneNoDetail)
+        {
+          return res.json({
+                  success: false,
+                  message: "Phone Number already regitered!",
+                });
+        }
+      }
+      
+      if(req.body.username !== undefined)
+      {
+        const userNameDetail = await Users.findOne({username:req.body.username});
+        if(req.body.username.toLowerCase() == myUserData.username.toLowerCase() )
+        {
+          editData["username"] = req.body.username;
+        }
+        else if(userNameDetail)
+        {
+          console.log("taken");
+          return res.json({
+            success: false,
+            message: "Username taken!",
+          });
+        }
+      }
+
+      // if(userInfo)
+      // {
+      //   if (req.body.username.toLowerCase() == userInfo.username.toLowerCase()) {
+      //     return res.json({
+      //       success: false,
+      //       message: "Username taken!",
+      //     });
+      //   } else if (req.body.email == userInfo.email) {
+      //     return res.json({
+      //       success: false,
+      //       message: "Email already regitered!",
+      //     });
+      //   } else if (req.body.phone == userInfo.phone) {
+      //     return res.json({
+      //       success: false,
+      //       message: "Phone number already regitered!",
+      //     });
+      //   }
+      // }
+    }
     editData = req.body;
     editData["updated_At"] = Date.now();
     const updateData = await Users.findByIdAndUpdate(

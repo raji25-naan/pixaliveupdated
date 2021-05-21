@@ -1,21 +1,19 @@
 const express = require("express");
+const { followUnfollowHashtag } = require("../../controllers/User/hashtag");
+const { checkSession } = require("../../middlewares/checkAuth");
+const { checkRequestBodyParams, validateRequest } = require("../../middlewares/validator");
 const router = express.Router();
 const Hashtag = require("../../models/User/hashtags");
 const user = require("../../models/User/Users");
 
-router.post("/create", async(req,res) => {
-    console.log(req.body);
-    const follow = await user.updateOne(
-        {_id : req.body.userId},
-        {
-           $push : {"followedHashtag" : {
-               _id : req.body.hashId,
-               hashtag:req.body.hashtag
-            } } 
-        },{new:true}
-    ).exec();
-    console.log(follow);
-    return res.send(follow)
-})
+router.post("/follow_unfollow_hashtag",
+            // checkSession,
+            checkRequestBodyParams('type').isIn(['1', '0']),
+            checkRequestBodyParams("userId"),
+            checkRequestBodyParams("hashId"),
+            checkRequestBodyParams("hashtag"),
+            validateRequest,
+            followUnfollowHashtag
+)
 
 module.exports = router;

@@ -1,6 +1,7 @@
 const Register = require("../../models/Admin/register");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const Users = require("../../models/User/Users");
 
 exports.signup = async(req,res) => {
 console.log(1);
@@ -59,3 +60,88 @@ exports.login = async (req, res, next) => {
       });
     }
   };
+
+  exports.getAllUsers = async(req,res,next)=>{
+
+    try 
+    {
+      let getUserInfo = await Users.find({isActive : true},
+        {_id:1,avatar:1,username:1,first_name:1,last_name:1,phone:1,email:1,isActive:true}).exec();
+      if(getUserInfo.length>0)
+      {
+        return res.json({
+          success : true,
+          result : getUserInfo
+        })
+      }
+      else
+      {
+        return res.json({
+          success : false,
+          result : "No data found"
+        })
+      }
+    } 
+    catch (error) {
+      return res.json({
+        success: false,
+        message: "Error occured!",
+      });
+    }
+  }
+
+  exports.activateUser = async(req,res,next)=>{
+
+    try
+    {
+      const updateactivate = await Users.updateOne(
+        {_id : req.body.userId},
+        {
+          $set : {isActive : true}
+        },
+        {new : true}
+      );
+      if(updateactivate)
+      {
+        return res.json({
+          success : true,
+          result : "Successfully Activated"
+        })
+      }
+    }
+    catch(error)
+    {
+      return res.json({
+        success: false,
+        message: "Error occured!",
+      });
+    }
+  }
+
+  exports.deactivateUser = async(req,res,next)=>{
+
+    try
+    {
+      const updateDeactivate = await Users.updateOne(
+        {_id : req.body.userId},
+        {
+          $set : {isActive : false}
+        },
+        {new : true}
+      );
+      if(updateDeactivate)
+      {
+        return res.json({
+          success : true,
+          result : "Successfully Deactivated"
+        })
+      }
+    }
+    catch(error)
+    {
+      return res.json({
+        success: false,
+        message: "Error occured!",
+      });
+    }
+  }

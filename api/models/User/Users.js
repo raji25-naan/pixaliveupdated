@@ -87,6 +87,10 @@ const user_schema = new mongoose.Schema({
     lng : {
         type : String,
         default : ''
+    },
+    isActive : {
+        type :Boolean,
+        default : true
     }
 });
 
