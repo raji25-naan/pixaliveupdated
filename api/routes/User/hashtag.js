@@ -1,5 +1,5 @@
 const express = require("express");
-const { followUnfollowHashtag } = require("../../controllers/User/hashtag");
+const { followUnfollowHashtag, create_hashtag, fetch_hashtag } = require("../../controllers/User/hashtag");
 const { checkSession } = require("../../middlewares/checkAuth");
 const { checkRequestBodyParams, validateRequest } = require("../../middlewares/validator");
 const router = express.Router();
@@ -14,6 +14,20 @@ router.post("/follow_unfollow_hashtag",
             checkRequestBodyParams("hashtag"),
             validateRequest,
             followUnfollowHashtag
+)
+
+router.post("/create_hashtag",
+            // checkSession,
+            checkRequestBodyParams("hashtag"),
+            validateRequest,
+            create_hashtag
+)
+
+router.post("/fetch_hashtag",
+            // checkSession,
+            checkRequestBodyParams("search_hash"),
+            validateRequest,
+            fetch_hashtag
 )
 
 module.exports = router;

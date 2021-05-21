@@ -1,6 +1,7 @@
 const postSchema = require("../../models/User/Post");
 const viewPost = require("../../models/User/viewPost");
 const hashtagSchema = require("../../models/User/hashtags");
+const reportPost = require("../../models/User/reportPost");
 // ************* Create post Using user_Id ***************//
 
 exports.create_post = async (req, res, next) => {
@@ -339,3 +340,63 @@ exports.updateviewpost = async (req, res, next) => {
     });
   }
 };
+
+//createReport
+exports.createReport = async(req,res,next)=>{
+  try
+  {
+    const{post_id,user_id,report}= req.body;
+    const reports = new reportPost({
+      post_id : post_id,
+      reportedByid : user_id,
+      report : report
+    });
+    const saveReport = await reports.save();
+    if(saveReport)
+    {
+      return res.json({
+      success : true,
+      message:"Reported successfully"
+      })
+    }else{
+      return res.json({
+      success:false,
+      msg:"Your report is not taken..try again!"
+    })
+    }
+  }
+  catch(error){
+    return res.json({
+      success:false,
+      msg:"error occured!"+error
+    })
+  }
+ 
+}
+
+// exploreFeedsbyLocation
+exports.exploreFeedsbyLocation = async (req,res,next) => {
+  try {
+    var {lat,lng} = req.query;
+    const sameLocationPosts = await postSchema.find({lat:lat,lng:lng}).exec();
+    if(sameLocationPosts.length > 0){
+      return res.json({
+        success:true,
+        result : sameLocationPosts,
+        message:"Post fetched successfully"
+      })
+    }
+    else{
+      return res.json({
+        success:false,
+        message:'No data Found'
+      })
+    }
+  } 
+  catch (error) {
+    return res.json({
+      success:false,
+      message:'error'
+    })
+  }
+}

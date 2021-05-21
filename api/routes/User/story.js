@@ -28,7 +28,7 @@ router.post(
   router.get(
     "/getStory",
     // checkSession,
-    checkRequestBodyParams("userId"),
+    checkQuery("user_id"),
     validateRequest,
     getStory
   );

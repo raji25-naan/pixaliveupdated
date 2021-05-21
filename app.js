@@ -16,6 +16,7 @@ const commentRouter = require("./api/routes/User/comment.routes");
 const storyRouter = require("./api/routes/User/story");
 const hashtagRouter = require("./api/routes/User/hashtag");
 const TagpostRouter = require("./api/routes/User/userTagpost");
+const categoryRouter = require("./api/routes/User/category");
 const fileUpload = require("express-fileupload");
 
 
@@ -62,6 +63,7 @@ app.use("/api/User/comments", commentRouter);
 app.use("/api/User/story",storyRouter);
 app.use("/api/User/hashtag",hashtagRouter);
 app.use("/api/User/tagPost",TagpostRouter);
+app.use("/api/User/category",categoryRouter);
 
 //admin router
 app.use("/api/Admin/register",registerRouter);

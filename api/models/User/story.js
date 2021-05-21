@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const moment = require("moment");
 
 const story = new mongoose.Schema({
 
@@ -10,8 +11,9 @@ const story = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref : "users"
   }, 
-  storyDisappearTime : {
-    type : String
+  storyDisappearTime:{
+    type:Date,
+    default: moment().add(1, 'd').toDate()
   },
   viewed_userId : {
     type : [String]

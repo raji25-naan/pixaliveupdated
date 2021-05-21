@@ -42,6 +42,17 @@ const postSchema = new mongoose.Schema({
   hastag: {
     type: Array,
   },
+  lat: {
+    type:String,
+    default:""
+  },
+  lng: {
+    type:String,
+    default:""
+  },
+  category: {
+    type:String
+  }
 });
 
 module.exports = mongoose.model("Posts", postSchema);
