@@ -171,10 +171,20 @@ router.get(
 );
 
 // #1 - Upload avatar
-router.post("/upload_avatar", checkSession, upload_avatar);
+router.post(
+  "/upload_avatar",
+  checkSession,
+  checkQuery("user_id"),
+  upload_avatar
+);
 
 // update avatar
-router.post("/change_avatar", checkSession, change_avatar);
+router.post(
+  "/change_avatar",
+  checkSession,
+  checkQuery("user_id"),
+  change_avatar
+);
 
 // search_user_hashtag
 router.get(

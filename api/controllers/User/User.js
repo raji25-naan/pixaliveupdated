@@ -112,7 +112,7 @@ exports.signup = async (req, res, next) => {
         otp_verified: false,
         otpExpirationTime: otpExpirationTime.toISOString(),
         gcm_token: "",
-        created_At: Date.now()        
+        created_At: Date.now(),
       };
 
       const data = new Users(userData);
@@ -155,7 +155,7 @@ exports.verifyOtp = async (req, res, next) => {
               otp: "",
               otp_verified: true,
               otpExpirationTime: "",
-              isActive : true
+              isActive: true,
             },
           },
           { new: true }
@@ -241,7 +241,7 @@ exports.resendotp = async (req, res, next) => {
       message: "Error occured!",
     });
   }
-}; 
+};
 
 //facebook_signin
 exports.facebook_sign = async (req, res, next) => {
@@ -344,7 +344,7 @@ exports.facebook_sign = async (req, res, next) => {
         gcm_token: "",
         created_At: Date.now(),
         facebook_signin: true,
-        isActive : true
+        isActive: true,
       };
 
       const data = new Users(userData);
@@ -354,7 +354,7 @@ exports.facebook_sign = async (req, res, next) => {
         // SendEmailVerificationLink(otp, req, saveData);
         return res.json({
           success: true,
-          message: "Account registered successfully"
+          message: "Account registered successfully",
         });
       } else {
         return res.json({
@@ -514,66 +514,57 @@ exports.updateProfile = async (req, res, next) => {
     let user_id = req.body.user_id;
     let editData = {};
     //checkOurData
-    const myUserData = await Users.findOne({_id:user_id});
-    if(req.body.email || req.body.phone || req.body.username)
-    {
-      if(req.body.email !== undefined)
-      {
+    const myUserData = await Users.findOne({ _id: user_id });
+    if (req.body.email || req.body.phone || req.body.username) {
+      if (req.body.email !== undefined) {
         const validateEmail = emailValidator.validate(req.body.email);
-        if(!validateEmail)
-        {
+        if (!validateEmail) {
           return res.json({
             success: false,
             message: "Please enter valid email",
           });
         }
-        const userEmailDetail = await Users.findOne({email:req.body.email});
-        if(req.body.email == myUserData.email)
-        {
+        const userEmailDetail = await Users.findOne({ email: req.body.email });
+        if (req.body.email == myUserData.email) {
           editData["email"] = req.body.email;
-        }
-        else if(userEmailDetail)
-        {
+        } else if (userEmailDetail) {
           return res.json({
-                  success: false,
-                  message: "Email already regitered!",
-                });
+            success: false,
+            message: "Email already regitered!",
+          });
         }
       }
 
       // let validatePhone = req.body.phone;
-      if(req.body.phone !== undefined)
-      {
-        if(req.body.phone.length != 10)
-        {
+      if (req.body.phone !== undefined) {
+        if (req.body.phone.length != 10) {
           return res.json({
             success: false,
             message: "Please enter valid phone number",
           });
         }
-        const userPhoneNoDetail = await Users.findOne({phone:req.body.phone});
-        if(req.body.phone == myUserData.phone)
-        {
+        const userPhoneNoDetail = await Users.findOne({
+          phone: req.body.phone,
+        });
+        if (req.body.phone == myUserData.phone) {
           editData["phone"] = req.body.phone;
-        }
-        else if(userPhoneNoDetail)
-        {
+        } else if (userPhoneNoDetail) {
           return res.json({
-                  success: false,
-                  message: "Phone Number already regitered!",
-                });
+            success: false,
+            message: "Phone Number already regitered!",
+          });
         }
       }
-      
-      if(req.body.username !== undefined)
-      {
-        const userNameDetail = await Users.findOne({username:req.body.username});
-        if(req.body.username.toLowerCase() == myUserData.username.toLowerCase() )
-        {
+
+      if (req.body.username !== undefined) {
+        const userNameDetail = await Users.findOne({
+          username: req.body.username,
+        });
+        if (
+          req.body.username.toLowerCase() == myUserData.username.toLowerCase()
+        ) {
           editData["username"] = req.body.username;
-        }
-        else if(userNameDetail)
-        {
+        } else if (userNameDetail) {
           console.log("taken");
           return res.json({
             success: false,
@@ -614,7 +605,10 @@ exports.updateProfile = async (req, res, next) => {
 exports.forgotpassword = async (req, res, next) => {
   try {
     let email = req.body.email;
-    let getUserInfo = await Users.findOne({ email: email,otp_verified:true }).exec();
+    let getUserInfo = await Users.findOne({
+      email: email,
+      otp_verified: true,
+    }).exec();
     if (getUserInfo) {
       let otp = Math.floor(1000 + Math.random() * 9000);
       let otpExpirationTime = moment().add(10, "m");
@@ -655,7 +649,7 @@ exports.forgotpassword = async (req, res, next) => {
     } else {
       return res.json({
         success: false,
-        message: "You are not registered with us!"
+        message: "You are not registered with us!",
       });
     }
   } catch (error) {
@@ -910,23 +904,32 @@ exports.search_place = async (req, res, next) => {
 // upload avatar in user schema
 exports.upload_avatar = async (req, res, next) => {
   try {
+    console.log(req.files);
     const file = req.files.photo;
     const user_id = req.body.user_id;
-
-    file.mv("./profile_avatar/" + file.name, async function (err, result) {
-      if (err) throw err;
-      const getUserInfoAndUpdate = await Users.findByIdAndUpdate(
-        { _id: user_id },
-        {
-          $set: { avatar: file.name },
-        },
-        { new: true }
-      );
-      res.send({
-        success: true,
-        message: "File uploads",
+    console.log(file.originalname);
+    console.log(file);
+    if (file.mimetype == "image/jpeg" || file.mimetype == "image/png") {
+      file.mv("./profile_avatar/" + file.name, async function (err, result) {
+        if (err) throw err;
+        const getUserInfoAndUpdate = await Users.findByIdAndUpdate(
+          { _id: user_id },
+          {
+            $set: { avatar: file.name },
+          },
+          { new: true }
+        );
+        res.send({
+          success: true,
+          message: "File uploads",
+        });
       });
-    });
+    } else {
+      return res.json({
+        success: false,
+        message: "Only jpeg and png are accepted !!" + error,
+      });
+    }
   } catch (error) {
     return res.json({
       success: false,
@@ -941,21 +944,27 @@ exports.change_avatar = async (req, res, next) => {
   try {
     const file = req.files.photo;
     const user_id = req.body.user_id;
-
-    file.mv("./profile_avatar/" + file.name, async function (err, result) {
-      if (err) throw err;
-      const getUserInfoAndUpdate = await Users.findByIdAndUpdate(
-        { _id: user_id },
-        {
-          $set: { avatar: file.name },
-        },
-        { new: true }
-      );
-      res.send({
-        success: true,
-        message: "File uploads",
+    if (file.mimetype == "image/jpeg" || file.mimetype == "image/png") {
+      file.mv("./profile_avatar/" + file.name, async function (err, result) {
+        if (err) throw err;
+        const getUserInfoAndUpdate = await Users.findByIdAndUpdate(
+          { _id: user_id },
+          {
+            $set: { avatar: file.name },
+          },
+          { new: true }
+        );
+        res.send({
+          success: true,
+          message: "File uploads",
+        });
       });
-    });
+    } else {
+      return res.json({
+        success: false,
+        message: "Only jpeg and png are accepted !!" + error,
+      });
+    }
   } catch (error) {
     return res.json({
       success: false,

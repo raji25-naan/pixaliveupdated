@@ -24,9 +24,6 @@ router.post(
   "/post",
   checkSession,
   checkRequestBodyParams("user_id"),
-  checkRequestBodyParams("thumbnail"),
-  checkRequestBodyParams("image"),
-  checkRequestBodyParams("body"),
   validateRequest,
   create_post
 );
@@ -84,22 +81,24 @@ router.post(
 );
 
 //createReport
-router.post("/createReport",
-            // checkSession,
-            checkRequestBodyParams("post_id"),
-            checkRequestBodyParams("user_id"),
-            checkRequestBodyParams("report"),
-            validateRequest,
-            createReport
-)
+router.post(
+  "/createReport",
+  // checkSession,
+  checkRequestBodyParams("post_id"),
+  checkRequestBodyParams("user_id"),
+  checkRequestBodyParams("report"),
+  validateRequest,
+  createReport
+);
 
 //exploreFeedsbyLocation
-router.get("/exploreFeedsbyLocation",
-          // checkSession,
-          checkQuery("lat"),
-          checkQuery("lng"),
-          validateRequest,
-          exploreFeedsbyLocation
-          )
+router.get(
+  "/exploreFeedsbyLocation",
+  // checkSession,
+  checkQuery("lat"),
+  checkQuery("lng"),
+  validateRequest,
+  exploreFeedsbyLocation
+);
 
 module.exports = router;
