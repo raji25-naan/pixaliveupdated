@@ -108,7 +108,7 @@ router.post(
 
 router.post(
   "/updateProfile",
-  // checkSession,
+  checkSession,
   checkRequestBodyParams("user_id"),
   validateRequest,
   updateProfile

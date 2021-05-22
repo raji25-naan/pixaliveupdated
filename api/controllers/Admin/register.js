@@ -65,8 +65,10 @@ exports.login = async (req, res, next) => {
 
     try 
     {
-      let getUserInfo = await Users.find({isActive : true},
-        {_id:1,avatar:1,username:1,first_name:1,last_name:1,phone:1,email:1,isActive:true}).exec();
+      let getUserInfo = await Users.find({
+        $or:[{isActive:true},{isActive:false}]
+      },
+        {_id:1,avatar:1,username:1,first_name:1,last_name:1,phone:1,email:1,isActive:1}).exec();
       if(getUserInfo.length>0)
       {
         return res.json({

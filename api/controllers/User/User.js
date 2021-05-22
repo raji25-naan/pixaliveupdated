@@ -112,7 +112,7 @@ exports.signup = async (req, res, next) => {
         otp_verified: false,
         otpExpirationTime: otpExpirationTime.toISOString(),
         gcm_token: "",
-        created_At: Date.now(),
+        created_At: Date.now()        
       };
 
       const data = new Users(userData);
@@ -155,6 +155,7 @@ exports.verifyOtp = async (req, res, next) => {
               otp: "",
               otp_verified: true,
               otpExpirationTime: "",
+              isActive : true
             },
           },
           { new: true }
@@ -342,7 +343,8 @@ exports.facebook_sign = async (req, res, next) => {
         // otpExpirationTime: otpExpirationTime.toISOString(),
         gcm_token: "",
         created_At: Date.now(),
-        facebook_signin: true
+        facebook_signin: true,
+        isActive : true
       };
 
       const data = new Users(userData);
@@ -579,26 +581,6 @@ exports.updateProfile = async (req, res, next) => {
           });
         }
       }
-
-      // if(userInfo)
-      // {
-      //   if (req.body.username.toLowerCase() == userInfo.username.toLowerCase()) {
-      //     return res.json({
-      //       success: false,
-      //       message: "Username taken!",
-      //     });
-      //   } else if (req.body.email == userInfo.email) {
-      //     return res.json({
-      //       success: false,
-      //       message: "Email already regitered!",
-      //     });
-      //   } else if (req.body.phone == userInfo.phone) {
-      //     return res.json({
-      //       success: false,
-      //       message: "Phone number already regitered!",
-      //     });
-      //   }
-      // }
     }
     editData = req.body;
     editData["updated_At"] = Date.now();
