@@ -17,6 +17,7 @@ const {
   updateviewpost,
   createReport,
   exploreFeedsbyLocation,
+  getPostsbycategory,
 } = require("../../controllers/User/Post");
 const { checkSession } = require("../../middlewares/checkAuth");
 
@@ -98,13 +99,23 @@ router.post(
 );
 
 //exploreFeedsbyLocation
+// router.get(
+//   "/exploreFeedsbyLocation",
+//   // checkSession,
+//   checkQuery("lat"),
+//   checkQuery("lng"),
+//   validateRequest,
+//   exploreFeedsbyLocation
+// );
+
+//getPostsbycategory
 router.get(
-  "/exploreFeedsbyLocation",
+  "/getPostsbycategory",
   // checkSession,
-  checkQuery("lat"),
-  checkQuery("lng"),
+  checkQuery("post_id"),
+  checkQuery("user_id"),
   validateRequest,
-  exploreFeedsbyLocation
+  getPostsbycategory
 );
 
 module.exports = router;

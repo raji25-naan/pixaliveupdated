@@ -64,6 +64,7 @@ exports.signup = async (req, res, next) => {
       );
       return res.json({
         success: true,
+        user_id: checkRegisterEmail._id,
         message: "You are already registered with us! Please verify OTP.",
       });
     }

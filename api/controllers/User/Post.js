@@ -375,28 +375,76 @@ exports.createReport = async(req,res,next)=>{
 }
 
 // exploreFeedsbyLocation
-exports.exploreFeedsbyLocation = async (req,res,next) => {
-  try {
-    var {lat,lng} = req.query;
-    const sameLocationPosts = await postSchema.find({lat:lat,lng:lng}).exec();
-    if(sameLocationPosts.length > 0){
+// exports.exploreFeedsbyLocation = async (req,res,next) => {
+//   try {
+//     var {lat,lng} = req.query;
+//     const sameLocationPosts = await postSchema.find({lat:lat,lng:lng}).exec();
+//     if(sameLocationPosts.length > 0){
+//       return res.json({
+//         success:true,
+//         result : sameLocationPosts,
+//         message:"Post fetched successfully"
+//       })
+//     }
+//     else{
+//       return res.json({
+//         success:false,
+//         message:'No data Found'
+//       })
+//     }
+//   } 
+//   catch (error) {
+//     return res.json({
+//       success:false,
+//       message:'error'
+//     })
+//   }
+// }
+
+
+exports.getPostsbycategory = async(req,res,next)=>{
+  try
+  {
+    let {post_id,user_id}=req.query;
+    const postData = await postSchema.findOne({_id:post_id});
+    const onlycategory = postData.category;
+    const allcategory = await postSchema.find({category:onlycategory})
+    if(allcategory.length>0)
+    {
+      const followers = await follow_unfollow.distinct("followerId",{
+        followingId:user_id
+      })
+      const following = await follow_unfollow.distinct("following",{
+        followerId:user_id
+      })
+      const all_ID = followers.concat(following).map(String);
+      const totalId = [...new Set(all_ID)];
+      allcategory.forEach((data) => {
+        totalId.forEach((followerUserId) => {
+          if (followerUserId == data.user_id) {
+            data["follow"] = 1;
+          }
+        });
+      });
       return res.json({
         success:true,
-        result : sameLocationPosts,
-        message:"Post fetched successfully"
+        result:allcategory,
+        message:"Posts fetched successfuly by category"
       })
     }
-    else{
+    else
+    {
       return res.json({
         success:false,
-        message:'No data Found'
+        msg:"No posts related to this category"
       })
     }
-  } 
-  catch (error) {
+  }
+  catch(error)
+  {
     return res.json({
       success:false,
-      message:'error'
+      msg:"error occured"+error
     })
   }
 }
