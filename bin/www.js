@@ -9,7 +9,7 @@ var debug = require("debug")("app:server");
 var https = require("https");
 
 const dotenv = require("dotenv");
-dotenv.config({path : "./dev.env"});
+dotenv.config({ path: "./dev.env" });
 
 /**
  * Get port from environment and store in Express.
@@ -19,9 +19,29 @@ const hostname = "localhost";
 const port = 7000; //normalizePort(process.env.PORT || '3000');
 app.set("port", port);
 
+/**
+ * Create HTTP server.
+ */
+
+var server = https.createServer(app);
+
+/**
+ * Socket.io
+ */
+var socketApi = require("../chat/socket");
+var io = socketApi.io;
+io.attach(server, {
+  pingInterval: 10000,
+  pingTimeout: 5000,
+  cookie: false,
+});
+
 app.listen(port, hostname, () => {
   console.log(`Server running at http://${hostname}:${port}/`);
 });
+
+server.on("error", onError);
+server.on("listening", onListening);
 
 function normalizePort(val) {
   var port = parseInt(val, 10);
