@@ -147,3 +147,30 @@ exports.login = async (req, res, next) => {
       });
     }
   }
+
+exports.getUserDetail = async(req,res,next)=> {
+
+  try
+  {
+    const getUserInfo = await Users.findOne({_id:req.body.userId},
+      {_id:1,avatar:1,username:1,first_name:1,last_name:1,phone:1,email:1,country_code:1}).exec();
+    if(getUserInfo)
+    {
+      {
+        return res.json({
+          success : true,
+          result : getUserInfo,
+          message: "Fetched successfully"
+        })
+      }
+    }
+
+  }
+  catch(error)
+  {
+    return res.json({
+      success: false,
+      message: "Error occured!"+error
+    });
+  }
+}
