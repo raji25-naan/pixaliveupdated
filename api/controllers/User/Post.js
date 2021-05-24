@@ -421,7 +421,7 @@ exports.getPostsbyLatLng = async(req,res,next)=>{
   }
 }
 
-
+//getPostsbycategory
 exports.getPostsbycategory = async(req,res,next)=>{
   try
   {
