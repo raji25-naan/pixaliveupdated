@@ -2,6 +2,7 @@ const postSchema = require("../../models/User/Post");
 const viewPost = require("../../models/User/viewPost");
 const hashtagSchema = require("../../models/User/hashtags");
 const reportPost = require("../../models/User/reportPost");
+const follow_unfollow = require("../../models/User/follow_unfollow");
 // ************* Create post Using user_Id ***************//
 
 exports.create_post = async (req, res, next) => {
@@ -374,32 +375,51 @@ exports.createReport = async(req,res,next)=>{
  
 }
 
-// exploreFeedsbyLocation
-// exports.exploreFeedsbyLocation = async (req,res,next) => {
-//   try {
-//     var {lat,lng} = req.query;
-//     const sameLocationPosts = await postSchema.find({lat:lat,lng:lng}).exec();
-//     if(sameLocationPosts.length > 0){
-//       return res.json({
-//         success:true,
-//         result : sameLocationPosts,
-//         message:"Post fetched successfully"
-//       })
-//     }
-//     else{
-//       return res.json({
-//         success:false,
-//         message:'No data Found'
-//       })
-//     }
-//   } 
-//   catch (error) {
-//     return res.json({
-//       success:false,
-//       message:'error'
-//     })
-//   }
-// }
+//getPostsbyLatLng
+exports.getPostsbyLatLng = async(req,res,next)=>{
+  try
+  {
+    let {user_id,lat,lng}=req.query;
+    const allPosts = await postSchema.find({lat:lat,lng:lng}).exec();
+    if(allPosts.length>0)
+    {
+      const followers = await follow_unfollow.distinct("followerId",{
+        followingId:user_id
+      })
+      const following = await follow_unfollow.distinct("followingId",{
+        followerId:user_id
+      })
+      const all_ID = followers.concat(following).map(String);
+      const totalId = [...new Set(all_ID)];
+      allPosts.forEach((data) => {
+        totalId.forEach((followerUserId) => {
+          if (followerUserId == data.user_id) {
+            data["follow"] = 1;
+          }
+        });
+      });
+      return res.json({
+        success:true,
+        result:allPosts,
+        message:"Posts fetched successfuly by location"
+      })
+    }
+    else
+    {
+      return res.json({
+        success:false,
+        msg:"No posts related to this location"
+      })
+    }
+  }
+  catch(error)
+  {
+    return res.json({
+      success:false,
+      msg:"error occured"+error
+    })
+  }
+}
 
 
 exports.getPostsbycategory = async(req,res,next)=>{
@@ -414,7 +434,7 @@ exports.getPostsbycategory = async(req,res,next)=>{
       const followers = await follow_unfollow.distinct("followerId",{
         followingId:user_id
       })
-      const following = await follow_unfollow.distinct("following",{
+      const following = await follow_unfollow.distinct("followingId",{
         followerId:user_id
       })
       const all_ID = followers.concat(following).map(String);
@@ -446,5 +466,49 @@ exports.getPostsbycategory = async(req,res,next)=>{
       success:false,
       msg:"error occured"+error
     })
+  }
+}
+
+//getPostByhashtag
+exports.getPostByhashtag = async(req,res,next)=>{
+  try{
+    let {hashtag,user_id} = req.query;
+    var{offset} = req.query;
+    var row = 20;
+    const post_hashtag = await postSchema.find({hashtag:hashtag}).exec();
+    if(post_hashtag)
+    {
+      const follower_data = await follow_unfollow.distinct("followerId",{
+        followingId:user_id
+      });
+      const following_data = await follow_unfollow.distinct("followingId", {
+        followerId: user_id,
+      });
+      var totalId = follower_data.concat(following_data).map(String);
+      var friendlist = [...new Set(totalId)]
+      post_hashtag.forEach((data) => {
+        friendlist.forEach((main_data) => {
+          if (main_data == data.user_id){
+            data["follow"]=1
+          }
+        });
+      })
+      return res.json({
+        success:true,
+        result:post_hashtag,
+        message:"Post fetched successfully"
+      })
+    }
+    else
+    {
+      return res.json({
+      success:false,
+      message:"No post found!😉"})
+    }
+  }catch(error){
+    return res.json({
+    success:false,
+    msg:"Error occured"+error
+  })
   }
 }

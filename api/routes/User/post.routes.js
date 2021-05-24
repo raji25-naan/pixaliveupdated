@@ -18,6 +18,8 @@ const {
   createReport,
   exploreFeedsbyLocation,
   getPostsbycategory,
+  getPostsbyLatLng,
+  getPostByhashtag,
 } = require("../../controllers/User/Post");
 const { checkSession } = require("../../middlewares/checkAuth");
 
@@ -98,15 +100,16 @@ router.post(
   createReport
 );
 
-//exploreFeedsbyLocation
-// router.get(
-//   "/exploreFeedsbyLocation",
-//   // checkSession,
-//   checkQuery("lat"),
-//   checkQuery("lng"),
-//   validateRequest,
-//   exploreFeedsbyLocation
-// );
+//getPostsbyLatLng
+router.get(
+  "/getPostsbyLatLng",
+  // checkSession,
+  checkQuery("lat"),
+  checkQuery("lng"),
+  checkQuery("user_id"),
+  validateRequest,
+  getPostsbyLatLng
+);
 
 //getPostsbycategory
 router.get(
@@ -117,5 +120,15 @@ router.get(
   validateRequest,
   getPostsbycategory
 );
+
+//getPostByhashtag
+router.get(
+  "/getPostByhashtag",
+  // checkSession,
+  checkQuery("user_id"),
+  checkQuery("hashtag"),
+  validateRequest,
+  getPostByhashtag
+)
 
 module.exports = router;
