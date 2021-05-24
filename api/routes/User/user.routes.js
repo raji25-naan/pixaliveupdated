@@ -5,6 +5,7 @@ const {
   verifyOtp,
   resendotp,
   login,
+  login_phone,
   changepassword,
   facebook_sign,
   user_info,
@@ -64,6 +65,14 @@ router.post(
   checkRequestBodyParams("password"),
   validateRequest,
   login
+);
+
+router.post(
+  "/login_phone",
+  checkRequestBodyParams("phone"),
+  checkRequestBodyParams("password"),
+  validateRequest,
+  login_phone
 );
 
 router.post(

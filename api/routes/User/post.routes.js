@@ -28,7 +28,13 @@ router.post(
   create_post
 );
 
-router.post("/post_new", create_postNew);
+router.post(
+  "/post_new",
+  checkSession,
+  checkRequestBodyParams("user_id"),
+  validateRequest,
+  create_postNew
+);
 
 // Get post by id
 router.get(

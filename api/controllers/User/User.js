@@ -414,6 +414,49 @@ exports.login = async (req, res, next) => {
   }
 };
 
+// login with phone number
+exports.login_phone = async (req, res, next) => {
+  try {
+    let { phone, password } = req.body;
+    const data = await Users.findOne({ phone, otp_verified: true }).exec();
+    if (data) {
+      const matched = await bcrypt.compare(password, data.password);
+      if (!matched) {
+        return res.json({
+          success: false,
+          message: "Invalid credentials!",
+        });
+      } else {
+        const payload = {
+          user: {
+            id: data._id,
+          },
+        };
+        const token = jwt.sign(payload, process.env.JWT_KEY, {
+          expiresIn: "90d",
+        });
+        if (token) {
+          return res.json({
+            success: true,
+            result: { data, token: token },
+            message: "you have logged in successfully",
+          });
+        }
+      }
+    } else {
+      return res.json({
+        success: false,
+        message: "you are not registered with us!",
+      });
+    }
+  } catch (error) {
+    return res.json({
+      success: false,
+      message: "Error occured!",
+    });
+  }
+};
+
 //changePassword
 exports.changepassword = async (req, res, next) => {
   try {
