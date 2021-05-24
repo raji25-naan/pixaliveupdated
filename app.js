@@ -54,19 +54,26 @@ function connectDatabase() {
   return new mongoconnect().connectToDb();
 }
 
+//userRoutes
+let userRoutes = [].concat(userRouter,postRouter,follow_unfollowRouter,likeRouter,commentRouter,storyRouter,hashtagRouter,TagpostRouter,categoryRouter);
+//adminRoutes
+let adminRoutes = [].concat(registerRouter);
+
+app.use("/api/user",userRoutes);
+app.use("/api/admin",adminRoutes);
 //user router
-app.use("/api/User/user", userRouter);
-app.use("/api/User/posts", postRouter);
-app.use("/api/User/follow_unfollow", follow_unfollowRouter);
-app.use("/api/User/like", likeRouter);
-app.use("/api/User/comments", commentRouter);
-app.use("/api/User/story",storyRouter);
-app.use("/api/User/hashtag",hashtagRouter);
-app.use("/api/User/tagPost",TagpostRouter);
-app.use("/api/User/category",categoryRouter);
+// app.use("/api/User/user", userRouter);
+// app.use("/api/User/posts", postRouter);
+// app.use("/api/User/follow_unfollow", follow_unfollowRouter);
+// app.use("/api/User/like", likeRouter);
+// app.use("/api/User/comments", commentRouter);
+// app.use("/api/User/story",storyRouter);
+// app.use("/api/User/hashtag",hashtagRouter);
+// app.use("/api/User/tagPost",TagpostRouter);
+// app.use("/api/User/category",categoryRouter);
 
 //admin router
-app.use("/api/Admin/register",registerRouter);
+// app.use("/api/Admin/register",registerRouter);
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));

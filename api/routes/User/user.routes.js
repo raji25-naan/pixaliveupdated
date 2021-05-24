@@ -200,7 +200,7 @@ router.get(
   "/search_user_hashtag",
   // checkSession,
   checkQuery("user_id"),
-  oneOf([checkQuery("search_user"), checkQuery("search_hashtag")]),
+  oneOf([checkQuery("search_user"), checkQuery("search_hashtag"), checkQuery("search_category")]),
   search_user_hashtag
 );
 

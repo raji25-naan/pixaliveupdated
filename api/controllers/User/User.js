@@ -122,7 +122,8 @@ exports.signup = async (req, res, next) => {
         // SendEmailVerificationLink(otp, req, saveData);
         return res.json({
           success: true,
-          message: "OTP sent successfully to your Phone number",
+          user_id: saveData._id,
+          message: "OTP sent successfully to your Phone number"
         });
       } else {
         return res.json({
@@ -916,9 +917,7 @@ exports.search_place = async (req, res, next) => {
   try {
     const search = req.query.place;
     const user_id = req.query.user_id;
-    const get_post = await postSchema.find("followingId", {
-      place: search,
-    });
+    const get_post = await postSchema.find({place: search});
     if (get_post) {
       const data_follower = await followSchema.distinct("followingId", {
         followerId: user_id,
@@ -927,7 +926,7 @@ exports.search_place = async (req, res, next) => {
       get_post.forEach((postdata) => {
         data_follower.forEach((following_id) => {
           if (following_id == postdata.user_id) {
-            postdata.follow = true;
+            postdata.follow = 1;
           }
         });
       });
@@ -1018,8 +1017,10 @@ exports.change_avatar = async (req, res, next) => {
 
 exports.search_user_hashtag = async (req, res, next) => {
   try {
+    const user_id = req.query.user_id;
     const search_user = req.query.search_user;
     const search_hashtag = req.query.search_hashtag;
+    const search_category = req.query.search_category;
     if (search_user) {
       let reg = new RegExp(search_user);
       const all_feeds = await Users.find({
@@ -1027,7 +1028,6 @@ exports.search_user_hashtag = async (req, res, next) => {
       });
       console.log(all_feeds);
       if (all_feeds.length > 0) {
-        const user_id = req.query.user_id;
         const data_follower = await followSchema.distinct("followingId", {
           followerId: user_id,
         });
@@ -1046,7 +1046,7 @@ exports.search_user_hashtag = async (req, res, next) => {
         });
         return res.json({
           success: true,
-          feeds: all_feeds,
+          result: all_feeds,
         });
       } else {
         return res.json({
@@ -1054,13 +1054,14 @@ exports.search_user_hashtag = async (req, res, next) => {
           message: "user not found ",
         });
       }
-    } else if (search_hashtag) {
+    } else if (search_hashtag) 
+    {
       let reg = new RegExp(search_hashtag);
       const getHashtags = await Hashtag.find({ hashtag: reg });
       if (getHashtags.length > 0) {
         let userFollowedHashtagList = await Users.distinct(
           "followedHashtag._id",
-          { _id: req.query.user_id }
+          { _id: user_id }
         ).exec();
         userFollowedHashtagList = userFollowedHashtagList.map(String);
         var followedHashtagId = [...new Set(userFollowedHashtagList)];
@@ -1074,12 +1075,47 @@ exports.search_user_hashtag = async (req, res, next) => {
         });
         return res.json({
           success: true,
-          result: getHashtags,
+          result: getHashtags
         });
       } else {
         return res.json({
           success: false,
           message: "hashtag not found ",
+        });
+      }
+    }
+    else if(search_category)
+    {
+      let reg = new RegExp( search_category);
+      const getPosts = await postSchema.find({category:reg}).exec();
+      if(getPosts.length>0)
+      {
+        const data_follower = await followSchema.distinct("followingId", {
+          followerId: user_id,
+        });
+        const data_following = await followSchema.distinct("followerId", {
+          followingId: user_id,
+        });
+        var array3 = data_follower.concat(data_following).map(String);
+        var uniq_id = [...new Set(array3)];
+        console.log(uniq_id);
+        getPosts.forEach((data) => {
+          uniq_id.forEach((main_data) => {
+            if (main_data == data.user_id) {
+              data["follow"] = 1;
+            }
+          });
+        });
+        return res.json({
+          success: true,
+          result: getPosts
+        });
+      }
+      else
+      {
+        return res.json({
+          success: false,
+          message: "No data found"
         });
       }
     }
