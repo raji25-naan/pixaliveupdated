@@ -17,8 +17,8 @@ const storyRouter = require("./api/routes/User/story");
 const hashtagRouter = require("./api/routes/User/hashtag");
 const TagpostRouter = require("./api/routes/User/userTagpost");
 const categoryRouter = require("./api/routes/User/category");
+const chatRouter = require("./api/routes/User/chat.routes");
 const fileUpload = require("express-fileupload");
-
 
 //admin router
 const registerRouter = require("./api/routes/Admin/register.routes");
@@ -55,12 +55,22 @@ function connectDatabase() {
 }
 
 //userRoutes
-let userRoutes = [].concat(userRouter,postRouter,follow_unfollowRouter,likeRouter,commentRouter,storyRouter,hashtagRouter,TagpostRouter,categoryRouter);
+let userRoutes = [].concat(
+  userRouter,
+  postRouter,
+  follow_unfollowRouter,
+  likeRouter,
+  commentRouter,
+  storyRouter,
+  hashtagRouter,
+  TagpostRouter,
+  categoryRouter
+);
 //adminRoutes
 let adminRoutes = [].concat(registerRouter);
 
-app.use("/api/user",userRoutes);
-app.use("/api/admin",adminRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/admin", adminRoutes);
 //user router
 // app.use("/api/User/user", userRouter);
 // app.use("/api/User/posts", postRouter);
@@ -71,6 +81,7 @@ app.use("/api/admin",adminRoutes);
 // app.use("/api/User/hashtag",hashtagRouter);
 // app.use("/api/User/tagPost",TagpostRouter);
 // app.use("/api/User/category",categoryRouter);
+app.use("/api/User/chat", chatRouter);
 
 //admin router
 // app.use("/api/Admin/register",registerRouter);
