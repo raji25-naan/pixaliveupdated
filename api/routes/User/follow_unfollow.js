@@ -38,7 +38,7 @@ router.get('/get_followers',
             )
 
 router.get('/suggestionFriendList',
-            // checkSession,
+            checkSession,
             checkQuery('userId'),
             checkQuery('lat'),
             checkQuery('lng'),

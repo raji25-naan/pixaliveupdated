@@ -155,7 +155,7 @@ router.post(
 //UpdateGcmtoken
 router.post(
   "/update_gcmToken",
-  // checkSession,
+  checkSession,
   checkRequestBodyParams("user_id"),
   checkRequestBodyParams("token"),
   validateRequest,
@@ -163,16 +163,16 @@ router.post(
 );
 
 // Search user
-router.get(
-  "/search_user",
-  checkSession,
-  checkQuery("user_id"),
-  checkQuery("search_word"),
-  search_user
-);
+// router.get(
+//   "/search_user",
+//   checkSession,
+//   checkQuery("user_id"),
+//   checkQuery("search_word"),
+//   search_user
+// );
 // Search place
 router.get(
-  "/search_user",
+  "/search_place",
   checkSession,
   checkQuery("user_id"),
   checkQuery("place"),
@@ -197,8 +197,8 @@ router.post(
 
 // search_user_hashtag
 router.get(
-  "/search_user_hashtag",
-  // checkSession,
+  "/search",
+  checkSession,
   checkQuery("user_id"),
   oneOf([checkQuery("search_user"), checkQuery("search_hashtag"), checkQuery("search_category")]),
   search_user_hashtag

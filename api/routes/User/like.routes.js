@@ -5,7 +5,7 @@ const { checkRequestBodyParams,validateRequest } = require("../../middlewares/va
 const router = express.Router();
 
 router.post('/likePost',
-            // checkSession,
+            checkSession,
             checkRequestBodyParams('type').isIn(['1', '0']),
             checkRequestBodyParams('post_id'),
             checkRequestBodyParams('user_id'),
@@ -14,7 +14,7 @@ router.post('/likePost',
 )
 
 router.post('/getLikedPosts',
-            // checkSession,
+            checkSession,
             checkRequestBodyParams('userId'),
             validateRequest,
             liked_post

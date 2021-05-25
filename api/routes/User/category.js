@@ -6,7 +6,7 @@ const router = express.Router();
 router.post("/createCategory",createCategory);
 
 router.get("/fetchCategory",
-            // checkSession,
+            checkSession,
             fetchCategory);
 
 

@@ -7,7 +7,7 @@ const Hashtag = require("../../models/User/hashtags");
 const user = require("../../models/User/Users");
 
 router.post("/follow_unfollow_hashtag",
-            // checkSession,
+            checkSession,
             checkRequestBodyParams('type').isIn(['1', '0']),
             checkRequestBodyParams("userId"),
             checkRequestBodyParams("hashId"),
@@ -17,14 +17,14 @@ router.post("/follow_unfollow_hashtag",
 )
 
 router.post("/create_hashtag",
-            // checkSession,
+            checkSession,
             checkRequestBodyParams("hashtag"),
             validateRequest,
             create_hashtag
 )
 
 router.post("/fetch_hashtag",
-            // checkSession,
+            checkSession,
             checkRequestBodyParams("search_hash"),
             validateRequest,
             fetch_hashtag

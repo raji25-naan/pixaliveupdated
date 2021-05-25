@@ -81,7 +81,7 @@ router.get("/all_feeds", checkSession, all_feeds);
 //updateviewpost
 router.post(
   "/updateviewpost",
-  // checkSession,
+  checkSession,
   checkRequestBodyParams("post_id"),
   checkRequestBodyParams("user_id"),
   checkRequestBodyParams("postUserId"),
@@ -92,7 +92,7 @@ router.post(
 //createReport
 router.post(
   "/createReport",
-  // checkSession,
+  checkSession,
   checkRequestBodyParams("post_id"),
   checkRequestBodyParams("user_id"),
   checkRequestBodyParams("report"),
@@ -103,7 +103,7 @@ router.post(
 //getPostsbyLatLng
 router.get(
   "/getPostsbyLatLng",
-  // checkSession,
+  checkSession,
   checkQuery("lat"),
   checkQuery("lng"),
   checkQuery("user_id"),
@@ -114,7 +114,7 @@ router.get(
 //getPostsbycategory
 router.get(
   "/getPostsbycategory",
-  // checkSession,
+  checkSession,
   checkQuery("post_id"),
   checkQuery("user_id"),
   validateRequest,
@@ -124,7 +124,7 @@ router.get(
 //getPostByhashtag
 router.get(
   "/getPostByhashtag",
-  // checkSession,
+  checkSession,
   checkQuery("user_id"),
   checkQuery("hashtag"),
   validateRequest,

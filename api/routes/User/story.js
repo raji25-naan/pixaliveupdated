@@ -9,7 +9,7 @@ const {
 
 router.post(
     "/addStories",
-    // checkSession,
+    checkSession,
     checkRequestBodyParams("userId"),
     checkRequestBodyParams("url"),
     validateRequest,
@@ -18,7 +18,7 @@ router.post(
 
   router.post(
     "/updateViewedStories",
-    // checkSession,
+    checkSession,
     checkRequestBodyParams("userId"),
     checkRequestBodyParams("storyId"),
     validateRequest,
@@ -27,7 +27,7 @@ router.post(
 
   router.get(
     "/getStory",
-    // checkSession,
+    checkSession,
     checkQuery("user_id"),
     validateRequest,
     getStory
