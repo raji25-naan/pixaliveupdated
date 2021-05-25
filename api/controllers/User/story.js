@@ -1,6 +1,7 @@
 const Story = require("../../models/User/story");
 const moment = require("moment");
-const follow_unfollow = require("../../models/User/story");
+const follow_unfollow = require("../../models/User/follow_unfollow");
+const momentTimeZone = require("moment-timezone");
 
 exports.StoriesUpload = async(req,res,next)=>{
 
@@ -114,7 +115,7 @@ exports.getStory = async(req,res,next) => {
       const friendsStories = await Story.find({$and:[{userId:totalId},
         {storyDisappearTime:{$gt:moment(momentTimeZone().tz('Asia/kolkata')).toDate()}}]});
         console.log(friendsStories);
-      if(data){
+      if(friendsStories){
         return res.json({
           success: true,
           result: friendsStories,
