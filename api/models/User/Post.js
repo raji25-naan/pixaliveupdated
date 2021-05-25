@@ -23,7 +23,8 @@ const postSchema = new mongoose.Schema({
     type: String,
   },
   user_id: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref : "users"
   },
   place: {
     type: String,

@@ -21,8 +21,8 @@ const chatRouter = require("./api/routes/User/chat.routes");
 const fileUpload = require("express-fileupload");
 
 //admin router
-const registerRouter = require("./api/routes/Admin/register.routes");
-
+const registerRouter = require("./api/routes/Admin/register");
+const postAdminRouter = require("./api/routes/Admin/post");
 //firebaseAdmin
 // global.admin = require("firebase-admin");
 // const serviceAccount = require("./api/serviceAccountkey.json");
@@ -67,7 +67,7 @@ let userRoutes = [].concat(
   categoryRouter
 );
 //adminRoutes
-let adminRoutes = [].concat(registerRouter);
+let adminRoutes = [].concat(registerRouter,postAdminRouter);
 
 app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);

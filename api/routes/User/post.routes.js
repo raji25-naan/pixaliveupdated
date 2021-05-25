@@ -25,7 +25,7 @@ const { checkSession } = require("../../middlewares/checkAuth");
 
 router.post(
   "/post",
-  checkSession,
+  // checkSession,
   checkRequestBodyParams("user_id"),
   validateRequest,
   create_post
