@@ -15,11 +15,9 @@ const {
   resetpassword,
   resetPasswordVerifyOtp,
   gcm_token_updation,
-  search_user,
   search_place,
   upload_avatar,
   change_avatar,
-  search_user_hashtag,
   search,
 } = require("../../controllers/User/User");
 const { checkSession } = require("../../middlewares/checkAuth");
@@ -177,6 +175,7 @@ router.get(
   checkSession,
   checkQuery("user_id"),
   checkQuery("place"),
+  validateRequest,
   search_place
 );
 
@@ -185,6 +184,7 @@ router.post(
   "/upload_avatar",
   checkSession,
   checkQuery("user_id"),
+  validateRequest,
   upload_avatar
 );
 
@@ -193,6 +193,7 @@ router.post(
   "/change_avatar",
   checkSession,
   checkQuery("user_id"),
+  validateRequest,
   change_avatar
 );
 
@@ -202,6 +203,7 @@ router.get(
   checkSession,
   checkQuery("user_id"),
   oneOf([checkQuery("search_user"), checkQuery("search_hashtag"), checkQuery("search_category")]),
+  validateRequest,
   search
 );
 
