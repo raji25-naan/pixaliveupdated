@@ -37,7 +37,7 @@ io.on("connection", (socket) => {
 
     // Insert message into database
 
-    var createdPost = await new messageSchema({
+    var createdPost = new messageSchema({
       sender_id: senderId,
       receiver_id: receiverId,
       message: message,

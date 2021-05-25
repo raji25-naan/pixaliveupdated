@@ -30,7 +30,7 @@ router.get('/get_following',
             )
 
 router.get('/get_followers',
-            checkSession,
+            // checkSession,
             checkQuery('id'),
             checkQuery('uid'),
             validateRequest,

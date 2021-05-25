@@ -1,3 +1,4 @@
+const { updateNotification } = require("../controllers/User/Notification");
 const Users = require("../models/User/Users");
 global.admin = require("firebase-admin");
 const serviceAccount = require("../serviceAccountkey.json");
@@ -56,6 +57,8 @@ module.exports.sendNotification = function(sender, receiver, type) {
                 console.log('Notification failed! ' + error);
 
             });
+        //updateNotification
+        updateNotification(sender,receiver,message,title);
     }
 
 }
