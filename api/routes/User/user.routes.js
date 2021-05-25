@@ -20,6 +20,7 @@ const {
   upload_avatar,
   change_avatar,
   search_user_hashtag,
+  search,
 } = require("../../controllers/User/User");
 const { checkSession } = require("../../middlewares/checkAuth");
 const router = express.Router();
@@ -195,13 +196,13 @@ router.post(
   change_avatar
 );
 
-// search_user_hashtag
+// search
 router.get(
   "/search",
   checkSession,
   checkQuery("user_id"),
   oneOf([checkQuery("search_user"), checkQuery("search_hashtag"), checkQuery("search_category")]),
-  search_user_hashtag
+  search
 );
 
 module.exports = router;
