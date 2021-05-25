@@ -25,6 +25,45 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     socket.leave(channel);
   });
+
+  //Send message to only a particular user
+  socket.on("send_message", (data) => {
+    //var message = JSON.parse(data);
+
+    receiverId = data.receiver_id;
+    senderId = data.sender_id;
+    message = data.message;
+    console.log(receiverId, senderId, message);
+
+    // Insert message into database
+
+    var createdPost = await new messageSchema({
+      sender_id: senderId,
+      receiver_id: receiverId,
+      message: message,
+      created_at: Date.now(),
+    }).save();
+    if (createdPost) {
+      //Send message to only that particular room
+      socket.to(receiverId + "-" + senderId).emit("receive_message", {
+        message: message,
+        sender_id: senderId,
+        receiver_id: receiverId,
+      });
+    } else {
+      console.log("error insert message");
+    }
+  });
+  socket.on("start_typing", (data) => {
+    io.to(data).emit("start_typing", {
+      typing: true,
+    });
+  });
+  socket.on("stop_typing", (data) => {
+    io.to(data).emit("stop_typing", {
+      typing: false,
+    });
+  });
 });
 
 function verifyToken(token) {
