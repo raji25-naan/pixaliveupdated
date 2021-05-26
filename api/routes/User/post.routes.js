@@ -22,6 +22,7 @@ const {
   getPostByhashtag,
 } = require("../../controllers/User/Post");
 const { checkSession } = require("../../middlewares/checkAuth");
+const { checkIsactive } = require("../../middlewares/checkActive");
 
 router.post(
   "/post",
@@ -52,6 +53,7 @@ router.get(
 router.get(
   "/postbyUid",
   checkSession,
+  checkIsactive,
   checkQuery("user_id"),
   validateRequest,
   user_posts

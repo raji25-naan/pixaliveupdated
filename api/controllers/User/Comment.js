@@ -23,8 +23,12 @@ exports.add_comment = async (req, res, next) => {
       created_at: new Date(),
     });
     const saveData = await updateComment.save();
-
-    if (saveData) {
+    const updatecommentCount = await postSchema.updateOne(
+      {_id : post_id},
+      {$inc : {commentCount :1}},
+      {new :true}
+    );
+    if (updatecommentCount) {
       const userPost = await postSchema.findOne({ _id: post_id });
       if (userPost) {
         if (user_id != userPost.user_id) {
@@ -98,9 +102,14 @@ exports.delete_comment = async (req, res, next) => {
   try {
     let { comment_id} = req.body;
     // pull out comment
+    const getComment = await commentSchema.findOne({_id:comment_id});
     const comment = await commentSchema.findOneAndDelete({ _id: comment_id });
-
-    if (comment) {
+    const updatecommentCount = await postSchema.updateOne(
+      {_id : getComment.post_id},
+      {$inc : {commentCount : -1}},
+      {new :true}
+    );
+    if (comment && updatecommentCount) {
       res.json({
         success: true,
         message: "Delete comment successfully",

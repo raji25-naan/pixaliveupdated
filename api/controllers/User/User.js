@@ -378,7 +378,16 @@ exports.login = async (req, res, next) => {
   try {
     let { email, password } = req.body;
     const data = await Users.findOne({ email, otp_verified: true }).exec();
-    if (data) {
+    if (data) 
+    {
+      if(data.isActive == false)
+      {
+        return res.status(401).json({
+          success: false,
+          statusCode: 499,
+          message: "Your account is not active"
+        })
+      }
       const matched = await bcrypt.compare(password, data.password);
       if (!matched) {
         return res.json({
@@ -394,6 +403,8 @@ exports.login = async (req, res, next) => {
         const token = jwt.sign(payload, process.env.JWT_KEY, {
           expiresIn: "90d",
         });
+        const decodedId = await jwt.verify(token, process.env.JWT_KEY);
+        console.log(decodedId.user.id);
         if (token) {
           return res.json({
             success: true,
