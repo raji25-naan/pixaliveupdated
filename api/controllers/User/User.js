@@ -912,27 +912,34 @@ exports.gcm_token_updation = async (req, res, next) => {
 // };
 
 // search place
-
 exports.search_place = async (req, res, next) => {
   try {
     const search = req.query.place;
     const user_id = req.query.user_id;
-    const get_post = await postSchema.find({place: search});
-    if (get_post) {
+    var reg = new RegExp(search);
+    const get_place = await postSchema.find({ place: reg});
+    console.log(get_place);
+    if (get_place.length>0) 
+    {
       const data_follower = await followSchema.distinct("followingId", {
         followerId: user_id,
       });
-
-      get_post.forEach((postdata) => {
-        data_follower.forEach((following_id) => {
+      const data_following = await followSchema.distinct("followerId", {
+        followingId: user_id,
+      });
+      var array3 = data_follower.concat(data_following);
+      var uniq_id = [...new Set(array3)];
+ 
+      get_place.forEach((postdata) => {
+        uniq_id.forEach((following_id) => {
           if (following_id == postdata.user_id) {
-            postdata.follow = 1;
+            postdata["follow"] = 1;
           }
         });
       });
       return res.json({
         success: true,
-        feeds: get_post,
+        feeds: get_place,
       });
     }
   } catch (error) {

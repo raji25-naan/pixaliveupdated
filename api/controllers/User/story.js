@@ -115,7 +115,7 @@ exports.getStory = async(req,res,next) => {
       const friendsStories = await Story.find({$and:[{userId:totalId},
         {storyDisappearTime:{$gt:moment(momentTimeZone().tz('Asia/kolkata')).toDate()}}]});
         console.log(friendsStories);
-      if(friendsStories){
+      if(friendsStories.length>0){
         return res.json({
           success: true,
           result: friendsStories,

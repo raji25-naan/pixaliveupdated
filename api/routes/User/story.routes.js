@@ -1,16 +1,16 @@
 const express = require("express");
 const {updateViewedStories, getStory, StoriesUpload } = require("../../controllers/User/story");
+const { checkSession } = require("../../middlewares/checkAuth");
 const router = express.Router();
 const {
   checkRequestBodyParams,
   validateRequest,
   checkQuery,
 } = require("../../middlewares/validator");
-const checkSession = require("../../middlewares/checkAuth");
 
   router.post(
     "/updateViewedStories",
-    // checkSession,
+    checkSession,
     checkRequestBodyParams("userId"),
     checkRequestBodyParams("storyId"),
     validateRequest,
@@ -19,7 +19,7 @@ const checkSession = require("../../middlewares/checkAuth");
 
   router.post(
     "/addStories",
-    // checkSession,
+    checkSession,
     checkRequestBodyParams("userId"),
     checkRequestBodyParams("url"),
     validateRequest,
@@ -28,7 +28,7 @@ const checkSession = require("../../middlewares/checkAuth");
 
 router.get(
   "/getStory",
-  // checkSession,
+  checkSession,
   checkQuery("user_id"),
   validateRequest,
   getStory
