@@ -78,7 +78,7 @@ router.get(
 );
 
 // Get feed posts
-router.get("/all_feeds", checkSession, all_feeds);
+router.get("/all_feeds", checkSession,checkQuery("user_id"),validateRequest, all_feeds);
 
 //updateviewpost
 router.post(

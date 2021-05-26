@@ -278,15 +278,39 @@ exports.feeds = async (req, res, next) => {
 // ************* get all feed of all users ***********//
 exports.all_feeds = async (req, res, next) => {
   try {
-    var { offset } = req.query;
+    var { offset, user_id } = req.query;
     var row = 20;
-
-    const all_feeds = await (await postSchema.find())
-      .reverse()
-      .splice(offset == undefined ? 0 : offset, row);
+ 
+    let all_feeds = await postSchema
+      .find({})
+      .populate("user_id", "username avatar first_name last_name follow")
+      .exec();
+ 
+    all_feeds = all_feeds.filter(
+      (person) => person.user_id._id.toString() != user_id.toString()
+    );
+    console.log(all_feeds);
+    //
+    const data_follower = await follow_unfollow.distinct("followingId", {
+      followerId: user_id,
+    });
+    const data_following = await follow_unfollow.distinct("followerId", {
+      followingId: user_id,
+    });
+    var array3 = data_follower.concat(data_following).map(String);
+    var uniq_id = [...new Set(array3)];
+ 
+    all_feeds.forEach((post) => {
+      uniq_id.forEach((ids) => {
+        if (ids == post.user_id._id) {
+          post.user_id.follow = 1;
+        }
+      });
+    });
+    const send_post = all_feeds.splice(offset == undefined ? 0 : offset, row);
     return res.json({
       success: true,
-      feeds: all_feeds,
+      feeds: send_post,
     });
   } catch (error) {
     return res.json({

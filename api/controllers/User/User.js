@@ -951,12 +951,13 @@ exports.gcm_token_updation = async (req, res, next) => {
 
 // search place
 exports.search_place = async (req, res, next) => {
-  try {
+
+  try 
+  {    
     const search = req.query.place;
     const user_id = req.query.user_id;
     var reg = new RegExp(search);
-    const get_place = await postSchema.find({ place: reg});
-    console.log(get_place);
+    const get_place = await postSchema.find({ place: reg , isActive:true}).exec();
     if (get_place.length>0) 
     {
       const data_follower = await followSchema.distinct("followingId", {
@@ -965,9 +966,9 @@ exports.search_place = async (req, res, next) => {
       const data_following = await followSchema.distinct("followerId", {
         followingId: user_id,
       });
-      var array3 = data_follower.concat(data_following);
+      var array3 = data_follower.concat(data_following).map(String);
       var uniq_id = [...new Set(array3)];
- 
+      console.log(uniq_id);
       get_place.forEach((postdata) => {
         uniq_id.forEach((following_id) => {
           if (following_id == postdata.user_id) {
@@ -978,6 +979,13 @@ exports.search_place = async (req, res, next) => {
       return res.json({
         success: true,
         feeds: get_place,
+      });
+    }
+    else
+    {
+      return res.json({
+        success: false,
+        message: "No data found"
       });
     }
   } catch (error) {

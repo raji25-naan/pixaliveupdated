@@ -1,14 +1,8 @@
 const mongoose = require("mongoose");
 
 const postSchema = new mongoose.Schema({
-  image_url: {
-    type: String,
-  },
-  audio_url: {
-    type: String,
-  },
-  video_url: {
-    type: String,
+  url : {
+    type : String
   },
   text_content: {
     type: String,
@@ -28,10 +22,6 @@ const postSchema = new mongoose.Schema({
   },
   place: {
     type: String,
-  },
-  follow: {
-    type: Number,
-    default: 0,
   },
   created_at: {
     type: Date,
