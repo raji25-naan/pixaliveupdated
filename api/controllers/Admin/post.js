@@ -29,3 +29,32 @@ exports.getAllPost = async(req,res,next)=>{
           });
     }
 }
+
+exports.getPostDetail = async(req,res,next)=>{
+
+    try 
+    {
+       const getPost = await Post.findOne({_id:req.query.post_id}).populate('user_id','username first_name last_name avatar email country_code created_At').exec();
+        if(getPost)
+        {
+            return res.json({
+                success: true,
+                result: getPost,
+                message: "Fetched posts successfully"
+              }); 
+        }
+        else
+        {
+            return res.json({
+                success: false,
+                message: "No data found"
+              });
+        }
+    } 
+    catch (error) {
+        return res.json({
+            success: false,
+            message: "Error occured!" + error,
+          });
+    }
+}

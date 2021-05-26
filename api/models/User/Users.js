@@ -93,7 +93,7 @@ const user_schema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: false,
-  },
+  }
 });
 
 module.exports = mongoose.model("users", user_schema);

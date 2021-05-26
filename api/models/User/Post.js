@@ -53,6 +53,10 @@ const postSchema = new mongoose.Schema({
   },
   category: {
     type:String
+  },
+  isActive: {
+    type: Boolean,
+    default: false,
   }
 });
 
