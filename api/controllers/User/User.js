@@ -397,8 +397,17 @@ exports.login = async (req, res, next) => {
         if (token) {
           return res.json({
             success: true,
-            result: { data, token: token },
-            message: "you have logged in successfully",
+            user : {
+              id : data._id,
+              username : data.username,
+              first_name : data.first_name,
+              last_name : data.last_name,
+              email : data.email,
+              phone : data.phone,
+              avatar : data.avatar
+            },
+            token : token,
+            message: "you have logged in successfully"
           });
         }
       }
