@@ -20,6 +20,7 @@ const {
   change_avatar,
   search,
 } = require("../../controllers/User/User");
+const { checkIsactive } = require("../../middlewares/checkActive");
 const { checkSession } = require("../../middlewares/checkAuth");
 const router = express.Router();
 const {
@@ -77,6 +78,7 @@ router.post(
 router.post(
   "/changepassword",
   checkSession,
+  checkIsactive,
   checkRequestBodyParams("user_id"),
   checkRequestBodyParams("oldpassword"),
   checkRequestBodyParams("newpassword"),
@@ -101,6 +103,7 @@ router.post(
 router.get(
   "/userInfo",
   checkSession,
+  checkIsactive,
   checkQuery("user_id"),
   validateRequest,
   user_info
@@ -109,6 +112,7 @@ router.get(
 router.post(
   "/is_user",
   checkSession,
+  checkIsactive,
   checkRequestBodyParams("phone"),
   validateRequest,
   is_user
@@ -117,6 +121,7 @@ router.post(
 router.post(
   "/updateProfile",
   checkSession,
+  checkIsactive,
   checkRequestBodyParams("user_id"),
   validateRequest,
   updateProfile
@@ -155,6 +160,7 @@ router.post(
 router.post(
   "/update_gcmToken",
   checkSession,
+  checkIsactive,
   checkRequestBodyParams("user_id"),
   checkRequestBodyParams("token"),
   validateRequest,
@@ -173,6 +179,7 @@ router.post(
 router.get(
   "/search_place",
   checkSession,
+  checkIsactive,
   checkQuery("user_id"),
   checkQuery("place"),
   validateRequest,

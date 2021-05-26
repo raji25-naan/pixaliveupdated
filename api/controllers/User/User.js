@@ -346,7 +346,7 @@ exports.facebook_sign = async (req, res, next) => {
         gcm_token: "",
         created_At: Date.now(),
         facebook_signin: true,
-        isActive: true,
+        isActive: true
       };
 
       const data = new Users(userData);
@@ -409,7 +409,7 @@ exports.login = async (req, res, next) => {
           return res.json({
             success: true,
             user : {
-              id : data._id,
+              _id : data._id,
               username : data.username,
               first_name : data.first_name,
               last_name : data.last_name,
@@ -442,6 +442,14 @@ exports.login_phone = async (req, res, next) => {
     let { phone, password } = req.body;
     const data = await Users.findOne({ phone, otp_verified: true }).exec();
     if (data) {
+      if(data.isActive == false)
+      {
+        return res.status(401).json({
+          success: false,
+          statusCode: 499,
+          message: "Your account is not active"
+        })
+      }
       const matched = await bcrypt.compare(password, data.password);
       if (!matched) {
         return res.json({
@@ -461,7 +469,7 @@ exports.login_phone = async (req, res, next) => {
           return res.json({
             success: true,
             user : {
-              id : data._id,
+              _id : data._id,
               username : data.username,
               first_name : data.first_name,
               last_name : data.last_name,
@@ -539,7 +547,7 @@ exports.changepassword = async (req, res, next) => {
 //Get user info
 exports.user_info = async (req, res, next) => {
   try {
-    const getUserInfo = await Users.findById({ _id: req.query.user_id });
+    const getUserInfo = await Users.findOne({ _id: req.query.user_id,isActive: true });
     if (getUserInfo) {
       return res.json({
         success: true,
@@ -563,10 +571,11 @@ exports.user_info = async (req, res, next) => {
 //is_user
 exports.is_user = async (req, res, next) => {
   try {
-    const getUserData = await Users.findOne({ phone: req.body.phone });
+    const getUserData = await Users.findOne({ phone: req.body.phone,isActive:true });
     if (getUserData) {
       return res.json({
         success: true,
+        result: getUserData,
         message: "successfully fetched user information",
       });
     } else {
