@@ -3,6 +3,8 @@ const viewPost = require("../../models/User/viewPost");
 const hashtagSchema = require("../../models/User/hashtags");
 const reportPost = require("../../models/User/reportPost");
 const follow_unfollow = require("../../models/User/follow_unfollow");
+const jwt = require("jsonwebtoken");
+
 // ************* Create post Using user_Id ***************//
 
 exports.create_post = async (req, res, next) => {
@@ -55,11 +57,11 @@ exports.create_postNew = async (req, res, next) => {
       });
       console.log(get_hashtag);
       hash_tags = new Set(get_hashtag.map((tag) => tag));
-
+ 
       arr_hash = arr_hash.filter((id) => !hash_tags.has(id));
-
+ 
       console.log(arr_hash);
-
+ 
       arr_hash.forEach(async (element) => {
         const hashtag = new hashtagSchema({
           hashtag: element,
@@ -72,8 +74,6 @@ exports.create_postNew = async (req, res, next) => {
         user_id,
         url,
         "",
-        "",
-        "",
         thumbnail,
         body,
         place,
@@ -84,8 +84,6 @@ exports.create_postNew = async (req, res, next) => {
     if (type == 2)
       update_postwithType(
         user_id,
-        "",
-        "",
         url,
         "",
         thumbnail,
@@ -98,9 +96,7 @@ exports.create_postNew = async (req, res, next) => {
     if (type == 3)
       update_postwithType(
         user_id,
-        "",
         url,
-        "",
         "",
         thumbnail,
         body,
@@ -112,8 +108,6 @@ exports.create_postNew = async (req, res, next) => {
     if (type == 4)
       update_postwithType(
         user_id,
-        "",
-        "",
         "",
         text,
         thumbnail,
@@ -130,12 +124,10 @@ exports.create_postNew = async (req, res, next) => {
     });
   }
 };
-
+ 
 async function update_postwithType(
   userId,
-  video,
-  image,
-  audio,
+  url,
   text,
   thumbnail,
   body,
@@ -148,9 +140,7 @@ async function update_postwithType(
   try {
     var createdPost = await new postSchema({
       user_id: userId,
-      video_url: video,
-      image_url: image,
-      audio_url: audio,
+      url: url,
       text_content: text,
       thumbnail: thumbnail,
       body: body,
@@ -278,7 +268,12 @@ exports.feeds = async (req, res, next) => {
 // ************* get all feed of all users ***********//
 exports.all_feeds = async (req, res, next) => {
   try {
-    var { offset, user_id } = req.query;
+    let token = req.headers["token"];
+    const tokenValue = token.split(' ')[1].trim();
+    const decodedId = await jwt.verify(tokenValue, process.env.JWT_KEY);
+    const user_id = decodedId.user.id;
+    console.log(user_id);
+    var { offset} = req.query;
     var row = 20;
  
     let all_feeds = await postSchema
@@ -289,7 +284,6 @@ exports.all_feeds = async (req, res, next) => {
     all_feeds = all_feeds.filter(
       (person) => person.user_id._id.toString() != user_id.toString()
     );
-    console.log(all_feeds);
     //
     const data_follower = await follow_unfollow.distinct("followingId", {
       followerId: user_id,
