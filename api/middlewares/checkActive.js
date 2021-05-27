@@ -11,12 +11,12 @@ module.exports.checkIsactive = async(req,res,next)=>{
         if (headerType.trim() === "Bearer") 
         {
             const decodedId = await jwt.verify(tokenValue, process.env.JWT_KEY);
-            console.log(decodedId.user.id);
             let user_id = decodedId.user.id;
             //checkActive
             const checkActive = await User.findOne({_id:user_id,isActive : true}).exec();
             if(checkActive)
             {
+                req["user_id"] = user_id;
                 next();
             }
             else

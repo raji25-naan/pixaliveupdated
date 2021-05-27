@@ -3,6 +3,7 @@ const viewPost = require("../../models/User/viewPost");
 const hashtagSchema = require("../../models/User/hashtags");
 const reportPost = require("../../models/User/reportPost");
 const follow_unfollow = require("../../models/User/follow_unfollow");
+const likeSchema = require("../../models/User/like");
 const jwt = require("jsonwebtoken");
 
 // ************* Create post Using user_Id ***************//
@@ -162,15 +163,22 @@ async function update_postwithType(
 }
 
 // ************* Get post Using Post_id ***************//
-
 exports.get_post = async (req, res, next) => {
   try {
     const post_id = req.query.post_id;
+    const user_id = req.user_id;
     const userPost = await postSchema.findOne({ _id: post_id });
     if (userPost) {
+      var get_like = await likeSchema.distinct("post_id", {
+        user_id: user_id,
+        post_id: post_id,
+      });
+      if(get_like.length != 0){
+        userPost.isLiked = 1
+      }
       return res.json({
         success: true,
-        post: userPost,
+        post: userPost
       });
     } else {
       return res.json({
@@ -190,7 +198,7 @@ exports.get_post = async (req, res, next) => {
 
 exports.user_posts = async (req, res, next) => {
   try {
-    const user_id = req.query.user_id;
+    const user_id = req.user_id;
     const userPost = await postSchema.find({ user_id: user_id });
     if (userPost) {
       return res.json({
@@ -248,7 +256,8 @@ exports.delete_post = async (req, res, next) => {
 
 exports.feeds = async (req, res, next) => {
   try {
-    var { offset, user_id } = req.query;
+    let user_id = req.user_id;
+    var { offset} = req.query;
     var row = 20;
     const get_userfeeds = await (await postSchema.find({ user_id: user_id }))
       .reverse()
@@ -267,13 +276,11 @@ exports.feeds = async (req, res, next) => {
 
 // ************* get all feed of all users ***********//
 exports.all_feeds = async (req, res, next) => {
-  try {
-    let token = req.headers["token"];
-    const tokenValue = token.split(' ')[1].trim();
-    const decodedId = await jwt.verify(tokenValue, process.env.JWT_KEY);
-    const user_id = decodedId.user.id;
+  try 
+  {
+    const user_id = req.user_id;
     console.log(user_id);
-    var { offset} = req.query;
+    var { offset } = req.query;
     var row = 20;
  
     let all_feeds = await postSchema
@@ -293,8 +300,19 @@ exports.all_feeds = async (req, res, next) => {
     });
     var array3 = data_follower.concat(data_following).map(String);
     var uniq_id = [...new Set(array3)];
- 
+    let get_like = await likeSchema.distinct("post_id", {
+      user_id: user_id,
+      isLike: 1
+    });
+    let likedIds = get_like.map(String);
     all_feeds.forEach((post) => {
+      likedIds.forEach((id) => {
+        console.log(id == post._id);
+        if(id == post._id)
+        {
+          post.isLiked = 1;
+        }
+      })
       uniq_id.forEach((ids) => {
         if (ids == post.user_id._id) {
           post.user_id.follow = 1;
@@ -306,13 +324,15 @@ exports.all_feeds = async (req, res, next) => {
       success: true,
       feeds: send_post,
     });
-  } catch (error) {
+  } 
+  catch (error) 
+  {
     return res.json({
       success: false,
       message: "Error occured! " + error,
     });
   }
-};
+} 
 
 // sort by date
 function sortFunction(a, b) {

@@ -172,6 +172,7 @@ router.post(
 router.get(
   "/search_user",
   checkSession,
+  checkIsactive,
   search_user
 );
 // Search place
@@ -179,9 +180,6 @@ router.get(
   "/search_place",
   checkSession,
   checkIsactive,
-  checkQuery("user_id"),
-  checkQuery("place"),
-  validateRequest,
   search_place
 );
 
@@ -189,8 +187,7 @@ router.get(
 router.post(
   "/upload_avatar",
   checkSession,
-  checkQuery("user_id"),
-  validateRequest,
+  checkIsactive,
   upload_avatar
 );
 
@@ -198,8 +195,7 @@ router.post(
 router.post(
   "/change_avatar",
   checkSession,
-  checkQuery("user_id"),
-  validateRequest,
+  checkIsactive,
   change_avatar
 );
 
@@ -207,7 +203,7 @@ router.post(
 router.get(
   "/search",
   checkSession,
-  checkQuery("user_id"),
+  checkIsactive,
   oneOf([checkQuery("search_user"), checkQuery("search_hashtag"), checkQuery("search_category")]),
   validateRequest,
   search

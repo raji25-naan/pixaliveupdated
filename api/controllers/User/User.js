@@ -910,14 +910,11 @@ exports.search_user = async (req, res, next) => {
   try 
   {
     const search_user = req.query.search_user;
-    let token = req.headers["token"];
-    const tokenValue = token.split(' ')[1].trim();
-    const decodedId = await jwt.verify(tokenValue, process.env.JWT_KEY);
-    const user_id = decodedId.user.id;
+    const user_id = req.user_id;
     let reg = new RegExp(search_user);
     const all_users = await Users.find({
-      $or: [{ username: reg }, { first_name: reg }, { email: reg }],
-    });
+      $or: [{ username: reg,isActive: true }, { first_name: reg,isActive: true }, { email: reg,isActive: true }],
+    }).exec();
     if (all_users.length > 0) {
       const data_follower = await followSchema.distinct("followingId", {
         followerId: user_id,
@@ -961,7 +958,7 @@ exports.search_place = async (req, res, next) => {
   try 
   {    
     const search = req.query.place;
-    const user_id = req.query.user_id;
+    const user_id = req.user_id;
     var reg = new RegExp(search);
     const get_place = await postSchema.find({ place: reg , isActive:true}).exec();
     if (get_place.length>0) 
@@ -1004,10 +1001,11 @@ exports.search_place = async (req, res, next) => {
 
 // upload avatar in user schema
 exports.upload_avatar = async (req, res, next) => {
-  try {
+  try 
+  {
     console.log(req.files);
     const file = req.files.photo;
-    const user_id = req.body.user_id;
+    const user_id = req.user_id;
     console.log(file.originalname);
     console.log(file);
     if (file.mimetype == "image/jpeg" || file.mimetype == "image/png") {
@@ -1044,7 +1042,7 @@ exports.upload_avatar = async (req, res, next) => {
 exports.change_avatar = async (req, res, next) => {
   try {
     const file = req.files.photo;
-    const user_id = req.body.user_id;
+    const user_id = req.user_id;
     if (file.mimetype == "image/jpeg" || file.mimetype == "image/png") {
       file.mv("./profile_avatar/" + file.name, async function (err, result) {
         if (err) throw err;
@@ -1076,14 +1074,14 @@ exports.change_avatar = async (req, res, next) => {
 
 exports.search = async (req, res, next) => {
   try {
-    const user_id = req.query.user_id;
+    const user_id = req.user_id;
     const search_user = req.query.search_user;
     const search_hashtag = req.query.search_hashtag;
     const search_category = req.query.search_category;
     if (search_user) {
       let reg = new RegExp(search_user);
       const all_users = await Users.find({
-        $or: [{ username: reg }, { first_name: reg }, { email: reg }],
+        $or: [{ username: reg,isActive: true }, { first_name: reg,isActive : true }, { email: reg,isActive : true }],
       });
       if (all_users.length > 0) {
         const data_follower = await followSchema.distinct("followingId", {
@@ -1145,7 +1143,7 @@ exports.search = async (req, res, next) => {
     else if(search_category)
     {
       let reg = new RegExp( search_category);
-      const getPosts = await postSchema.find({category:reg}).exec();
+      const getPosts = await postSchema.find({category: reg,isActive: true}).exec();
       if(getPosts.length>0)
       {
         const data_follower = await followSchema.distinct("followingId", {

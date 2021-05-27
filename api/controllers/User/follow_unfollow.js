@@ -7,7 +7,7 @@ exports.createFollow = async(req,res,next) => {
 
     try
     {
-      let followerId = req.body.user_id;
+      let followerId = req.user_id;
       let followingId = req.body.following_id;
         if(req.body.type == 1)
         {          
@@ -15,11 +15,7 @@ exports.createFollow = async(req,res,next) => {
             followerId : followerId,
             followingId : followingId,
             status : 1,
-            created_at : Date.now()
-
-
-
-            
+            created_at : Date.now()           
         });
         const saveData = await data.save();
         if(saveData)
@@ -84,7 +80,7 @@ exports.mutualFriendList = async(req,res,next)=> {
     
     try 
     {
-        let user_id = req.query.uid;
+        let user_id = req.user_id;
         let id = req.query.id
         
         //getFollowingIdByUserid
@@ -102,7 +98,7 @@ exports.mutualFriendList = async(req,res,next)=> {
         //filterData
         const totalUserIdArray = totalIdByUserid.filter(Set.prototype.has, new Set(totalIdByid));
         //getMutualFriendsData
-        const getMutualFriendsData = await Users.find({_id : {$in : totalUserIdArray}}).exec();
+        const getMutualFriendsData = await Users.find({_id : {$in : totalUserIdArray},isActive: true}).exec();
         if(getMutualFriendsData)
         {
             return res.json({

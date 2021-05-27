@@ -51,6 +51,10 @@ const postSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: false,
+  },
+  isLiked: {
+    type: Number,
+    default: 0
   }
 });
 

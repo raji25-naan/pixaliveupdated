@@ -4,8 +4,10 @@ const TagPost = require('../../models/User/userTagpost');
 
 exports.add_like = async (req, res, next) => {
 
-    try {
-      let { user_id, post_id } = req.body; 
+    try 
+    {
+        let user_id = req.user_id;
+        let {post_id } = req.body; 
         if(req.body.type == 1)
         {
           //Update like

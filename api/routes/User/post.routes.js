@@ -44,6 +44,7 @@ router.post(
 router.get(
   "/getPost",
   checkSession,
+  checkIsactive,
   checkQuery("post_id"),
   validateRequest,
   get_post
@@ -54,8 +55,6 @@ router.get(
   "/postbyUid",
   checkSession,
   checkIsactive,
-  checkQuery("user_id"),
-  validateRequest,
   user_posts
 );
 
@@ -72,13 +71,12 @@ router.post(
 router.get(
   "/feeds",
   checkSession,
-  checkQuery("user_id"),
-  validateRequest,
+  checkIsactive,
   feeds
 );
 
 // Get feed posts
-router.get("/all_feeds", checkSession, all_feeds);
+router.get("/all_feeds", checkSession, checkIsactive, all_feeds);
 
 //updateviewpost
 router.post(
