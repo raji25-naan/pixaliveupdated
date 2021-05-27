@@ -24,23 +24,23 @@ router.get('/mutuals',
 
 router.get('/get_following',
             checkSession,
+            checkIsactive,
             checkQuery('id'),
-            checkQuery('uid'),
             validateRequest,
             get_following
             )
 
 router.get('/get_followers',
-            // checkSession,
+            checkSession,
+            checkIsactive,
             checkQuery('id'),
-            checkQuery('uid'),
             validateRequest,
             get_followers
             )
 
 router.get('/suggestionFriendList',
             checkSession,
-            checkQuery('userId'),
+            checkIsactive,
             checkQuery('lat'),
             checkQuery('lng'),
             validateRequest,

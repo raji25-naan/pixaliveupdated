@@ -127,13 +127,13 @@ exports.get_following = async (req, res, next) => {
     try 
     {
       const followerId = req.query.id;
-      const uid = req.query.uid;
+      const uid = req.user_id;
    
       const getFollowingid = await follow_unfollow.distinct("followingId", {
         followerId: followerId
       });
       const getFollowingUserData = await Users.find({
-        _id: { $in: getFollowingid },
+        _id: { $in: getFollowingid },isActive: true
       });
       const data_follower = await follow_unfollow.distinct("followingId", {
         followerId: uid,
@@ -147,7 +147,7 @@ exports.get_following = async (req, res, next) => {
       getFollowingUserData.forEach((data) => {
         totalId.forEach((followingUserId) => {
           if (followingUserId == data._id) {
-             data.follow = 1;
+             data["follow"] = 1;
           }
         });
       });
@@ -169,13 +169,13 @@ exports.get_following = async (req, res, next) => {
     try 
     {
       const followingId = req.query.id;
-      const uid = req.query.uid;
+      const uid = req.user_id;
    
       const getFollowerid = await follow_unfollow.distinct("followerId", {
         followingId: followingId
       });
       const getFollowerUserData = await Users.find({
-        _id: { $in: getFollowerid },
+        _id: { $in: getFollowerid },isActive: true
       });
       const data_follower = await follow_unfollow.distinct("followingId", {
         followerId: uid,
@@ -189,7 +189,7 @@ exports.get_following = async (req, res, next) => {
       getFollowerUserData.forEach((data) => {
         totalId.forEach((followerUserId) => {
           if (followerUserId == data._id) {
-             data.follow = 1;
+             data["follow"] = 1;
           }
         });
       });
@@ -211,7 +211,8 @@ exports.get_following = async (req, res, next) => {
 
     try 
     {
-      let {userId,lat,lng} = req.query;
+      let userId = req.user_id;
+      let {lat,lng} = req.query;
       console.log(req.query);
       const getFollowerId = await follow_unfollow.distinct("followerId",{followingId:userId}).exec();
       const getFollowingId = await follow_unfollow.distinct("followingId",{followerId:userId}).exec();
@@ -245,7 +246,7 @@ exports.get_following = async (req, res, next) => {
       console.log(totalSuggestedIds);
       //getSuggestedList
       const getSuggestedList = await Users.find(
-        {_id:totalSuggestedIds},
+        {_id: totalSuggestedIds,isActive: true},
         {_id:1, username:1, email:1,avatar:1,phone:1,followersCount:1,followingCount:1}
       ).exec();
       return res.json({

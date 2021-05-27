@@ -256,15 +256,41 @@ exports.delete_post = async (req, res, next) => {
 
 exports.feeds = async (req, res, next) => {
   try {
-    let user_id = req.user_id;
-    var { offset} = req.query;
-    var row = 20;
-    const get_userfeeds = await (await postSchema.find({ user_id: user_id }))
-      .reverse()
-      .splice(offset == undefined ? 0 : offset, row);
+    const user_id = req.user_id;
+    const data_follower = await follow_unfollow.distinct("followingId", {
+      followerId: user_id,
+    });
+    const data_following = await follow_unfollow.distinct("followerId", {
+      followingId: user_id,
+    });
+    data_follower.push(user_id);
+    var array3 = data_follower.concat(data_following).map(String);
+    var getAllId = [...new Set(array3)];
+ 
+    const all_feeds = await postSchema
+      .find({
+        user_id: { $in: getAllId },
+      })
+      .populate("user_id", "username avatar first_name last_name follow")
+      .exec();
+ 
+    let get_like = await likeSchema.distinct("post_id", {
+      user_id: user_id,
+      isLike: 1,
+    });
+    let likedIds = get_like.map(String);
+    all_feeds.forEach((post) => {
+      post.user_id.follow = 1;
+      likedIds.forEach((id) => {
+        if (id == post._id) {
+          post.isLiked = 1;
+        }
+      });
+    });
+ 
     return res.json({
       success: true,
-      feeds: get_userfeeds,
+      feeds: all_feeds,
     });
   } catch (error) {
     return res.json({
