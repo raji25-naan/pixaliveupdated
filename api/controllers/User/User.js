@@ -13,6 +13,7 @@ const twillio = require("../../helpers/smsManager");
 let Twillio = new twillio();
 const emailValidator = require("email-validator");
 
+
 //signup
 exports.signup = async (req, res, next) => {
   try {
@@ -905,49 +906,54 @@ exports.gcm_token_updation = async (req, res, next) => {
 };
 
 // search user
-// exports.search_user = async (req, res, next) => {
-//   try {
-//     const search = req.query.search_word;
-//     var reg = new RegExp(search);
-//     const all_feeds = await Users.find({
-//       $or: [{ username: reg }, { first_name: reg }, { email: reg }],
-//     });
-//     console.log(all_feeds);
-//     if (all_feeds) {
-//       const user_id = req.query.user_id;
-//       const data_follower = await followSchema.distinct("followingId", {
-//         followerId: user_id,
-//       });
-//       const data_following = await followSchema.distinct("followerId", {
-//         followingId: user_id,
-//       });
-//       var array3 = data_follower.concat(data_following);
-//       var uniq_id = [...new Set(array3)];
+exports.search_user = async (req, res, next) => {
+  try 
+  {
+    const search_user = req.query.search_user;
+    let token = req.headers["token"];
+    const tokenValue = token.split(' ')[1].trim();
+    const decodedId = await jwt.verify(tokenValue, process.env.JWT_KEY);
+    const user_id = decodedId.user.id;
+    let reg = new RegExp(search_user);
+    const all_users = await Users.find({
+      $or: [{ username: reg }, { first_name: reg }, { email: reg }],
+    });
+    if (all_users.length > 0) {
+      const data_follower = await followSchema.distinct("followingId", {
+        followerId: user_id,
+      });
+      const data_following = await followSchema.distinct("followerId", {
+        followingId: user_id,
+      });
+      var array3 = data_follower.concat(data_following).map(String);
+      var uniq_id = [...new Set(array3)];
+      console.log(uniq_id);
+      all_users.forEach((data) => {
+        uniq_id.forEach((main_data) => {
+          if (main_data == data._id) {
+            data["follow"] = 1;
+          }
+        });
+      });
+      return res.json({
+        success: true,
+        result: all_users
+      });
+    } else {
+      return res.json({
+        success: false,
+        message: "user not found ",
+      });
+    }
 
-//       all_feeds.forEach((data) => {
-//         uniq_id.forEach((main_data) => {
-//           if (main_data == data.user_id) {
-//             data.follow = true;
-//           }
-//         });
-//       });
-//       return res.json({
-//         success: true,
-//         feeds: all_feeds,
-//       });
-//     } else {
-//       return res.json({
-//         success: false,
-//         message: "user not found ",
-//       });
-//     }
-//   } catch (error) {
-//     return res.json({
-//       success: false,
-//       message: "Error occured! " + error,
-//     });
-//   }
-// };
+      
+  } catch (error) {
+    return res.json({
+      success: false,
+      message: "Error occured! " + error,
+    });
+  }
+};
 
 // search place
 exports.search_place = async (req, res, next) => {
@@ -1076,11 +1082,10 @@ exports.search = async (req, res, next) => {
     const search_category = req.query.search_category;
     if (search_user) {
       let reg = new RegExp(search_user);
-      const all_feeds = await Users.find({
+      const all_users = await Users.find({
         $or: [{ username: reg }, { first_name: reg }, { email: reg }],
       });
-      console.log(all_feeds);
-      if (all_feeds.length > 0) {
+      if (all_users.length > 0) {
         const data_follower = await followSchema.distinct("followingId", {
           followerId: user_id,
         });
@@ -1090,16 +1095,16 @@ exports.search = async (req, res, next) => {
         var array3 = data_follower.concat(data_following).map(String);
         var uniq_id = [...new Set(array3)];
         console.log(uniq_id);
-        all_feeds.forEach((data) => {
+        all_users.forEach((data) => {
           uniq_id.forEach((main_data) => {
-            if (main_data == data.user_id) {
+            if (main_data == data._id) {
               data["follow"] = 1;
             }
           });
         });
         return res.json({
           success: true,
-          result: all_feeds,
+          result: all_users
         });
       } else {
         return res.json({

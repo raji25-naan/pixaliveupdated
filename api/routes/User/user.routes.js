@@ -19,6 +19,7 @@ const {
   upload_avatar,
   change_avatar,
   search,
+  search_user,
 } = require("../../controllers/User/User");
 const { checkIsactive } = require("../../middlewares/checkActive");
 const { checkSession } = require("../../middlewares/checkAuth");
@@ -168,13 +169,11 @@ router.post(
 );
 
 // Search user
-// router.get(
-//   "/search_user",
-//   checkSession,
-//   checkQuery("user_id"),
-//   checkQuery("search_word"),
-//   search_user
-// );
+router.get(
+  "/search_user",
+  checkSession,
+  search_user
+);
 // Search place
 router.get(
   "/search_place",
