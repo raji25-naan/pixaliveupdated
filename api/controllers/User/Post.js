@@ -10,7 +10,8 @@ const jwt = require("jsonwebtoken");
 
 exports.create_post = async (req, res, next) => {
   try {
-    let { image, body, thumbnail, user_id } = req.body;
+    let user_id = req.user_id;
+    let { image, body, thumbnail} = req.body;
     const updateFavourtie = new postSchema({
       thumbnail: thumbnail,
       image: image,

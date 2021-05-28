@@ -912,9 +912,7 @@ exports.search_user = async (req, res, next) => {
     const search_user = req.query.search_user;
     const user_id = req.user_id;
     let reg = new RegExp(search_user);
-    const all_users = await Users.find({
-      $or: [{ username: reg,isActive: true }, { first_name: reg,isActive: true }, { email: reg,isActive: true }],
-    }).exec();
+    const all_users = await Users.find({username: reg,isActive: true}).exec();
     if (all_users.length > 0) {
       const data_follower = await followSchema.distinct("followingId", {
         followerId: user_id,
@@ -1080,9 +1078,7 @@ exports.search = async (req, res, next) => {
     const search_category = req.query.search_category;
     if (search_user) {
       let reg = new RegExp(search_user);
-      const all_users = await Users.find({
-        $or: [{ username: reg,isActive: true }, { first_name: reg,isActive : true }, { email: reg,isActive : true }],
-      });
+      const all_users = await Users.find({ username: reg,isActive: true}).exec();
       if (all_users.length > 0) {
         const data_follower = await followSchema.distinct("followingId", {
           followerId: user_id,

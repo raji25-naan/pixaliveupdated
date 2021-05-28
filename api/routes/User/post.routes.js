@@ -26,9 +26,8 @@ const { checkIsactive } = require("../../middlewares/checkActive");
 
 router.post(
   "/post",
-  // checkSession,
-  checkRequestBodyParams("user_id"),
-  validateRequest,
+  checkSession,
+  checkIsactive,
   create_post
 );
 
