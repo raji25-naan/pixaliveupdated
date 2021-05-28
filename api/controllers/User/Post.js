@@ -11,7 +11,7 @@ const jwt = require("jsonwebtoken");
 exports.create_post = async (req, res, next) => {
   try {
     let user_id = req.user_id;
-    let { image, body, thumbnail} = req.body;
+    let { image, body, thumbnail } = req.body;
     const updateFavourtie = new postSchema({
       thumbnail: thumbnail,
       image: image,
@@ -43,7 +43,8 @@ exports.create_post = async (req, res, next) => {
 
 exports.create_postNew = async (req, res, next) => {
   try {
-    const { text, url, body, thumbnail, user_id, place, type } = req.body;
+    const { text, url, body, thumbnail, place, type } = req.body;
+    const user_id = req.user_id;
     // string.match(/#\w+/g)
     var arr_hash = body.match(/(^|\s)#(\w+)/g);
     console.log(arr_hash);
@@ -59,11 +60,11 @@ exports.create_postNew = async (req, res, next) => {
       });
       console.log(get_hashtag);
       hash_tags = new Set(get_hashtag.map((tag) => tag));
- 
+
       arr_hash = arr_hash.filter((id) => !hash_tags.has(id));
- 
+
       console.log(arr_hash);
- 
+
       arr_hash.forEach(async (element) => {
         const hashtag = new hashtagSchema({
           hashtag: element,
@@ -126,7 +127,7 @@ exports.create_postNew = async (req, res, next) => {
     });
   }
 };
- 
+
 async function update_postwithType(
   userId,
   url,
@@ -149,6 +150,7 @@ async function update_postwithType(
       place: place,
       post_type: type,
       hastag: hashtag,
+      isActive: true,
       created_at: Date.now(),
     }).save();
     return res.json({
@@ -167,20 +169,19 @@ async function update_postwithType(
 exports.get_post = async (req, res, next) => {
   try {
     const post_id = req.query.post_id;
-    const user_id = req.user_id;
     const userPost = await postSchema.findOne({ _id: post_id });
     if (userPost) {
-      var get_like = await likeSchema.distinct("post_id", {
-        user_id: user_id,
-        post_id: post_id,
-      });
-      if(get_like.length != 0){
-        userPost.isLiked = 1
+      if (userPost.isActive == true) {
+        return res.json({
+          success: true,
+          post: userPost,
+        });
+      } else {
+        return res.json({
+          success: false,
+          message: "Inactive Post",
+        });
       }
-      return res.json({
-        success: true,
-        post: userPost
-      });
     } else {
       return res.json({
         success: false,
@@ -200,7 +201,10 @@ exports.get_post = async (req, res, next) => {
 exports.user_posts = async (req, res, next) => {
   try {
     const user_id = req.user_id;
-    const userPost = await postSchema.find({ user_id: user_id });
+    const userPost = await postSchema.find({
+      user_id: user_id,
+      isActive: true,
+    });
     if (userPost) {
       return res.json({
         success: true,
@@ -267,14 +271,15 @@ exports.feeds = async (req, res, next) => {
     data_follower.push(user_id);
     var array3 = data_follower.concat(data_following).map(String);
     var getAllId = [...new Set(array3)];
- 
+
     const all_feeds = await postSchema
       .find({
         user_id: { $in: getAllId },
+        isActive: true,
       })
       .populate("user_id", "username avatar first_name last_name follow")
       .exec();
- 
+
     let get_like = await likeSchema.distinct("post_id", {
       user_id: user_id,
       isLike: 1,
@@ -288,7 +293,7 @@ exports.feeds = async (req, res, next) => {
         }
       });
     });
- 
+
     return res.json({
       success: true,
       feeds: all_feeds,
@@ -308,13 +313,14 @@ exports.all_feeds = async (req, res, next) => {
     var { offset } = req.query;
     var row = 20;
     let all_feeds = await postSchema
-      .find({ isActive: true }).sort({created_at : -1})
+      .find({ isActive: true })
+      .sort({ created_at: -1 })
       .populate("user_id", "username avatar first_name last_name follow")
       .exec();
     all_feeds = all_feeds.filter(
       (person) => person.user_id._id.toString() != user_id.toString()
     );
- 
+
     const data_follower = await follow_unfollow.distinct("followingId", {
       followerId: user_id,
     });
@@ -364,7 +370,8 @@ function sortFunction(a, b) {
 //updateviewPost
 exports.updateviewpost = async (req, res, next) => {
   try {
-    let { user_id, post_id, postUserId } = req.body;
+    let { post_id, postUserId } = req.body;
+    let user_id = req.user_id;
     //getViewdata
     const getViewdata = await viewPost
       .find({
@@ -401,52 +408,50 @@ exports.updateviewpost = async (req, res, next) => {
 };
 
 //createReport
-exports.createReport = async(req,res,next)=>{
-  try
-  {
-    const{post_id,user_id,report}= req.body;
+exports.createReport = async (req, res, next) => {
+  try {
+    const { post_id, report } = req.body;
+    const user_id = req.user_id;
     const reports = new reportPost({
-      post_id : post_id,
-      reportedByid : user_id,
-      report : report
+      post_id: post_id,
+      reportedByid: user_id,
+      report: report,
     });
     const saveReport = await reports.save();
-    if(saveReport)
-    {
+    if (saveReport) {
       return res.json({
-      success : true,
-      message:"Reported successfully"
-      })
-    }else{
+        success: true,
+        message: "Reported successfully",
+      });
+    } else {
       return res.json({
-      success:false,
-      msg:"Your report is not taken..try again!"
-    })
+        success: false,
+        msg: "Your report is not taken..try again!",
+      });
     }
-  }
-  catch(error){
+  } catch (error) {
     return res.json({
-      success:false,
-      msg:"error occured!"+error
-    })
+      success: false,
+      msg: "error occured!" + error,
+    });
   }
- 
-}
+};
 
 //getPostsbyLatLng
-exports.getPostsbyLatLng = async(req,res,next)=>{
-  try
-  {
-    let {user_id,lat,lng}=req.query;
-    const allPosts = await postSchema.find({lat:lat,lng:lng}).exec();
-    if(allPosts.length>0)
-    {
-      const followers = await follow_unfollow.distinct("followerId",{
-        followingId:user_id
-      })
-      const following = await follow_unfollow.distinct("followingId",{
-        followerId:user_id
-      })
+exports.getPostsbyLatLng = async (req, res, next) => {
+  try {
+    let { lat, lng } = req.query;
+    let user_id = req.user_id;
+    const allPosts = await postSchema
+      .find({ lat: lat, lng: lng, isActive: true })
+      .exec();
+    if (allPosts.length > 0) {
+      const followers = await follow_unfollow.distinct("followerId", {
+        followingId: user_id,
+      });
+      const following = await follow_unfollow.distinct("followingId", {
+        followerId: user_id,
+      });
       const all_ID = followers.concat(following).map(String);
       const totalId = [...new Set(all_ID)];
       allPosts.forEach((data) => {
@@ -457,116 +462,113 @@ exports.getPostsbyLatLng = async(req,res,next)=>{
         });
       });
       return res.json({
-        success:true,
-        result:allPosts,
-        message:"Posts fetched successfuly by location"
-      })
-    }
-    else
-    {
+        success: true,
+        result: allPosts,
+        message: "Posts fetched successfuly by location",
+      });
+    } else {
       return res.json({
-        success:false,
-        msg:"No posts related to this location"
-      })
+        success: false,
+        msg: "No posts related to this location",
+      });
     }
-  }
-  catch(error)
-  {
+  } catch (error) {
     return res.json({
-      success:false,
-      msg:"error occured"+error
-    })
+      success: false,
+      msg: "error occured" + error,
+    });
   }
-}
+};
 
 //getPostsbycategory
-exports.getPostsbycategory = async(req,res,next)=>{
-  try
-  {
-    let {post_id,user_id}=req.query;
-    const postData = await postSchema.findOne({_id:post_id});
-    const onlycategory = postData.category;
-    const allcategory = await postSchema.find({category:onlycategory})
-    if(allcategory.length>0)
-    {
-      const followers = await follow_unfollow.distinct("followerId",{
-        followingId:user_id
-      })
-      const following = await follow_unfollow.distinct("followingId",{
-        followerId:user_id
-      })
-      const all_ID = followers.concat(following).map(String);
-      const totalId = [...new Set(all_ID)];
-      allcategory.forEach((data) => {
-        totalId.forEach((followerUserId) => {
-          if (followerUserId == data.user_id) {
-            data["follow"] = 1;
-          }
-        });
+exports.getPostsbycategory = async (req, res, next) => {
+  try {
+    let { post_id } = req.query;
+    let user_id = req.user_id;
+    const postData = await postSchema.findOne({ _id: post_id, isActive: true });
+    if (postData) {
+      const onlycategory = postData.category;
+      const allcategory = await postSchema.find({
+        category: onlycategory,
+        isActive: true,
       });
+      if (allcategory.length > 0) {
+        const followers = await follow_unfollow.distinct("followerId", {
+          followingId: user_id,
+        });
+        const following = await follow_unfollow.distinct("followingId", {
+          followerId: user_id,
+        });
+        const all_ID = followers.concat(following).map(String);
+        const totalId = [...new Set(all_ID)];
+        allcategory.forEach((data) => {
+          totalId.forEach((followerUserId) => {
+            if (followerUserId == data.user_id) {
+              data["follow"] = 1;
+            }
+          });
+        });
+        return res.json({
+          success: true,
+          result: allcategory,
+          message: "Posts fetched successfuly by category",
+        });
+      } else {
+        return res.json({
+          success: false,
+          msg: "Post is in Active",
+        });
+      }
+    } else {
       return res.json({
-        success:true,
-        result:allcategory,
-        message:"Posts fetched successfuly by category"
-      })
+        success: false,
+        msg: "No posts related to this category",
+      });
     }
-    else
-    {
-      return res.json({
-        success:false,
-        msg:"No posts related to this category"
-      })
-    }
-  }
-  catch(error)
-  {
+  } catch (error) {
     return res.json({
-      success:false,
-      msg:"error occured"+error
-    })
+      success: false,
+      msg: "error occured" + error,
+    });
   }
-}
-
+};
 //getPostByhashtag
-exports.getPostByhashtag = async(req,res,next)=>{
-  try{
-    let {hashtag,user_id} = req.query;
-    var{offset} = req.query;
-    var row = 20;
-    const post_hashtag = await postSchema.find({hashtag:hashtag}).exec();
-    if(post_hashtag)
-    {
-      const follower_data = await follow_unfollow.distinct("followerId",{
-        followingId:user_id
+exports.getPostByhashtag = async (req, res, next) => {
+  try {
+    let { hashtag } = req.query;
+    let user_id = req.user_id;
+    const post_hashtag = await postSchema.find({ hashtag: hashtag }).exec();
+    if (post_hashtag) {
+      const follower_data = await follow_unfollow.distinct("followerId", {
+        followingId: user_id,
       });
       const following_data = await follow_unfollow.distinct("followingId", {
         followerId: user_id,
       });
       var totalId = follower_data.concat(following_data).map(String);
-      var friendlist = [...new Set(totalId)]
+      var friendlist = [...new Set(totalId)];
       post_hashtag.forEach((data) => {
         friendlist.forEach((main_data) => {
-          if (main_data == data.user_id){
-            data["follow"]=1
+          if (main_data == data.user_id) {
+            data["follow"] = 1;
           }
         });
-      })
+      });
       return res.json({
-        success:true,
-        result:post_hashtag,
-        message:"Post fetched successfully"
-      })
-    }
-    else
-    {
+        success: true,
+        result: post_hashtag,
+        message: "Post fetched successfully",
+      });
+    } else {
       return res.json({
-      success:false,
-      message:"No post found!😉"})
+        success: false,
+        message: "No post found!",
+      });
     }
-  }catch(error){
+  } catch (error) {
     return res.json({
-    success:false,
-    msg:"Error occured"+error
-  })
+      success: false,
+      msg: "Error occured" + error,
+    });
   }
-}
+};
