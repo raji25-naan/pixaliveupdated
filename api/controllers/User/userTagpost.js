@@ -3,10 +3,10 @@ const TagPost = require('../../models/User/userTagpost');
 
 exports.tagged_post = async (req,res,next) => {
     try {
-      const {userId} = req.body;
+      const {userId} = req.user_id;
       const taggedPostId = await TagPost.distinct("post_id",{tagged_userId:userId}).exec();
       //getPosts
-      const getPosts = await Post.find({_id:taggedPostId}).exec();
+      const getPosts = await Post.find({_id:taggedPostId, isActive: true}).exec();
         if(getPosts.length>0)
         {
           return res.json({

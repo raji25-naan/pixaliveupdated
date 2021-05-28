@@ -2,12 +2,14 @@ const Story = require("../../models/User/story");
 const moment = require("moment");
 const follow_unfollow = require("../../models/User/follow_unfollow");
 const momentTimeZone = require("moment-timezone");
+const Users = require("../../models/User/Users");
 
 exports.StoriesUpload = async(req,res,next)=>{
 
     try
     {
-        let {url,userId} = req.body;
+        let userId = req.user_id;
+        let {url} = req.body;
         const storyDisappearTime = moment().add(1, "d");
         const data = new Story({
         url:url,
@@ -47,7 +49,7 @@ exports.updateViewedStories = async(req,res,next) => {
     try
     {
         console.log(req.body);
-        let userId = req.body.userId;
+        let userId = req.user_id;
         let storyId = req.body.storyId;
         //findViewedUserId
         const findViewedUserId = await Story.findOne({
@@ -100,7 +102,7 @@ exports.updateViewedStories = async(req,res,next) => {
 exports.getStory = async(req,res,next) => {
   try
   {
-    const user_id = req.query.user_id;
+    const user_id = req.user_id;
     const data_follower = await follow_unfollow.distinct("followingId",{
       followerId: user_id
     });
@@ -110,10 +112,11 @@ exports.getStory = async(req,res,next) => {
     console.log(data_following)
     const all_ID = data_follower.concat(data_following).map(String);
     const totalId = [...new Set(all_ID)];
-    console.log(totalId)
+    console.log(totalId);
+    let inactiveUsers = await Users.distinct("_id",{isActive: false}).exec();
     if(totalId){
-      const friendsStories = await Story.find({$and:[{userId:totalId},
-        {storyDisappearTime:{$gt:moment(momentTimeZone().tz('Asia/kolkata')).toDate()}}]});
+      const friendsStories = await Story.find({$and:[{userId:{$in:totalId,$nin:inactiveUsers}},
+        {storyDisappearTime:{$gt:moment(momentTimeZone().tz('Asia/kolkata')).toDate()}}]}).exec();
         console.log(friendsStories);
       if(friendsStories.length>0){
         return res.json({

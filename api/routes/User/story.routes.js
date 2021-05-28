@@ -1,5 +1,6 @@
 const express = require("express");
 const {updateViewedStories, getStory, StoriesUpload } = require("../../controllers/User/story");
+const { checkIsactive } = require("../../middlewares/checkActive");
 const { checkSession } = require("../../middlewares/checkAuth");
 const router = express.Router();
 const {
@@ -11,7 +12,7 @@ const {
   router.post(
     "/updateViewedStories",
     checkSession,
-    checkRequestBodyParams("userId"),
+    checkIsactive,
     checkRequestBodyParams("storyId"),
     validateRequest,
     updateViewedStories
@@ -20,7 +21,7 @@ const {
   router.post(
     "/addStories",
     checkSession,
-    checkRequestBodyParams("userId"),
+    checkIsactive,
     checkRequestBodyParams("url"),
     validateRequest,
     StoriesUpload
@@ -29,8 +30,7 @@ const {
 router.get(
   "/getStory",
   checkSession,
-  checkQuery("user_id"),
-  validateRequest,
+  checkIsactive,
   getStory
 );
 

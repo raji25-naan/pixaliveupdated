@@ -16,8 +16,7 @@ router.post('/likePost',
 
 router.post('/getLikedPosts',
             checkSession,
-            checkRequestBodyParams('userId'),
-            validateRequest,
+            checkIsactive,
             liked_post
 )
 
