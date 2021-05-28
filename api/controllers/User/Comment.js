@@ -1,6 +1,7 @@
 const commentSchema = require("../../models/User/Comment");
 const postSchema = require("../../models/User/Post");
 const notificationSchema = require("../../models/User/Notification");
+const Users = require("../../models/User/Users");
 
 // ************create comment*******************
 
@@ -48,12 +49,11 @@ exports.add_comment = async (req, res, next) => {
             message: "Comment added",
           });
         }
-      } else {
-      }
+      } 
     } else {
       return res.json({
         success: true,
-        message: "Comment added",
+        message: "Error Occured"+error
       });
     }
   } catch (error) {
@@ -70,17 +70,18 @@ exports.add_comment = async (req, res, next) => {
 exports.getPost_comments = async (req, res, next) => {
   try {
     const post_id = req.query.post_id;
-    const getcomment = await commentSchema.find({ post_id: post_id });
-    if (getcomment) {
-      res.json({
+    let inactiveUsers = await Users.distinct("_id",{isActive : false}).exec();
+    const getcomment = await commentSchema.find({ post_id: post_id,user_id : {$nin : inactiveUsers}}).exec();
+    if (getcomment.length>0) {
+      return res.json({
         success: true,
         result: getcomment,
         message: "Comment fetched successfully",
       });
     } else {
-      res.json({
+      return res.json({
         success: false,
-        message: "error occured in getting comment",
+        message: "No comments"
       });
     }
   } catch (error) {

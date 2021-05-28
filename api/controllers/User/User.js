@@ -551,10 +551,13 @@ exports.user_info = async (req, res, next) => {
    {
     let getUserInfo = await Users.findOne({ _id: req.query.user_id,isActive: true }).exec();
     let getUserPosts = await postSchema.find({user_id: getUserInfo._id,isActive: true}).exec();
-    if (getUserInfo) {
+    var obj_set = {feeds: getUserPosts};
+    const obj = Object.assign({}, getUserInfo._doc, obj_set);
+    if (obj) 
+    {
       return res.json({
         success: true,
-        user : getUserInfo,
+        user : obj,
         message: "successfully fetched user information",
       });
     } else {

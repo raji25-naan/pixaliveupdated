@@ -20,12 +20,14 @@ router.post("/comment",
 
 router.get("/getpost_comments",
             checkSession,
+            checkIsactive,
             checkQuery("post_id"),
             validateRequest,
             getPost_comments);
 
 router.post("/delete_comment",
             checkSession,
+            checkIsactive,
             checkRequestBodyParams("comment_id"),
             validateRequest,
             delete_comment);
