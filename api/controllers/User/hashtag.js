@@ -4,7 +4,7 @@ const Hashtag = require("../../models/User/hashtags");
 exports.followUnfollowHashtag = async (req,res,next) => {
 
     try {
-        let userId = req.body.userId;
+        let userId = req.user_id;
         let hashId = req.body.hashId;
         let hashtag = req.body.hashtag;
         let type = req.body.type;
@@ -80,8 +80,7 @@ exports.followUnfollowHashtag = async (req,res,next) => {
 
 exports.create_hashtag = async (req,res,next) => {
     try {
-        const {hashtag} = req.body;
- 
+        const {hashtag} = req.body; 
         const createHashtag = new Hashtag({
             hashtag: hashtag,
             created_at: Date.now()

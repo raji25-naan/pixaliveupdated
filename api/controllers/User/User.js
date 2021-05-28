@@ -558,7 +558,7 @@ exports.user_info = async (req, res, next) => {
       return res.json({
         success: true,
         user : obj,
-        message: "successfully fetched user information",
+        message: "successfully fetched user information"
       });
     } else {
       return res.json({

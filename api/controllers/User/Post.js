@@ -303,22 +303,18 @@ exports.feeds = async (req, res, next) => {
 
 // ************* get all feed of all users ***********//
 exports.all_feeds = async (req, res, next) => {
-  try 
-  {
+  try {
     const user_id = req.user_id;
-    console.log(user_id);
     var { offset } = req.query;
     var row = 20;
- 
     let all_feeds = await postSchema
-      .find({})
+      .find({ isActive: true }).sort({created_at : -1})
       .populate("user_id", "username avatar first_name last_name follow")
       .exec();
- 
     all_feeds = all_feeds.filter(
       (person) => person.user_id._id.toString() != user_id.toString()
     );
-    //
+ 
     const data_follower = await follow_unfollow.distinct("followingId", {
       followerId: user_id,
     });
@@ -329,17 +325,16 @@ exports.all_feeds = async (req, res, next) => {
     var uniq_id = [...new Set(array3)];
     let get_like = await likeSchema.distinct("post_id", {
       user_id: user_id,
-      isLike: 1
+      isLike: 1,
     });
     let likedIds = get_like.map(String);
     all_feeds.forEach((post) => {
       likedIds.forEach((id) => {
         console.log(id == post._id);
-        if(id == post._id)
-        {
+        if (id == post._id) {
           post.isLiked = 1;
         }
-      })
+      });
       uniq_id.forEach((ids) => {
         if (ids == post.user_id._id) {
           post.user_id.follow = 1;
@@ -351,15 +346,13 @@ exports.all_feeds = async (req, res, next) => {
       success: true,
       feeds: send_post,
     });
-  } 
-  catch (error) 
-  {
+  } catch (error) {
     return res.json({
       success: false,
       message: "Error occured! " + error,
     });
   }
-} 
+};
 
 // sort by date
 function sortFunction(a, b) {

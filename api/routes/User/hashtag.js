@@ -1,5 +1,6 @@
 const express = require("express");
 const { followUnfollowHashtag, create_hashtag, fetch_hashtag } = require("../../controllers/User/hashtag");
+const { checkIsactive } = require("../../middlewares/checkActive");
 const { checkSession } = require("../../middlewares/checkAuth");
 const { checkRequestBodyParams, validateRequest } = require("../../middlewares/validator");
 const router = express.Router();
@@ -8,8 +9,8 @@ const user = require("../../models/User/Users");
 
 router.post("/follow_unfollow_hashtag",
             checkSession,
+            checkIsactive,
             checkRequestBodyParams('type').isIn(['1', '0']),
-            checkRequestBodyParams("userId"),
             checkRequestBodyParams("hashId"),
             checkRequestBodyParams("hashtag"),
             validateRequest,
@@ -18,6 +19,7 @@ router.post("/follow_unfollow_hashtag",
 
 router.post("/create_hashtag",
             checkSession,
+            checkIsactive,
             checkRequestBodyParams("hashtag"),
             validateRequest,
             create_hashtag
@@ -25,6 +27,7 @@ router.post("/create_hashtag",
 
 router.post("/fetch_hashtag",
             checkSession,
+            checkIsactive,
             checkRequestBodyParams("search_hash"),
             validateRequest,
             fetch_hashtag
