@@ -547,12 +547,14 @@ exports.changepassword = async (req, res, next) => {
 
 //Get user info
 exports.user_info = async (req, res, next) => {
-  try {
-    const getUserInfo = await Users.findOne({ _id: req.query.user_id,isActive: true });
+  try
+   {
+    let getUserInfo = await Users.findOne({ _id: req.query.user_id,isActive: true }).exec();
+    let getUserPosts = await postSchema.find({user_id: getUserInfo._id,isActive: true}).exec();
     if (getUserInfo) {
       return res.json({
         success: true,
-        result: getUserInfo,
+        user : getUserInfo,
         message: "successfully fetched user information",
       });
     } else {
