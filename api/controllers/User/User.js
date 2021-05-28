@@ -550,7 +550,7 @@ exports.user_info = async (req, res, next) => {
   try
    {
     let getUserInfo = await Users.findOne({ _id: req.query.user_id,isActive: true }).exec();
-    let getUserPosts = await postSchema.find({user_id: getUserInfo._id,isActive: true}).exec();
+    let getUserPosts = await postSchema.find({user_id: getUserInfo._id,isActive: true}).populate("user_id","username first_name last_name avatar").exec();
     var obj_set = {feeds: getUserPosts};
     const obj = Object.assign({}, getUserInfo._doc, obj_set);
     if (obj) 
