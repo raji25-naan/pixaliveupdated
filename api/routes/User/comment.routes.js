@@ -8,10 +8,11 @@ const {
 
 const { add_comment,getPost_comments,delete_comment } = require("../../controllers/User/Comment");
 const { checkSession } = require("../../middlewares/checkAuth");
+const { checkIsactive } = require("../../middlewares/checkActive");
 
 router.post("/comment",
               checkSession,
-              checkRequestBodyParams("user_id"),
+              checkIsactive,
               checkRequestBodyParams("post_id"),
               checkRequestBodyParams("comment"),
               validateRequest,

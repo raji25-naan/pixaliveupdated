@@ -55,6 +55,10 @@ const postSchema = new mongoose.Schema({
   isLiked: {
     type: Number,
     default: 0
+  },
+  image: {
+    type: String,
+    default : ""
   }
 });
 

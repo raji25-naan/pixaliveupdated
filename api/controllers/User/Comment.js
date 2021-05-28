@@ -7,13 +7,8 @@ const notificationSchema = require("../../models/User/Notification");
 exports.add_comment = async (req, res, next) => {
   try {
     //    get id and comment
-    var { user_id, comment, post_id } = req.body;
-    if (post_id == undefined && user_id == undefined) {
-      return res.json({
-        success: false,
-        message: "Invalid post id",
-      });
-    }
+    let user_id = req.user_id;
+    var {comment, post_id } = req.body;
 
     // create document for user in db
     const updateComment = new commentSchema({
