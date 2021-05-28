@@ -71,7 +71,9 @@ exports.getPost_comments = async (req, res, next) => {
   try {
     const post_id = req.query.post_id;
     let inactiveUsers = await Users.distinct("_id",{isActive : false}).exec();
-    const getcomment = await commentSchema.find({ post_id: post_id,user_id : {$nin : inactiveUsers}}).populate('user_id','username first_name last_name avatar follow').exec();
+    console.log(inactiveUsers);
+    const getcomment = await commentSchema.find({ post_id: post_id,user_id:{$nin : inactiveUsers}}).populate("user_id","username first_name last_name avatar follow").exec();
+    console.log(getcomment);
     if (getcomment.length>0) {
       return res.json({
         success: true,
