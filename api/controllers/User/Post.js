@@ -277,7 +277,7 @@ exports.feeds = async (req, res, next) => {
       .find({
         user_id: { $in: getAllId },
         isActive: true,
-      })
+      }).sort({ created_at: -1 })
       .populate("user_id", "username avatar first_name last_name follow")
       .exec();
 
