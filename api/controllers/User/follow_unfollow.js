@@ -247,7 +247,7 @@ exports.get_following = async (req, res, next) => {
       //getSuggestedList
       const getSuggestedList = await Users.find(
         {_id: totalSuggestedIds,isActive: true},
-        {_id:1, username:1, email:1,avatar:1,phone:1,followersCount:1,followingCount:1}
+        {_id:1, username:1,first_name:1,last_name:1,email:1,avatar:1,phone:1,followersCount:1,followingCount:1}
       ).exec();
       return res.json({
         success : true,
