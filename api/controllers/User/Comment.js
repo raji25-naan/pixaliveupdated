@@ -82,7 +82,7 @@ exports.getPost_comments = async (req, res, next) => {
       });
     } else {
       return res.json({
-        success: false,
+        success: true,
         message: "No comments"
       });
     }
