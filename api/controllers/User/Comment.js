@@ -83,6 +83,7 @@ exports.getPost_comments = async (req, res, next) => {
     } else {
       return res.json({
         success: true,
+        comments: getcomment,
         message: "No comments"
       });
     }
