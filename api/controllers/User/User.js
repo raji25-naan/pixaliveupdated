@@ -677,7 +677,11 @@ exports.updateProfile = async (req, res, next) => {
         }
       }
     }
-    editData = req.body;
+    editData["phone"] = req.body.phone;
+    editData["username"] = req.body.username;
+    editData["first_name"] = req.body.first_name;
+    editData["last_name"] = req.body.last_name;
+    editData["avatar"] = req.body.avatar;
     editData["updated_At"] = Date.now();
     const updateData = await Users.findByIdAndUpdate(
       { _id: user_id },

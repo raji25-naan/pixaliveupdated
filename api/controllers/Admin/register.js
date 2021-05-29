@@ -4,6 +4,8 @@ const jwt = require("jsonwebtoken");
 const Users = require("../../models/User/Users");
 const Posts = require("../../models/User/Post");
 const follow_unfollow = require("../../models/User/follow_unfollow");
+const Like = require("../../models/User/like");
+const Comment = require("../../models/User/Comment");
 
 exports.signup = async (req, res) => {
   console.log(1);
@@ -133,19 +135,41 @@ exports.deactivateUser = async (req, res, next) => {
         $set: { isActive: false }
       },
       { new: true }
-    );
+    ).exec();
     //deactivateUserPosts
     const updateDeactivateUserPosts = await Posts.updateMany(
       {user_id : userId},
       {$set:{isActive : false}},
       {new:true}
-    );
+    ).exec();
     //reduceFollowingCount
     let totalFollower = await follow_unfollow.distinct("followerId",{followingId:userId}).exec();
-    // const reduceFollowingCount = await Users.updateMany(
-    //   {}
-    // )
-
+    const reduceFollowingCount = await Users.updateMany(
+      {_id:{$in:totalFollower}},
+      {$inc:{followingCount : -1}},
+      {new:true}
+    ).exec();
+    //reduceFollowersCount
+    let totalFollowing = await follow_unfollow.distinct("followingId",{followerId:userId}).exec();
+    const reduceFollowersCount = await Users.updateMany(
+      {_id:{$in:totalFollowing}},
+      {$inc:{followersCount : -1}},
+      {new:true}
+    ).exec();
+    //reduceLikeCount
+    let totalLike = await Like.distinct("post_id",{user_id:userId,isLike:1}).exec();
+    const reduceLikeCount = await Posts.updateMany(
+      {_id:{$in:totalLike}},
+      {$inc:{likeCount:-1}},
+      {new:true}
+    ).exec();
+    // reduceCommentCount
+    let totalComments = await Comment.distinct("post_id",{user_id:userId}).exec();
+    const reduceCommentCount = await Comment.updateMany(
+      {_id:{$in:totalComments}},
+      {$inc:{commentCount:-1}},
+      {new:true}
+    ).exec();
     if (updateDeactivateUser && updateDeactivateUserPosts) {
       return res.json({
         success: true,
