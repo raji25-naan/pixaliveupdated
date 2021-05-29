@@ -17,6 +17,7 @@ exports.create_post = async (req, res, next) => {
       image: image,
       body: body,
       user_id: user_id,
+      isActive: true,
       created_at: new Date(),
     });
 
