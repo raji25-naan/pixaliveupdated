@@ -1,7 +1,9 @@
 const express = require("express");
-const { getAllPost, getPostDetail } = require("../../controllers/Admin/post");
+const { getAllPost, getPostDetail, create_postNew } = require("../../controllers/Admin/post");
 const { checkQuery, validateRequest } = require("../../middlewares/validator");
 const router = express.Router();
+
+router.post("/create_post", create_postNew);
 
 router.get("/getAllPost",getAllPost);
 

@@ -73,31 +73,7 @@ exports.create_postNew = async (req, res, next) => {
         }).save();
       });
     }
-    if (type == 1)
-      update_postwithType(
-        user_id,
-        url,
-        "",
-        thumbnail,
-        body,
-        place,
-        type,
-        hash_tag,
-        res
-      );
-    if (type == 2)
-      update_postwithType(
-        user_id,
-        url,
-        "",
-        thumbnail,
-        body,
-        place,
-        type,
-        hash_tag,
-        res
-      );
-    if (type == 3)
+    if (type == 1 || type == 2 || type == 3 )
       update_postwithType(
         user_id,
         url,

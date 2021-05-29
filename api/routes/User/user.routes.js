@@ -105,7 +105,7 @@ router.get(
   "/userInfo",
   checkSession,
   checkIsactive,
-  checkQuery("user_id"),
+  checkQuery("id"),
   validateRequest,
   user_info
 );
@@ -123,8 +123,6 @@ router.post(
   "/updateProfile",
   checkSession,
   checkIsactive,
-  checkRequestBodyParams("user_id"),
-  validateRequest,
   updateProfile
 );
 

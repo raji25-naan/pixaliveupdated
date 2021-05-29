@@ -549,8 +549,23 @@ exports.changepassword = async (req, res, next) => {
 exports.user_info = async (req, res, next) => {
   try
    {
-    let getUserInfo = await Users.findOne({ _id: req.query.user_id,isActive: true }).exec();
+    let user_id = req.user_id;
+    let getUserInfo = await Users.findOne({ _id: req.query.id,isActive: true }).exec();
     let getUserPosts = await postSchema.find({user_id: getUserInfo._id,isActive: true}).populate("user_id","username first_name last_name avatar").exec();
+    //getFriendslist
+    const data_follower = await followSchema.distinct("followingId", {
+      followerId: user_id,
+    });
+    const data_following = await followSchema.distinct("followerId", {
+      followingId: user_id,
+    });
+    var array3 = data_follower.concat(data_following).map(String);
+    var uniq_id = [...new Set(array3)];
+      uniq_id.forEach((main_data) => {
+        if (main_data == getUserInfo._id) {
+          getUserInfo["follow"] = 1;
+        }
+      });
     var obj_set = {feeds: getUserPosts};
     const obj = Object.assign({}, getUserInfo._doc, obj_set);
     if (obj) 
@@ -600,7 +615,7 @@ exports.is_user = async (req, res, next) => {
 
 exports.updateProfile = async (req, res, next) => {
   try {
-    let user_id = req.body.user_id;
+    let user_id = req.user_id;
     let editData = {};
     //checkOurData
     const myUserData = await Users.findOne({ _id: user_id });

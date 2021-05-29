@@ -2,6 +2,8 @@ const Register = require("../../models/Admin/register");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const Users = require("../../models/User/Users");
+const Posts = require("../../models/User/Post");
+const follow_unfollow = require("../../models/User/follow_unfollow");
 
 exports.signup = async (req, res) => {
   console.log(1);
@@ -121,15 +123,30 @@ exports.activateUser = async (req, res, next) => {
 };
 
 exports.deactivateUser = async (req, res, next) => {
-  try {
-    const updateDeactivate = await Users.updateOne(
-      { _id: req.body.userId },
+  try 
+  {
+    let userId = req.body.userId;
+    //deactivateUser
+    const updateDeactivateUser = await Users.updateOne(
+      { _id: userId},
       {
-        $set: { isActive: false },
+        $set: { isActive: false }
       },
       { new: true }
     );
-    if (updateDeactivate) {
+    //deactivateUserPosts
+    const updateDeactivateUserPosts = await Posts.updateMany(
+      {user_id : userId},
+      {$set:{isActive : false}},
+      {new:true}
+    );
+    //reduceFollowingCount
+    let totalFollower = await follow_unfollow.distinct("followerId",{followingId:userId}).exec();
+    // const reduceFollowingCount = await Users.updateMany(
+    //   {}
+    // )
+
+    if (updateDeactivateUser && updateDeactivateUserPosts) {
       return res.json({
         success: true,
         result: "Successfully Deactivated",
