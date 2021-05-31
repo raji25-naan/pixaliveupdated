@@ -377,8 +377,10 @@ exports.facebook_sign = async (req, res, next) => {
 //login
 exports.login = async (req, res, next) => {
   try {
-    let { email, password } = req.body;
-    const data = await Users.findOne({ email, otp_verified: true }).exec();
+    //changesByakeel
+    let phone = req.body.email;
+    let password = req.body.password;
+    const data = await Users.findOne({ phone, otp_verified: true }).exec();
     if (data) 
     {
       if(data.isActive == false)
