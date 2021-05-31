@@ -137,7 +137,6 @@ router.post(
 //resetPasswordVerifyOtp
 router.post(
   "/resetPasswordVerifyOtp",
-  checkRequestBodyParams("user_id"),
   checkRequestBodyParams("otp"),
   checkRequestBodyParams("token"),
   validateRequest,
@@ -147,7 +146,6 @@ router.post(
 //resetPassword
 router.post(
   "/resetPassword",
-  checkRequestBodyParams("user_id"),
   checkRequestBodyParams("token"),
   checkRequestBodyParams("password"),
   checkRequestBodyParams("confirmPassword"),

@@ -773,8 +773,9 @@ exports.forgotpassword = async (req, res, next) => {
 exports.resetPasswordVerifyOtp = async (req, res, next) => {
   try {
     var { token, otp } = req.body;
-    let user_id = req.body.user_id;
     const verifytoken = jwt.verify(token, process.env.JWT_KEY);
+    let user_id = verifytoken.user.id;
+
     if (verifytoken) {
       const userdetails = await Users.findOne({ _id: user_id });
       if (otp == userdetails.otp) {
@@ -792,6 +793,7 @@ exports.resetPasswordVerifyOtp = async (req, res, next) => {
         if (updatedetails) {
           return res.json({
             success: true,
+            token: token,
             message: "OTP verified successfully",
           });
         } else {
@@ -830,8 +832,8 @@ exports.resetPasswordVerifyOtp = async (req, res, next) => {
 exports.resetpassword = async (req, res, next) => {
   try {
     let { token, password, confirmPassword } = req.body;
-    let user_id = req.body.user_id;
     const verifytoken = jwt.verify(token, process.env.JWT_KEY);
+    let user_id = verifytoken.user.id;
     if (verifytoken) {
       if (password == confirmPassword) {
         const passwordUpdate = await Users.findByIdAndUpdate(
