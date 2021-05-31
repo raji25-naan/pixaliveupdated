@@ -747,8 +747,8 @@ exports.forgotpassword = async (req, res, next) => {
         // SendEmailVerificationLink(otp, req, data);
         return res.json({
           success: true,
-          passwordResetToken: data.passwordResetToken,
-          message: "OTP has been sent successfully",
+          message: data.passwordResetToken
+          // message: "OTP has been sent successfully",
         });
       } else {
         return res.json({
@@ -793,8 +793,8 @@ exports.resetPasswordVerifyOtp = async (req, res, next) => {
         if (updatedetails) {
           return res.json({
             success: true,
-            token: token,
-            message: "OTP verified successfully",
+            message: token
+            // message: "OTP verified successfully",
           });
         } else {
           res.json({
