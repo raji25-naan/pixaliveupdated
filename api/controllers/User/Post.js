@@ -116,7 +116,6 @@ async function update_postwithType(
   hashtag,
   res
 ) {
-  console.log("text", video, image, audio, text);
   try {
     var createdPost = await new postSchema({
       user_id: userId,

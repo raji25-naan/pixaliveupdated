@@ -74,7 +74,6 @@ exports.create_postNew = async (req, res, next) => {
     hashtag,
     res
   ) {
-    console.log("text", video, image, audio, text);
     try {
       var createdPost = await new Post({
         user_id: userId,
