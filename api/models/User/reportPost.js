@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
- 
+const { db_Main } = require("../../db/database")
+
 const reports = new mongoose.Schema({
     post_id: {
         type: String,
@@ -15,4 +16,4 @@ const reports = new mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model("reports",reports)
+module.exports = db_Main.model("reports", reports)

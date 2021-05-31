@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { db_Main } = require("../../db/database")
 
 const user_schema = new mongoose.Schema({
   username: {
@@ -95,5 +96,5 @@ const user_schema = new mongoose.Schema({
     default: false,
   }
 });
-
-module.exports = mongoose.model("users", user_schema);
+const user = db_Main.model("users", user_schema);
+module.exports = user;

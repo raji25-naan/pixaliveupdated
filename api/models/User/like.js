@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { db_Main } = require("../../db/database")
 
 const likes = new mongoose.Schema({
   post_id: {
@@ -8,12 +9,12 @@ const likes = new mongoose.Schema({
     type: String,
   },
   isLike: {
-    type: Number, 
-    default:0 
+    type: Number,
+    default: 0
   },
   created_at: {
     type: Date
   },
 });
 
-module.exports = mongoose.model("likes", likes);
+module.exports = db_Main.model("likes", likes);

@@ -1,34 +1,36 @@
 const mongoose = require("mongoose");
 
+const { db_Main } = require("../../db/database")
+
 const register = new mongoose.Schema({
 
-    username : {
-        type : String,
-        default : ''
+    username: {
+        type: String,
+        default: ''
     },
-    email : {
-        type : String,
-        default : ''
+    email: {
+        type: String,
+        default: ''
     },
-    password : {
-        type : String,
-        default : ''
+    password: {
+        type: String,
+        default: ''
     },
-    country_code : {
-        type : String,
-        default : ''
+    country_code: {
+        type: String,
+        default: ''
     },
-    phone : {
-        type : String,
-        default : ''
+    phone: {
+        type: String,
+        default: ''
     },
-    created_At : {
-        type : Date
+    created_At: {
+        type: Date
     },
-    updated_At : {
-        type : Date,
-        default : ''
+    updated_At: {
+        type: Date,
+        default: ''
     }
 });
 
-module.exports = mongoose.model("registers",register)
+module.exports = db_Main.model("registers", register)

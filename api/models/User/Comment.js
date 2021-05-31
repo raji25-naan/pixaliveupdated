@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-
+const { db_Main } = require("../../db/database")
 const commentSchema = new mongoose.Schema({
   post_id: {
     type: mongoose.Schema.Types.ObjectId,
@@ -18,4 +18,4 @@ const commentSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("Comments", commentSchema);
+module.exports = db_Main.model("Comments", commentSchema);

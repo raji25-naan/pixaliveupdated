@@ -1,8 +1,9 @@
 const mongoose = require("mongoose");
+const { db_Main } = require("../../db/database")
 
 const postSchema = new mongoose.Schema({
-  url : {
-    type : String
+  url: {
+    type: String
   },
   text_content: {
     type: String,
@@ -18,7 +19,7 @@ const postSchema = new mongoose.Schema({
   },
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
-    ref : "users"
+    ref: "users"
   },
   place: {
     type: String,
@@ -38,15 +39,15 @@ const postSchema = new mongoose.Schema({
     type: Array,
   },
   lat: {
-    type:String,
-    default:""
+    type: String,
+    default: ""
   },
   lng: {
-    type:String,
-    default:""
+    type: String,
+    default: ""
   },
   category: {
-    type:String
+    type: String
   },
   isActive: {
     type: Boolean,
@@ -58,8 +59,8 @@ const postSchema = new mongoose.Schema({
   },
   image: {
     type: String,
-    default : ""
+    default: ""
   }
 });
 
-module.exports = mongoose.model("Posts", postSchema);
+module.exports = db_Main.model("Posts", postSchema);

@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-
+const { db_Main } = require("../../db/database")
 const chatSchema = new mongoose.Schema({
   sender_id: {
     type: String,
@@ -15,4 +15,4 @@ const chatSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("chat", chatSchema);
+module.exports = db_Main.model("chat", chatSchema);

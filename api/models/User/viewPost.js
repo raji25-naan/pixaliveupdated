@@ -1,22 +1,23 @@
 const mongoose = require("mongoose");
+const { db_Main } = require("../../db/database")
 
 const viewPost = new mongoose.Schema({
 
   post_id: {
     type: mongoose.Schema.Types.ObjectId,
-    ref : "Posts"
+    ref: "Posts"
   },
-  post_userID :{
+  post_userID: {
     type: mongoose.Schema.Types.ObjectId,
-    ref : "postusers"
+    ref: "postusers"
   },
   viewed_userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref : "users"
+    ref: "users"
   },
-  created_At : {
-    type : Date
+  created_At: {
+    type: Date
   }
 });
 
-module.exports = mongoose.model("viewPosts", viewPost);
+module.exports = db_Main.model("viewPosts", viewPost);

@@ -1,4 +1,4 @@
-var mongoconnect = require("./api/db/database");
+// var mongoconnect = require("./api/db/database");
 var createError = require("http-errors");
 var express = require("express");
 var app = express();
@@ -49,10 +49,11 @@ app.use(
 );
 
 //DatabaseConnection
-connectDatabase();
-function connectDatabase() {
-  return new mongoconnect().connectToDb();
-}
+// connectDatabase();
+// function connectDatabase() {
+//   return new mongoconnect().connectToDb();
+// }
+
 
 //userRoutes
 let userRoutes = [].concat(
@@ -67,7 +68,7 @@ let userRoutes = [].concat(
   categoryRouter
 );
 //adminRoutes
-let adminRoutes = [].concat(registerRouter,postAdminRouter);
+let adminRoutes = [].concat(registerRouter, postAdminRouter);
 
 app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);

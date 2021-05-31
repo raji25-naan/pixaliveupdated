@@ -1,22 +1,23 @@
 const mongoose = require("mongoose");
+const { db_Main } = require("../../db/database")
 
 const taggedPost = new mongoose.Schema({
 
   post_id: {
     type: mongoose.Schema.Types.ObjectId,
-    ref : "Posts"
+    ref: "Posts"
   },
   tagged_userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref : "users"
+    ref: "users"
   },
   taggedByuserId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref : "users"
+    ref: "users"
   },
   created_at: {
     type: Date
   }
 });
 
-module.exports = mongoose.model("taggedPost", taggedPost);
+module.exports = db_Main.model("taggedPost", taggedPost);

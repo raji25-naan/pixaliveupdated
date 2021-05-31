@@ -1,7 +1,8 @@
 const mongoose = require("mongoose");
+const { db_Main } = require("../../db/database")
 
 const Notification = new mongoose.Schema({
-  
+
   sender_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "users"
@@ -18,8 +19,8 @@ const Notification = new mongoose.Schema({
   },
   read: {
     type: Boolean,
-    default : false
+    default: false
   }
 });
 
-module.exports = mongoose.model("Notification", Notification);
+module.exports = db_Main.model("Notification", Notification);
