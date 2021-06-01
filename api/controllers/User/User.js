@@ -670,6 +670,7 @@ exports.user_info = async (req, res, next) => {
     uniq_id.forEach((main_data) => {
       if (main_data == getUserInfo._id) {
         getUserInfo.follow = 1;
+        getUserPosts.user_id.follow = 1;
       }
     });
     var obj_set = { feeds: getUserPosts };
