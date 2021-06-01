@@ -6,11 +6,9 @@ var io = socket_io();
 var socketApi = {};
 
 socketApi.io = io;
-console.log(1);
-
-console.log(socket);
 
 io.on("connection", (socket) => {
+  console.log(1);
   console.log("Test",socket);
   var channel = socket.handshake.query.channel;
   var token = socket.handshake.query.token;
