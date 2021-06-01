@@ -1,6 +1,8 @@
 const Like = require('../../models/User/like');
 const Post = require('../../models/User/Post');
+const notificationSchema = require('../../models/User/Notification');
 const TagPost = require('../../models/User/userTagpost');
+const { sendNotification } = require('../../helpers/notification');
 
 exports.add_like = async (req, res, next) => {
 
@@ -27,10 +29,26 @@ exports.add_like = async (req, res, next) => {
               );
               if(updateLikeCount)
               {
-                  return res.json({
+                const LikePost = await Post.findOne({ _id: post_id });
+                if (user_id != LikePost.user_id) 
+                {
+                  const updateNotification = new notificationSchema({
+                    sender_id: user_id,
+                    receiver_id: LikePost.user_id,
+                    post_id: post_id,
+                    type:0,
+                    seen: 0,
+                    created_at:Date.now()
+                  });
+                  const saveNotificationData = await updateNotification.save();
+                  if (saveNotificationData) {
+                    sendNotification(user_id, LikePost.user_id,0);
+                      return res.json({
                       success: true,
-                      message:"Like Added successfully"
-                  })
+                      message:"Like added and notification Sent"
+                  });
+                }
+                }
               }
               else
               {

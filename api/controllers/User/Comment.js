@@ -26,8 +26,8 @@ exports.add_comment = async (req, res, next) => {
     );
     if (updatecommentCount) {
       const userPost = await postSchema.findOne({ _id: post_id });
-      if (userPost) {
-        if (user_id != userPost.user_id) {
+        if (user_id != userPost.user_id) 
+        {
           const updateNotification = new notificationSchema({
             sender_id: user_id,
             receiver_id: userPost.user_id,
@@ -37,19 +37,13 @@ exports.add_comment = async (req, res, next) => {
           });
           const saveNotificationData = await updateNotification.save();
           if (saveNotificationData) {
-            // sendNotification(user_id, userPost.user_id, 1);
+            sendNotification(user_id, userPost.user_id, 1);
             return res.json({
               success: true,
               message: "Comment added",
             });
           }
-        } else {
-          return res.json({
-            success: true,
-            message: "Comment added",
-          });
-        }
-      } 
+        } 
     } else {
       return res.json({
         success: true,

@@ -1,7 +1,8 @@
 const follow_unfollow = require("../../models/User/follow_unfollow");
 const Users = require("../../models/User/Users");
 const viewPost = require("../../models/User/viewPost");
-
+const notificationSchema = require("../../models/User/Notification");
+const { sendNotification } = require("../../helpers/notification");
 
 exports.createFollow = async(req,res,next) => {
 
@@ -34,10 +35,22 @@ exports.createFollow = async(req,res,next) => {
             );
             if(updateFollowingCount && updateFollowerCount)
             {
+              const updateNotification = new notificationSchema({
+                sender_id: followerId,
+                receiver_id: followingId,
+                type:2,
+                seen: 0,
+                created_at:Date.now(),
+              });
+              const saveNotificationData = await updateNotification.save()
+              if (saveNotificationData) {
+                sendNotification(followerId, followingId,2);
                 return res.json({
-                    success:true,
-                    message:"successfully followed"
-                })
+                  success: true,
+                  message:'successfully following and notification Sent'
+                });
+              }
+                
             }
         }
         }

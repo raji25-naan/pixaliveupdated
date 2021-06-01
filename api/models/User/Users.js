@@ -70,6 +70,10 @@ const user_schema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  google_signin: {
+    type: Boolean,
+    default: false,
+  },
   follow: {
     type: Number,
     default: 0,
