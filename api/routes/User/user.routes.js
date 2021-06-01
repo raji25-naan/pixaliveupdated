@@ -20,6 +20,7 @@ const {
   change_avatar,
   search,
   search_user,
+  socialLogin,
 } = require("../../controllers/User/User");
 const { checkIsactive } = require("../../middlewares/checkActive");
 const { checkSession } = require("../../middlewares/checkAuth");
@@ -68,12 +69,20 @@ router.post(
   login
 );
 
+// router.post(
+//   "/login_phone",
+//   checkRequestBodyParams("phone"),
+//   checkRequestBodyParams("password"),
+//   validateRequest,
+//   login_phone
+// );
+
+//facebook and google login
 router.post(
-  "/login_phone",
-  checkRequestBodyParams("phone"),
-  checkRequestBodyParams("password"),
+  "/social-login",
+  checkRequestBodyParams("email"),
   validateRequest,
-  login_phone
+  socialLogin
 );
 
 router.post(

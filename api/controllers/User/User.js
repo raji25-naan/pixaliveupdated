@@ -102,21 +102,63 @@ exports.signup = async (req, res, next) => {
     } else {
       let otp = Math.floor(1000 + Math.random() * 9000);
       let otpExpirationTime = moment().add(5, "m");
-      let userData = {
-        username: username,
-        email: email,
-        password: bcrypt.hashSync(password, 12),
-        country_code: country_code,
-        phone: phone,
-        first_name: first_name,
-        last_name: last_name,
-        avatar: avatar,
-        otp: otp,
-        otp_verified: false,
-        otpExpirationTime: otpExpirationTime.toISOString(),
-        gcm_token: "",
-        created_At: Date.now(),
-      };
+      let userData;
+      if(req.body.facebook_signin == true)
+      {
+        userData = {
+          username: username,
+          email: email,
+          password: bcrypt.hashSync(password, 12),
+          country_code: country_code,
+          phone: phone,
+          first_name: first_name,
+          last_name: last_name,
+          avatar: avatar,
+          otp: otp,
+          otp_verified: false,
+          otpExpirationTime: otpExpirationTime.toISOString(),
+          gcm_token: "",
+          facebook_signin: true,
+          created_At: Date.now(),
+        };
+      }
+      else if(req.body.google_signin == true)
+      {
+        userData = {
+          username: username,
+          email: email,
+          password: bcrypt.hashSync(password, 12),
+          country_code: country_code,
+          phone: phone,
+          first_name: first_name,
+          last_name: last_name,
+          avatar: avatar,
+          otp: otp,
+          otp_verified: false,
+          otpExpirationTime: otpExpirationTime.toISOString(),
+          gcm_token: "",
+          google_signin: true,
+          created_At: Date.now(),
+        };
+      }
+      else
+      {
+        userData = {
+          username: username,
+          email: email,
+          password: bcrypt.hashSync(password, 12),
+          country_code: country_code,
+          phone: phone,
+          first_name: first_name,
+          last_name: last_name,
+          avatar: avatar,
+          otp: otp,
+          otp_verified: false,
+          otpExpirationTime: otpExpirationTime.toISOString(),
+          gcm_token: "",
+          created_At: Date.now(),
+        };
+      }
 
       const data = new Users(userData);
       const saveData = await data.save();
@@ -405,8 +447,7 @@ exports.login = async (req, res, next) => {
         const token = jwt.sign(payload, process.env.JWT_KEY, {
           expiresIn: "90d",
         });
-        const decodedId = await jwt.verify(token, process.env.JWT_KEY);
-        console.log(decodedId.user.id);
+       
         if (token) {
           return res.json({
             success: true,
@@ -438,51 +479,45 @@ exports.login = async (req, res, next) => {
   }
 };
 
-// login with phone number
-exports.login_phone = async (req, res, next) => {
+//social-login
+exports.socialLogin = async (req, res, next) => {
   try {
-    let { phone, password } = req.body;
-    const data = await Users.findOne({ phone, otp_verified: true }).exec();
-    if (data) {
-      if (data.isActive == false) {
+    //changesByakeel
+    let email = req.body.email;
+    const data = await Users.findOne({ email, otp_verified: true }).exec();
+    if (data) 
+    {
+      if (data.isActive == false) 
+      {
         return res.status(401).json({
           success: false,
           statusCode: 499,
           message: "Your account is not active"
         })
       }
-      const matched = await bcrypt.compare(password, data.password);
-      if (!matched) {
-        return res.json({
-          success: false,
-          message: "Invalid credentials!",
-        });
-      } else {
-        const payload = {
-          user: {
-            id: data._id,
-          },
-        };
-        const token = jwt.sign(payload, process.env.JWT_KEY, {
-          expiresIn: "90d",
-        });
-        if (token) {
-          return res.json({
-            success: true,
-            user: {
-              _id: data._id,
-              username: data.username,
-              first_name: data.first_name,
-              last_name: data.last_name,
-              email: data.email,
-              phone: data.phone,
-              avatar: data.avatar
-            },
-            token: token,
-            message: "you have logged in successfully"
-          });
-        }
-      }
+      const payload = {
+        user: {
+          id: data._id,
+        },
+      };
+      const token = jwt.sign(payload, process.env.JWT_KEY, {
+        expiresIn: "90d",
+      });
+      return res.json({
+        success: true,
+        user: {
+          _id: data._id,
+          username: data.username,
+          first_name: data.first_name,
+          last_name: data.last_name,
+          email: data.email,
+          phone: data.phone,
+          avatar: data.avatar
+        },
+        token: token,
+        message: "you have logged in successfully"
+      });
+             
     } else {
       return res.json({
         success: false,
@@ -496,6 +531,65 @@ exports.login_phone = async (req, res, next) => {
     });
   }
 };
+
+// login with phone number
+// exports.login_phone = async (req, res, next) => {
+//   try {
+//     let { phone, password } = req.body;
+//     const data = await Users.findOne({ phone, otp_verified: true }).exec();
+//     if (data) {
+//       if (data.isActive == false) {
+//         return res.status(401).json({
+//           success: false,
+//           statusCode: 499,
+//           message: "Your account is not active"
+//         })
+//       }
+//       const matched = await bcrypt.compare(password, data.password);
+//       if (!matched) {
+//         return res.json({
+//           success: false,
+//           message: "Invalid credentials!",
+//         });
+//       } else {
+//         const payload = {
+//           user: {
+//             id: data._id,
+//           },
+//         };
+//         const token = jwt.sign(payload, process.env.JWT_KEY, {
+//           expiresIn: "90d",
+//         });
+//         if (token) {
+//           return res.json({
+//             success: true,
+//             user: {
+//               _id: data._id,
+//               username: data.username,
+//               first_name: data.first_name,
+//               last_name: data.last_name,
+//               email: data.email,
+//               phone: data.phone,
+//               avatar: data.avatar
+//             },
+//             token: token,
+//             message: "you have logged in successfully"
+//           });
+//         }
+//       }
+//     } else {
+//       return res.json({
+//         success: false,
+//         message: "you are not registered with us!",
+//       });
+//     }
+//   } catch (error) {
+//     return res.json({
+//       success: false,
+//       message: "Error occured!",
+//     });
+//   }
+// };
 
 //changePassword
 exports.changepassword = async (req, res, next) => {
