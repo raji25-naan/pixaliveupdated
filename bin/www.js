@@ -6,7 +6,7 @@
 
 var app = require("../app");
 var debug = require("debug")("app:server");
-var http = require("http");
+var https = require("http");
 
 const dotenv = require("dotenv");
 dotenv.config({ path: "./dev.env" });
@@ -23,7 +23,7 @@ app.set("port", port);
  * Create HTTP server.
  */
 
-var server = http.createServer(app);
+var server = https.createServer(app);
 
 /**
  * Socket.io
@@ -36,15 +36,15 @@ io.attach(server, {
   cookie: false,
 });
 
-server.listen(port, hostname, () => {
-    debug(`Server running at http://${hostname}:${port}/`);
-    console.log(`Server running at http://${hostname}:${port}/`);
-  });
-
 // app.listen(port, hostname, () => {
 //   console.log(`Server running at http://${hostname}:${port}/`);
 // });
 
+
+server.listen(port, hostname, () => {
+  debug(`Server running at http://${hostname}:${port}/`);
+  console.log(`Server running at http://${hostname}:${port}/`);
+});
 server.on("error", onError);
 server.on("listening", onListening);
 
