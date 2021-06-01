@@ -1,5 +1,27 @@
 const Notification = require("../../models/User/Notification");
 
+module.exports.getAllNotificationByuser = async(req,res,next)=>{
+
+    let user_id = req.user_id;
+    const getAllNotify = await Notification.find({receiver_id:user_id}).exec();
+    if(getAllNotify.length>0)
+    {
+        return res.json({
+            success : true,
+            result : getAllNotify,
+            message: "Notifications fetched successfully"
+        })
+    }
+    else
+    {
+        return res.json({
+            success : true,
+            result : getAllNotify,
+            message: "No notifications"
+        })
+    }
+}
+
 module.exports.updateNotification = async(req,res,next)=>{
 
     let {sender_id,receiver_id,message,title} = req.body;

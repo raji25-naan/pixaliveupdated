@@ -17,9 +17,21 @@ const Notification = new mongoose.Schema({
   message: {
     type: String
   },
-  read: {
-    type: Boolean,
-    default: false
+  post_id:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "post",
+ 
+  },
+  seen:{
+    type:Number,
+    default:0
+  },
+  type:{
+    type:Number 
+  },
+  created_at:{
+    type:Date,
+    default: Date.now()
   }
 });
 
