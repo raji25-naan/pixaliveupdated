@@ -23,7 +23,7 @@ app.set("port", port);
  * Create HTTP server.
  */
 
-var server = https.createServer(port);
+var server = https.createServer(app);
 
 /**
  * Socket.io
