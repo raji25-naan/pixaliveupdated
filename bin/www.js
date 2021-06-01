@@ -36,9 +36,14 @@ io.attach(server, {
   cookie: false,
 });
 
-app.listen(port, hostname, () => {
-  console.log(`Server running at http://${hostname}:${port}/`);
-});
+server.listen(port, hostname, () => {
+    debug(`Server running at http://${hostname}:${port}/`);
+    console.log(`Server running at http://${hostname}:${port}/`);
+  });
+
+// app.listen(port, hostname, () => {
+//   console.log(`Server running at http://${hostname}:${port}/`);
+// });
 
 server.on("error", onError);
 server.on("listening", onListening);
