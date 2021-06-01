@@ -6,7 +6,7 @@
 
 var app = require("../app");
 var debug = require("debug")("app:server");
-var https = require("https");
+var http = require("http");
 
 const dotenv = require("dotenv");
 dotenv.config({ path: "./dev.env" });
@@ -23,7 +23,7 @@ app.set("port", port);
  * Create HTTP server.
  */
 
-var server = https.createServer(app);
+var server = http.createServer(app);
 
 /**
  * Socket.io
