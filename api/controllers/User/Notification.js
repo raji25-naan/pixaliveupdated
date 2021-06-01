@@ -3,7 +3,8 @@ const Notification = require("../../models/User/Notification");
 module.exports.getAllNotificationByuser = async(req,res,next)=>{
 
     let user_id = req.user_id;
-    const getAllNotify = await Notification.find({receiver_id:user_id}).exec();
+    const getAllNotify = await Notification.find({receiver_id:user_id}).populate("sender_id","username first_name last_name avatar")
+    .populate("receiver_id","username first_name last_name avatar").exec();
     if(getAllNotify.length>0)
     {
         return res.json({
