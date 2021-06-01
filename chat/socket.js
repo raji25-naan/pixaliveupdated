@@ -6,10 +6,17 @@ var io = socket_io();
 var socketApi = {};
 
 socketApi.io = io;
-
-io.on("connection", (socket) => {
-  console.log(1);
-  console.log("Test",socket);
+console.log(io);
+console.log(1);
+io.on("connection", (socket,error) => {
+  console.log(2);
+  if(error)
+  {
+    console.log(error);
+  }
+  else
+  {
+    console.log("Test",socket);
   var channel = socket.handshake.query.channel;
   var token = socket.handshake.query.token;
 
@@ -20,6 +27,7 @@ io.on("connection", (socket) => {
     //console.log('Token invalid disconnected!');
     socket.disconnect();
     return;
+  }
   }
 
   //Leave the room if the user closes the socket
