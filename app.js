@@ -18,6 +18,7 @@ const storyRouter = require("./api/routes/User/story.routes");
 const TagpostRouter = require("./api/routes/User/userTagpost");
 const categoryRouter = require("./api/routes/User/category");
 const chatRouter = require("./api/routes/User/chat.routes");
+const notificationRouter = require("./api/routes/User/Notification");
 const fileUpload = require("express-fileupload");
 
 //admin router
@@ -65,7 +66,8 @@ let userRoutes = [].concat(
   storyRouter,
   hashtagRouter,
   TagpostRouter,
-  categoryRouter
+  categoryRouter,
+  notificationRouter
 );
 //adminRoutes
 let adminRoutes = [].concat(registerRouter, postAdminRouter);
