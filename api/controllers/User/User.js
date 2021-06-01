@@ -572,6 +572,7 @@ exports.user_info = async (req, res, next) => {
           post.isLiked = 1;
         }
       });
+    });
     uniq_id.forEach((main_data) => {
       if (main_data == getUserInfo._id) {
         getUserInfo.follow = 1;
