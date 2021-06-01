@@ -482,7 +482,6 @@ exports.login = async (req, res, next) => {
 //social-login
 exports.socialLogin = async (req, res, next) => {
   try {
-    //changesByakeel
     let email = req.body.email;
     const data = await Users.findOne({ email, otp_verified: true }).exec();
     if (data) 
@@ -524,7 +523,8 @@ exports.socialLogin = async (req, res, next) => {
         message: "you are not registered with us!",
       });
     }
-  } catch (error) {
+  }
+   catch (error) {
     return res.json({
       success: false,
       message: "Error occured!",

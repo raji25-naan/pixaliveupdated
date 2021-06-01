@@ -20,7 +20,7 @@ const {
   change_avatar,
   search,
   search_user,
-  socialLogin,
+  socialLogin
 } = require("../../controllers/User/User");
 const { checkIsactive } = require("../../middlewares/checkActive");
 const { checkSession } = require("../../middlewares/checkAuth");
