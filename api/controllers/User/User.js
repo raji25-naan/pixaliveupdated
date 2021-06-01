@@ -2,6 +2,7 @@ const moment = require("moment");
 const Users = require("../../models/User/Users");
 const followSchema = require("../../models/User/follow_unfollow");
 const postSchema = require("../../models/User/Post");
+const likeSchema = require("../../models/User/like");
 const Hashtag = require("../../models/User/hashtags");
 const bcrypt = require("bcrypt");
 const {
@@ -549,7 +550,7 @@ exports.user_info = async (req, res, next) => {
   try {
     let user_id = req.user_id;
     let getUserInfo = await Users.findOne({ _id: req.query.id, isActive: true }).exec();
-    let getUserPosts = await postSchema.find({ user_id: getUserInfo._id, isActive: true }).populate("user_id", "username first_name last_name avatar").exec();
+    let getUserPosts = await postSchema.find({ user_id: getUserInfo._id, isActive: true }).populate("user_id", "username first_name last_name avatar follow").exec();
     //getFriendslist
     const data_follower = await followSchema.distinct("followingId", {
       followerId: user_id,
@@ -559,9 +560,21 @@ exports.user_info = async (req, res, next) => {
     });
     var array3 = data_follower.concat(data_following).map(String);
     var uniq_id = [...new Set(array3)];
+    let get_like = await likeSchema.distinct("post_id", {
+      user_id: user_id,
+      isLike: 1,
+    });
+    let likedIds = get_like.map(String);
+    getUserPosts.forEach((post) => {
+      likedIds.forEach((id) => {
+        console.log(id == post._id);
+        if (id == post._id) {
+          post.isLiked = 1;
+        }
+      });
     uniq_id.forEach((main_data) => {
       if (main_data == getUserInfo._id) {
-        getUserInfo["follow"] = 1;
+        getUserInfo.follow = 1;
       }
     });
     var obj_set = { feeds: getUserPosts };
