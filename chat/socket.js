@@ -28,6 +28,7 @@ io.on("connection", (socket) => {
 
   //Send message to only a particular user
   socket.on("send_message", (data) => {
+    console.log("data1",data);
     //var message = JSON.parse(data);
 
     receiverId = data.receiver_id;
