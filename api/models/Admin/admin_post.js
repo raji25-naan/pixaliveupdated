@@ -19,7 +19,7 @@ const admin_postSchema = new mongoose.Schema({
     },
     user_id: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "users"
+        ref: "registers"
     },
     place: {
         type: String,

@@ -381,10 +381,8 @@ exports.login = async (req, res, next) => {
     let phone = req.body.email;
     let password = req.body.password;
     const data = await Users.findOne({ phone, otp_verified: true }).exec();
-    if (data) 
-    {
-      if(data.isActive == false)
-      {
+    if (data) {
+      if (data.isActive == false) {
         return res.status(401).json({
           success: false,
           statusCode: 499,
@@ -411,16 +409,16 @@ exports.login = async (req, res, next) => {
         if (token) {
           return res.json({
             success: true,
-            user : {
-              _id : data._id,
-              username : data.username,
-              first_name : data.first_name,
-              last_name : data.last_name,
-              email : data.email,
-              phone : data.phone,
-              avatar : data.avatar
+            user: {
+              _id: data._id,
+              username: data.username,
+              first_name: data.first_name,
+              last_name: data.last_name,
+              email: data.email,
+              phone: data.phone,
+              avatar: data.avatar
             },
-            token : token,
+            token: token,
             message: "you have logged in successfully"
           });
         }
@@ -445,8 +443,7 @@ exports.login_phone = async (req, res, next) => {
     let { phone, password } = req.body;
     const data = await Users.findOne({ phone, otp_verified: true }).exec();
     if (data) {
-      if(data.isActive == false)
-      {
+      if (data.isActive == false) {
         return res.status(401).json({
           success: false,
           statusCode: 499,
@@ -471,16 +468,16 @@ exports.login_phone = async (req, res, next) => {
         if (token) {
           return res.json({
             success: true,
-            user : {
-              _id : data._id,
-              username : data.username,
-              first_name : data.first_name,
-              last_name : data.last_name,
-              email : data.email,
-              phone : data.phone,
-              avatar : data.avatar
+            user: {
+              _id: data._id,
+              username: data.username,
+              first_name: data.first_name,
+              last_name: data.last_name,
+              email: data.email,
+              phone: data.phone,
+              avatar: data.avatar
             },
-            token : token,
+            token: token,
             message: "you have logged in successfully"
           });
         }
@@ -549,11 +546,10 @@ exports.changepassword = async (req, res, next) => {
 
 //Get user info
 exports.user_info = async (req, res, next) => {
-  try
-   {
+  try {
     let user_id = req.user_id;
-    let getUserInfo = await Users.findOne({ _id: req.query.id,isActive: true }).exec();
-    let getUserPosts = await postSchema.find({user_id: getUserInfo._id,isActive: true}).populate("user_id","username first_name last_name avatar").exec();
+    let getUserInfo = await Users.findOne({ _id: req.query.id, isActive: true }).exec();
+    let getUserPosts = await postSchema.find({ user_id: getUserInfo._id, isActive: true }).populate("user_id", "username first_name last_name avatar").exec();
     //getFriendslist
     const data_follower = await followSchema.distinct("followingId", {
       followerId: user_id,
@@ -563,18 +559,17 @@ exports.user_info = async (req, res, next) => {
     });
     var array3 = data_follower.concat(data_following).map(String);
     var uniq_id = [...new Set(array3)];
-      uniq_id.forEach((main_data) => {
-        if (main_data == getUserInfo._id) {
-          getUserInfo["follow"] = 1;
-        }
-      });
-    var obj_set = {feeds: getUserPosts};
+    uniq_id.forEach((main_data) => {
+      if (main_data == getUserInfo._id) {
+        getUserInfo["follow"] = 1;
+      }
+    });
+    var obj_set = { feeds: getUserPosts };
     const obj = Object.assign({}, getUserInfo._doc, obj_set);
-    if (obj) 
-    {
+    if (obj) {
       return res.json({
         success: true,
-        user : obj,
+        user: obj,
         message: "successfully fetched user information"
       });
     } else {
@@ -594,7 +589,7 @@ exports.user_info = async (req, res, next) => {
 //is_user
 exports.is_user = async (req, res, next) => {
   try {
-    const getUserData = await Users.findOne({ phone: req.body.phone,isActive:true });
+    const getUserData = await Users.findOne({ phone: req.body.phone, isActive: true });
     if (getUserData) {
       return res.json({
         success: true,
@@ -935,12 +930,11 @@ exports.gcm_token_updation = async (req, res, next) => {
 
 // search user
 exports.search_user = async (req, res, next) => {
-  try 
-  {
+  try {
     const search_user = req.query.search_user;
     const user_id = req.user_id;
     let reg = new RegExp(search_user);
-    const all_users = await Users.find({username: reg,isActive: true}).exec();
+    const all_users = await Users.find({ username: reg, isActive: true }).exec();
     if (all_users.length > 0) {
       const data_follower = await followSchema.distinct("followingId", {
         followerId: user_id,
@@ -969,7 +963,7 @@ exports.search_user = async (req, res, next) => {
       });
     }
 
-      
+
   } catch (error) {
     return res.json({
       success: false,
@@ -981,14 +975,12 @@ exports.search_user = async (req, res, next) => {
 // search place
 exports.search_place = async (req, res, next) => {
 
-  try 
-  {    
+  try {
     const search = req.query.place;
     const user_id = req.user_id;
     var reg = new RegExp(search);
-    const get_place = await postSchema.find({ place: reg , isActive:true}).exec();
-    if (get_place.length>0) 
-    {
+    const get_place = await postSchema.find({ place: reg, isActive: true }).exec();
+    if (get_place.length > 0) {
       const data_follower = await followSchema.distinct("followingId", {
         followerId: user_id,
       });
@@ -1010,8 +1002,7 @@ exports.search_place = async (req, res, next) => {
         feeds: get_place,
       });
     }
-    else
-    {
+    else {
       return res.json({
         success: false,
         message: "No data found"
@@ -1027,8 +1018,7 @@ exports.search_place = async (req, res, next) => {
 
 // upload avatar in user schema
 exports.upload_avatar = async (req, res, next) => {
-  try 
-  {
+  try {
     console.log(req.files);
     const file = req.files.photo;
     const user_id = req.user_id;
@@ -1106,7 +1096,7 @@ exports.search = async (req, res, next) => {
     const search_category = req.query.search_category;
     if (search_user) {
       let reg = new RegExp(search_user);
-      const all_users = await Users.find({ username: reg,isActive: true}).exec();
+      const all_users = await Users.find({ username: reg, isActive: true }).exec();
       if (all_users.length > 0) {
         const data_follower = await followSchema.distinct("followingId", {
           followerId: user_id,
@@ -1134,8 +1124,7 @@ exports.search = async (req, res, next) => {
           message: "user not found ",
         });
       }
-    } else if (search_hashtag) 
-    {
+    } else if (search_hashtag) {
       let reg = new RegExp(search_hashtag);
       const getHashtags = await Hashtag.find({ hashtag: reg });
       if (getHashtags.length > 0) {
@@ -1164,12 +1153,10 @@ exports.search = async (req, res, next) => {
         });
       }
     }
-    else if(search_category)
-    {
-      let reg = new RegExp( search_category);
-      const getPosts = await postSchema.find({category: reg,isActive: true}).exec();
-      if(getPosts.length>0)
-      {
+    else if (search_category) {
+      let reg = new RegExp(search_category);
+      const getPosts = await postSchema.find({ category: reg, isActive: true }).exec();
+      if (getPosts.length > 0) {
         const data_follower = await followSchema.distinct("followingId", {
           followerId: user_id,
         });
@@ -1191,8 +1178,7 @@ exports.search = async (req, res, next) => {
           result: getPosts
         });
       }
-      else
-      {
+      else {
         return res.json({
           success: false,
           message: "No data found"

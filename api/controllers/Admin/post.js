@@ -104,10 +104,14 @@ exports.getAllPost = async (req, res, next) => {
 
   try {
     const getPosts = await Post.find({}).sort({ created_at: -1 }).populate('user_id', 'username isActive').exec();
+    const adminPost = await admin_post.find({}).sort({ created_at: -1 }).populate('user_id', 'username').exec();
+
+    const all_post = { ...getPosts, ...adminPost }
+    console.log(all_post)
     if (getPosts.length > 0) {
       return res.json({
         success: true,
-        result: getPosts,
+        result: all_post,
         message: "Fetched posts successfully"
       });
     }
