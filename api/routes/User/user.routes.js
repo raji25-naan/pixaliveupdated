@@ -21,6 +21,7 @@ const {
   search,
   search_user,
   socialLogin,
+  contactSync,
   
 } = require("../../controllers/User/User");
 const { checkIsactive } = require("../../middlewares/checkActive");
@@ -214,5 +215,15 @@ router.get(
   validateRequest,
   search
 );
+
+// contactSync
+router.post(
+  "/contactSync",
+  checkSession,
+  checkIsactive,
+  checkRequestBodyParams("phone"),
+  validateRequest,
+  contactSync
+)
 
 module.exports = router;

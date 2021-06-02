@@ -1301,3 +1301,50 @@ exports.search = async (req, res, next) => {
     });
   }
 };
+
+//contactSync
+exports.contactSync = async(req,res,next)=>{
+  try{
+    const user_id = req.user_id;
+    const phonelist = req.body.phone;
+    const userlist = await Users.find({phone:phonelist},{_id:1,username:1,first_name:1,last_name:1,follow:1,phone:1,avatar:1}).exec();
+    if(userlist.length>0)
+    {
+      //checkFriends
+      const data_follower = await followSchema.distinct("followingId", {
+        followerId: user_id,
+      });
+      const data_following = await followSchema.distinct("followerId", {
+        followingId: user_id,
+      });
+      var array3 = data_follower.concat(data_following).map(String);
+      var uniq_id = [...new Set(array3)];
+      console.log(uniq_id);
+      userlist.forEach((data) => {
+        uniq_id.forEach((main_data) => {
+          if (main_data == data._id) {
+            data.follow = 1;
+          }
+        });
+      });
+      return res.json({
+        success:true,
+        users:userlist
+      })
+    }
+    else
+    {
+      return res.json({
+        success:false,
+        message:"No data found"
+        
+      })
+    }
+  }
+  catch(error){
+    return res.json({
+      success: false,
+      message: "Error occured! " + error,
+    });
+  }
+}
