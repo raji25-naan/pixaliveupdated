@@ -1206,8 +1206,9 @@ exports.search = async (req, res, next) => {
     const search_hashtag = req.query.search_hashtag;
     const search_category = req.query.search_category;
     if (search_user) {
-      let reg = new RegExp(search_user);
-      const all_users = await Users.find({ username: reg, isActive: true }).exec();
+      // let reg = new RegExp(search_user);
+      const all_users = await Users.find({ "username": new RegExp(".*" + req.query.search_user + ".*", "i"),isActive:true}).exec();
+      // const all_users = await Users.find({ username: reg, isActive: true }).exec();
       if (all_users.length > 0) {
         const data_follower = await followSchema.distinct("followingId", {
           followerId: user_id,
@@ -1236,8 +1237,8 @@ exports.search = async (req, res, next) => {
         });
       }
     } else if (search_hashtag) {
-      let reg = new RegExp(search_hashtag);
-      const getHashtags = await Hashtag.find({ hashtag: reg });
+      // let reg = new RegExp(search_hashtag);
+      const getHashtags = await Hashtag.find({"hashtag": new RegExp(".*" + req.query.search_hashtag + ".*", "i")});
       if (getHashtags.length > 0) {
         let userFollowedHashtagList = await Users.distinct(
           "followedHashtag._id",
@@ -1265,8 +1266,8 @@ exports.search = async (req, res, next) => {
       }
     }
     else if (search_category) {
-      let reg = new RegExp(search_category);
-      const getPosts = await postSchema.find({ category: reg, isActive: true }).exec();
+      // let reg = new RegExp(search_category);
+      const getPosts = await postSchema.find({"category": new RegExp(".*" + req.query.search_category + ".*", "i"), isActive: true }).exec();
       if (getPosts.length > 0) {
         const data_follower = await followSchema.distinct("followingId", {
           followerId: user_id,
