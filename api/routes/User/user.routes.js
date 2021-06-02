@@ -221,8 +221,8 @@ router.post(
   "/contactSync",
   checkSession,
   checkIsactive,
-  checkRequestBodyParams("phone"),
-  validateRequest,
+  // checkRequestBodyParams(["phone"]),
+  // validateRequest,
   contactSync
 )
 

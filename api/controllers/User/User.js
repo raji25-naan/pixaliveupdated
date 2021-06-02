@@ -1306,7 +1306,9 @@ exports.search = async (req, res, next) => {
 exports.contactSync = async(req,res,next)=>{
   try{
     const user_id = req.user_id;
-    let phonelist = [] = req.body.phone;
+    console.log(req.body);
+    let phonelist = [];
+    phonelist = req.body.phone;
     const userlist = await Users.find({phone:{$in: phonelist}},{_id:1,username:1,first_name:1,last_name:1,follow:1,phone:1,avatar:1}).exec();
     if(userlist.length>0)
     {
