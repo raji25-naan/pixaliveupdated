@@ -668,10 +668,12 @@ exports.user_info = async (req, res, next) => {
       });
     });
     uniq_id.forEach((main_data) => {
-      if (main_data == getUserInfo._id) {
-        getUserInfo.follow = 1;
-        getUserPosts.user_id.follow = 1;
-      }
+      getUserPosts.forEach((post) => {
+        if (main_data == getUserInfo._id) {
+          getUserInfo.follow = 1;
+          post.user_id.follow = 1;
+        }
+      });
     });
     var obj_set = { feeds: getUserPosts };
     const obj = Object.assign({}, getUserInfo._doc, obj_set);
