@@ -44,6 +44,7 @@ exports.signup = async (req, res, next) => {
     }
     let checkRegisterEmail = await Users.findOne({
       email: email,
+      phone: phone,
       otp_verified: false,
     }).exec();
     if (checkRegisterEmail) {

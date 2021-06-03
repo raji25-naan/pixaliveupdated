@@ -28,7 +28,7 @@ function makeNewConnection(uri) {
     return db;
 }
 
-const db_Main = makeNewConnection("mongodb+srv://pixaliveDuplicate:pixadupe123@cluster0.rjdpc.mongodb.net/myFirstDatabase?retryWrites=true&w=majority");
+const db_Main = makeNewConnection("mongodb+srv://pixaliveTest:pixalivetest123@cluster0.szd08.mongodb.net/pixaliveTest?retryWrites=true&w=majority");
 const db_Chat = makeNewConnection("mongodb+srv://findplace:findplacepassword@cluster0.sj5tv.mongodb.net/findplace?retryWrites=true&w=majority");
 module.exports = { db_Main, db_Chat };
 
