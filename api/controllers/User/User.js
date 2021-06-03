@@ -42,6 +42,14 @@ exports.signup = async (req, res, next) => {
         message: "Please enter valid phone number",
       });
     }
+    //checkPassword
+    if (password != confirm_password)
+    {
+     return res.json({
+       success: false,
+       message: "Passwords must be the same!",
+     });
+   }
     let checkRegisterEmail = await Users.findOne({
       email: email,
       phone: phone,
@@ -92,14 +100,7 @@ exports.signup = async (req, res, next) => {
           success: false,
           message: "Phone number already regitered!",
         });
-      }
-      //checkPassword
-      if (password != confirm_password) {
-        return res.json({
-          success: false,
-          message: "Passwords must be the same!",
-        });
-      }
+      }      
     } else {
       let otp = Math.floor(1000 + Math.random() * 9000);
       let otpExpirationTime = moment().add(5, "m");
