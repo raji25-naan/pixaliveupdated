@@ -38,7 +38,7 @@ app.use(timeout("20s"));
 // app.use(express.urlencoded({ limit: "50mb" }));
 app.use(fileUpload());
 app.use(bodyParser.json({ limit: "50mb" }));
-
+app.use('/profile_avatar', express.static(path.join(__dirname, 'profile_avatar')));
 console.log("APP.JS LINE: 17");
 
 app.use(

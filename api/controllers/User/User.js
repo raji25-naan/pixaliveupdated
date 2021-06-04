@@ -1147,15 +1147,18 @@ exports.upload_avatar = async (req, res, next) => {
           },
           { new: true }
         );
-        res.send({
-          success: true,
-          message: "File uploads",
-        });
+        if(getUserInfoAndUpdate)
+        {
+          res.send({
+            success: true,
+            message: file.name
+          });
+        }
       });
     } else {
       return res.json({
         success: false,
-        message: "Only jpeg and png are accepted !!" + error,
+        message: "Only jpeg and png are accepted "
       });
     }
   } catch (error) {
@@ -1182,15 +1185,19 @@ exports.change_avatar = async (req, res, next) => {
           },
           { new: true }
         );
-        res.send({
-          success: true,
-          message: "File uploads",
-        });
+        if(getUserInfoAndUpdate)
+        {
+          res.send({
+            success: true,
+            message: file.name
+          });
+        }
+        
       });
     } else {
       return res.json({
         success: false,
-        message: "Only jpeg and png are accepted !!" + error,
+        message: "Only jpeg and png are accepted"
       });
     }
   } catch (error) {
