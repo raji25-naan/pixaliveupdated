@@ -140,7 +140,7 @@ router.post(
 //reset_passwordstep1
 router.post(
   "/forgotpassword",
-  checkRequestBodyParams("email"),
+  checkRequestBodyParams("phone"),
   validateRequest,
   forgotpassword
 );

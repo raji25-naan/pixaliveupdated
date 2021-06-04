@@ -822,9 +822,9 @@ exports.updateProfile = async (req, res, next) => {
 
 exports.forgotpassword = async (req, res, next) => {
   try {
-    let email = req.body.email;
+    let phone = req.body.phone;
     let getUserInfo = await Users.findOne({
-      email: email,
+      phone: phone,
       otp_verified: true,
     }).exec();
     if (getUserInfo) {
@@ -840,7 +840,7 @@ exports.forgotpassword = async (req, res, next) => {
       });
 
       const data = await Users.findOneAndUpdate(
-        { email: req.body.email },
+        { phone: req.body.phone },
         {
           $set: {
             otp: otp,
