@@ -152,8 +152,8 @@ router.post(
 //trendingPeople
 router.get(
   "/trendingPeople",
-  // checkSession,
-  // checkIsactive,
+  checkSession,
+  checkIsactive,
   catch_error(trendingPeople)
 )
 
