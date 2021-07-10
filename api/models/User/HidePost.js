@@ -1,19 +1,20 @@
 const mongoose = require("mongoose");
 const { db_Main } = require("../../db/database")
 
-const reports = new mongoose.Schema({
+const hidepost = new mongoose.Schema({
+
     post_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Posts"
     },
-    reportedByid: {
+    hideByid: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "users"
     },
-    report: {
-        type: String,
-        default: ""
+    created_at:{
+        type:Date,
+        default: Date.now()
     }
 });
 
-module.exports = db_Main.model("reports", reports)
+module.exports = db_Main.model("hideposts", hidepost)

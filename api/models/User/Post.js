@@ -3,64 +3,74 @@ const { db_Main } = require("../../db/database")
 
 const postSchema = new mongoose.Schema({
   url: {
-    type: String
+    type: String,
+    default: ""
   },
   text_content: {
-    type: String,
+    type: String
   },
   thumbnail: {
-    type: String,
+    type: String
   },
   post_type: {
-    type: Number,
+    type: Number
   },
   body: {
-    type: String,
+    type: String
   },
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "users"
   },
-  place: {
-    type: String,
-  },
   created_at: {
-    type: Date,
+    type: Date
   },
   likeCount: {
     type: Number,
-    default: 0,
+    default: 0
   },
   commentCount: {
     type: Number,
     default: 0
   },
   hashtag: {
-    type: Array,
+    type: Array
   },
-  lat: {
+  place: {
     type: String,
     default: ""
   },
-  lng: {
-    type: String,
-    default: ""
-  },
-  category: {
-    type: String
-  },
+  category: [],
   isActive: {
     type: Boolean,
-    default: false,
+    default: false
+  },
+  isDeleted: {
+    type: Boolean,
+    default: false
   },
   isLiked: {
     type: Number,
     default: 0
   },
-  image: {
+  privacyType: {
+    type: String,
+    default: ""
+  },
+  tagged_userId: [],
+  reloopPostId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Posts"
+  },
+  reloopCount: {
+    type: Number,
+    default: 0
+  },
+  encryptId: {
     type: String,
     default: ""
   }
+
 });
 
 module.exports = db_Main.model("Posts", postSchema);

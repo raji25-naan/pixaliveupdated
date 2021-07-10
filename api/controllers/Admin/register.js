@@ -1,4 +1,4 @@
-const Register = require("../../models/Admin/register");
+const Admin_schema = require("../../models/Admin/register");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const Users = require("../../models/User/Users");
@@ -9,13 +9,11 @@ const Comment = require("../../models/User/Comment");
 
 exports.signup = async (req, res) => {
   console.log(1);
-  let { username, email, password, country_code, phone } = req.body;
-  const data = new Register({
+  let { username, email, password } = req.body;
+  const data = new Admin_schema({
     username: username,
     email: email,
     password: bcrypt.hashSync(password, 12),
-    country_code: country_code,
-    phone: phone,
     created_At: Date.now(),
   });
   const save = await data.save();
@@ -26,7 +24,7 @@ exports.signup = async (req, res) => {
 exports.login = async (req, res, next) => {
   try {
     let { username, password } = req.body;
-    const data = await Register.findOne({ username }).exec();
+    const data = await Admin_schema.findOne({ username }).exec();
     if (data) {
       const matched = await bcrypt.compare(password, data.password);
       if (!matched) {
@@ -67,22 +65,8 @@ exports.login = async (req, res, next) => {
 
 exports.getAllUsers = async (req, res, next) => {
   try {
-    let getUserInfo = await Users.find(
-      {
-        $or: [{ isActive: true }, { isActive: false }],
-      },
-      {
-        _id: 1,
-        avatar: 1,
-        username: 1,
-        first_name: 1,
-        last_name: 1,
-        phone: 1,
-        email: 1,
-        isActive: 1,
-      }
-    ).exec();
-    if (getUserInfo.length > 0) {
+    let getUserInfo = await Users.find()
+    if (getUserInfo.length) {
       return res.json({
         success: true,
         result: getUserInfo,
@@ -103,14 +87,53 @@ exports.getAllUsers = async (req, res, next) => {
 
 exports.activateUser = async (req, res, next) => {
   try {
-    const updateactivate = await Users.updateOne(
-      { _id: req.body.userId },
+    console.log(1)
+    let userId = req.body.userId;
+    console.log(userId)
+    //ActivateUser
+    const updateActivateUser = await Users.updateOne(
+      { _id: userId },
       {
-        $set: { isActive: true },
+        $set: { isActive: true }
       },
       { new: true }
+    ).exec();
+    //ActivateUserPosts
+    const updateActivateUserPosts = await Posts.updateMany(
+      { user_id: userId },
+      { $set: { isActive: true } },
+      { new: true }
     );
-    if (updateactivate) {
+    //reduceFollowingCount
+    let totalFollower = await follow_unfollow.distinct("followerId", { followingId: userId, status: 1 }).exec();
+    const increaseFollowingCount = await Users.updateMany(
+      { _id: { $in: totalFollower } },
+      { $inc: { followingCount: 1 } },
+      { new: true }
+    );
+    //reduceFollowersCount
+    let totalFollowing = await follow_unfollow.distinct("followingId", { followerId: userId, status: 1 }).exec();
+    const increaseFollowersCount = await Users.updateMany(
+      { _id: { $in: totalFollowing } },
+      { $inc: { followersCount: 1 } },
+      { new: true }
+    );
+    //reduceLikeCount
+    let totalLike = await Like.distinct("post_id", { user_id: userId, isLike: 1 }).exec();
+    const increaseLikeCount = await Posts.updateMany(
+      { _id: { $in: totalLike } },
+      { $inc: { likeCount: 1 } },
+      { new: true }
+    );
+    // reduceCommentCount
+    let totalComments = await Comment.distinct("post_id", { user_id: userId }).exec();
+    const increaseCommentCount = await Comment.updateMany(
+      { _id: { $in: totalComments } },
+      { $inc: { commentCount: 1 } },
+      { new: true }
+    );
+    console.log(increaseCommentCount)
+    if (updateActivateUser && updateActivateUserPosts) {
       return res.json({
         success: true,
         result: "Successfully Activated",
@@ -125,12 +148,11 @@ exports.activateUser = async (req, res, next) => {
 };
 
 exports.deactivateUser = async (req, res, next) => {
-  try 
-  {
+  try {
     let userId = req.body.userId;
     //deactivateUser
     const updateDeactivateUser = await Users.updateOne(
-      { _id: userId},
+      { _id: userId },
       {
         $set: { isActive: false }
       },
@@ -138,38 +160,38 @@ exports.deactivateUser = async (req, res, next) => {
     ).exec();
     //deactivateUserPosts
     const updateDeactivateUserPosts = await Posts.updateMany(
-      {user_id : userId},
-      {$set:{isActive : false}},
-      {new:true}
-    ).exec();
+      { user_id: userId },
+      { $set: { isActive: false } },
+      { new: true }
+    );
     //reduceFollowingCount
-    let totalFollower = await follow_unfollow.distinct("followerId",{followingId:userId}).exec();
+    let totalFollower = await follow_unfollow.distinct("followerId", { followingId: userId, status: 1 }).exec();
     const reduceFollowingCount = await Users.updateMany(
-      {_id:{$in:totalFollower}},
-      {$inc:{followingCount : -1}},
-      {new:true}
-    ).exec();
+      { _id: { $in: totalFollower } },
+      { $inc: { followingCount: -1 } },
+      { new: true }
+    );
     //reduceFollowersCount
-    let totalFollowing = await follow_unfollow.distinct("followingId",{followerId:userId}).exec();
+    let totalFollowing = await follow_unfollow.distinct("followingId", { followerId: userId, status: 1 }).exec();
     const reduceFollowersCount = await Users.updateMany(
-      {_id:{$in:totalFollowing}},
-      {$inc:{followersCount : -1}},
-      {new:true}
-    ).exec();
+      { _id: { $in: totalFollowing } },
+      { $inc: { followersCount: -1 } },
+      { new: true }
+    );
     //reduceLikeCount
-    let totalLike = await Like.distinct("post_id",{user_id:userId,isLike:1}).exec();
+    let totalLike = await Like.distinct("post_id", { user_id: userId, isLike: 1 }).exec();
     const reduceLikeCount = await Posts.updateMany(
-      {_id:{$in:totalLike}},
-      {$inc:{likeCount:-1}},
-      {new:true}
-    ).exec();
+      { _id: { $in: totalLike } },
+      { $inc: { likeCount: -1 } },
+      { new: true }
+    );
     // reduceCommentCount
-    let totalComments = await Comment.distinct("post_id",{user_id:userId}).exec();
+    let totalComments = await Comment.distinct("post_id", { user_id: userId }).exec();
     const reduceCommentCount = await Comment.updateMany(
-      {_id:{$in:totalComments}},
-      {$inc:{commentCount:-1}},
-      {new:true}
-    ).exec();
+      { _id: { $in: totalComments } },
+      { $inc: { commentCount: -1 } },
+      { new: true }
+    );
     if (updateDeactivateUser && updateDeactivateUserPosts) {
       return res.json({
         success: true,
@@ -186,24 +208,20 @@ exports.deactivateUser = async (req, res, next) => {
 
 exports.getUserDetail = async (req, res, next) => {
   try {
-    const getUserInfo = await Users.findOne(
-      { _id: req.query.userId },
-      {
-        _id: 1,
-        avatar: 1,
-        username: 1,
-        first_name: 1,
-        last_name: 1,
-        phone: 1,
-        email: 1,
-        country_code: 1,
-      }
-    ).exec();
+    console.log(req.query.userId)
+    const getUserInfo = await Users.findOne({ _id: req.query.userId });
+    const post_countTrue = await Posts.find({ user_id: req.query.userId, isActive: true });
+    const post_countfalse = await Posts.find({ user_id: req.query.userId, isActive: false });
+
+    let ActiveCount = post_countTrue.length;
+    let InActiveCount = post_countfalse.length;
     if (getUserInfo) {
       {
         return res.json({
           success: true,
-          result: getUserInfo,
+          getUserInfo: getUserInfo,
+          ActiveCount: ActiveCount,
+          InActiveCount: InActiveCount,
           message: "Fetched successfully",
         });
       }

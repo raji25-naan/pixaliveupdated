@@ -19,11 +19,15 @@ const TagpostRouter = require("./api/routes/User/userTagpost");
 const categoryRouter = require("./api/routes/User/category");
 const chatRouter = require("./api/routes/User/chat.routes");
 const notificationRouter = require("./api/routes/User/Notification");
+const user_profileRouter = require("./api/routes/User/user_profile.routes");
+const blockedRouter = require("./api/routes/User/blockedUser.routes");
+const CronJob = require('node-cron');
 const fileUpload = require("express-fileupload");
 
 //admin router
 const registerRouter = require("./api/routes/Admin/register");
 const postAdminRouter = require("./api/routes/Admin/post");
+const storyAdminRouter = require("./api/routes/Admin/story");
 //firebaseAdmin
 // global.admin = require("firebase-admin");
 // const serviceAccount = require("./api/serviceAccountkey.json");
@@ -67,10 +71,13 @@ let userRoutes = [].concat(
   hashtagRouter,
   TagpostRouter,
   categoryRouter,
-  notificationRouter
+  notificationRouter,
+  chatRouter,
+  user_profileRouter,
+  blockedRouter
 );
 //adminRoutes
-let adminRoutes = [].concat(registerRouter, postAdminRouter);
+let adminRoutes = [].concat(registerRouter, postAdminRouter, storyAdminRouter);
 
 app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);
@@ -84,7 +91,7 @@ app.use("/api/admin", adminRoutes);
 // app.use("/api/User/hashtag",hashtagRouter);
 // app.use("/api/User/tagPost",TagpostRouter);
 // app.use("/api/User/category",categoryRouter);
-app.use("/api/User/chat", chatRouter);
+// app.use("/api/User/chat", chatRouter);
 
 //admin router
 // app.use("/api/Admin/register",registerRouter);
@@ -100,6 +107,12 @@ app.use(haltOnTimedout);
 app.use(cookieParser());
 app.use(haltOnTimedout);
 app.use(cors());
+app.use(function (err, req, res, next) {
+  return res.json({
+    success: false,
+    message: "error occur" + err
+  })
+})
 
 app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
@@ -129,5 +142,10 @@ app.use(function (err, req, res, next) {
 function haltOnTimedout(req, res, next) {
   if (!req.timedout) next();
 }
+
+//CronJob
+CronJob.schedule('0 05 11 * * *', async () => {
+  console.info(`running cron job a task ${new Date()}`);
+})
 
 module.exports = app;

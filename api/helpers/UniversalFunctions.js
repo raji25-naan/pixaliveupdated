@@ -5,12 +5,11 @@ const ejs = require('ejs');
 const { getUrl } = require('./getUrl');
 const { sendOtpToEmail } = require('./emailSms');
 
-module.exports.SendEmailVerificationLink = function(otp,req,user){
+module.exports.SendEmailVerificationLink = function(otp,req,email){
 
     let verificationToken = jwt.sign(
         {
-            id: user._id,
-            email: user.email
+            email: email
         },
         process.env.JWT_KEY,
         {
@@ -27,7 +26,7 @@ module.exports.SendEmailVerificationLink = function(otp,req,user){
         //context
         let context = {
             'verification-token': verificationToken,
-            username: user.username,
+            // username: user.username,
             'user_otp': otp,
             'baseUrl': baseUrl,
             'url': url,
@@ -37,7 +36,7 @@ module.exports.SendEmailVerificationLink = function(otp,req,user){
         let html = compiledTmpl(context);
         let mailOptions = {
             from: 'mail@pixalive.me',
-            to: user.email,
+            to: email,
             subject: 'Verify email',
             html: html
         };

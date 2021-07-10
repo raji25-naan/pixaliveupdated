@@ -103,15 +103,15 @@ async function update_postwithType(
 exports.getAllPost = async (req, res, next) => {
 
   try {
-    const getPosts = await Post.find({}).sort({ created_at: -1 }).populate('user_id', 'username isActive').exec();
-    const adminPost = await admin_post.find({}).sort({ created_at: -1 }).populate('user_id', 'username').exec();
+    const getPosts = await Post.find({}).populate('user_id', 'username name avatar isActive').sort({ created_at: -1 }).exec();
+    // const adminPost = await admin_post.find({}).sort({ created_at: -1 }).populate('user_id', 'username').exec();
 
-    const all_post = [...getPosts, ...adminPost];
-    console.log(all_post)
+    // const all_post = [...getPosts, ...adminPost];
+    // console.log(all_post)
     if (getPosts.length > 0) {
       return res.json({
         success: true,
-        result: all_post,
+        result: getPosts,
         message: "Fetched posts successfully"
       });
     }
@@ -133,7 +133,7 @@ exports.getAllPost = async (req, res, next) => {
 exports.getPostDetail = async (req, res, next) => {
 
   try {
-    const getPost = await Post.findOne({ _id: req.query.post_id }).populate('user_id', 'username first_name last_name avatar email country_code created_At').exec();
+    const getPost = await Post.findOne({ _id: req.query.post_id }).populate('user_id', 'username name avatar isActive').exec();
     if (getPost) {
       return res.json({
         success: true,
@@ -155,3 +155,50 @@ exports.getPostDetail = async (req, res, next) => {
     });
   }
 }
+
+exports.activatepost = async (req, res, next) => {
+  try {
+    const updateactivate = await Post.updateOne(
+      { _id: req.body.post_id },
+      {
+        $set: { isActive: true },
+      },
+      { new: true }
+    );
+    if (updateactivate) {
+      return res.json({
+        success: true,
+        result: "Successfully Activated",
+      });
+    }
+  } catch (error) {
+    return res.json({
+      success: false,
+      message: "Error occured!",
+    });
+  }
+};
+
+exports.deactivatepost = async (req, res, next) => {
+  try {
+    const updateDeactivateUser = await Post.updateOne(
+      { _id: req.body.post_id},
+      {
+        $set: { isActive: false }
+      },
+      { new: true }
+    ).exec();
+    
+    if (updateDeactivateUser) {
+      return res.json({
+        success: true,
+        result: "Successfully Deactivated",
+      });
+    }
+  } catch (error) {
+    return res.json({
+      success: false,
+      message: "Error occured!",
+    });
+  }
+};

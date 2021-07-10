@@ -33,4 +33,4 @@ const register = new mongoose.Schema({
     }
 });
 
-module.exports = db_Main.model("registers", register)
+module.exports = db_Main.model("admin_schema", register)

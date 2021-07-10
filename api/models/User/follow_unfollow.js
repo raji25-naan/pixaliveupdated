@@ -16,7 +16,8 @@ const follow_unfollow = new mongoose.Schema({
   },
   created_at: {
     type: Date
-  },
+  }
+  
 });
 
 module.exports = db_Main.model("follow_unfollows", follow_unfollow);

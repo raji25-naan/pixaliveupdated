@@ -1,10 +1,11 @@
 const mongoose = require("mongoose");
 const { db_Main } = require("../../db/database")
 
-const reports = new mongoose.Schema({
-    post_id: {
+const reportchat = new mongoose.Schema({
+
+    reported_id: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Posts"
+        ref: "users"
     },
     reportedByid: {
         type: mongoose.Schema.Types.ObjectId,
@@ -13,7 +14,11 @@ const reports = new mongoose.Schema({
     report: {
         type: String,
         default: ""
+    },
+    created_at: {
+        type : Date,
+        default: Date.now()
     }
 });
 
-module.exports = db_Main.model("reports", reports)
+module.exports = db_Main.model("reportchats", reportchat)

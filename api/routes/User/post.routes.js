@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const { oneOf } = require("express-validator/check");
 const {
   checkRequestBodyParams,
   validateRequest,
@@ -7,37 +8,44 @@ const {
 } = require("../../middlewares/validator");
 
 const {
-  create_post,
   create_postNew,
   get_post,
-  user_posts,
   delete_post,
   feeds,
-  all_feeds,
   updateviewpost,
   createReport,
-  exploreFeedsbyLocation,
   getPostsbycategory,
-  getPostsbyLatLng,
-  getPostByhashtag,
+  reloopPost,
+  hidePost,
+  editPost,
+  edit_privacy,
+  delete_post_New,
+  createShare
 } = require("../../controllers/User/Post");
 const { checkSession } = require("../../middlewares/checkAuth");
 const { checkIsactive } = require("../../middlewares/checkActive");
+const { increaseShare_Point, trendingPeople } = require("../../controllers/User/points");
+const catch_error = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
-router.post(
-  "/post",
-  checkSession,
-  checkIsactive,
-  create_post
-);
 
+//post_new
 router.post(
   "/post_new",
   checkSession,
   checkIsactive,
-  checkRequestBodyParams("user_id"),
+  oneOf([checkRequestBodyParams("url"), checkRequestBodyParams("text")]),
   validateRequest,
-  create_postNew
+  catch_error(create_postNew)
+);
+
+//reloopPost
+router.post(
+  "/reloopPost",
+  checkSession,
+  checkIsactive,
+  checkRequestBodyParams("post_id"),
+  validateRequest,
+  catch_error(reloopPost)
 );
 
 // Get post by id
@@ -47,36 +55,24 @@ router.get(
   checkIsactive,
   checkQuery("post_id"),
   validateRequest,
-  get_post
+  catch_error(get_post)
 );
 
 // Get user posts
-router.get(
-  "/postbyUid",
-  checkSession,
-  checkIsactive,
-  user_posts
-);
-
-// Delete user Post
-router.post(
-  "/delete_post",
-  checkSession,
-  checkRequestBodyParams("post_id"),
-  validateRequest,
-  delete_post
-);
+// router.get(
+//   "/postbyUid",
+//   checkSession,
+//   checkIsactive,
+//   user_posts
+// );
 
 // get single user feed
 router.get(
   "/feeds",
   checkSession,
   checkIsactive,
-  feeds
+  catch_error(feeds)
 );
-
-// Get feed posts
-router.get("/all_feeds", checkSession, checkIsactive, all_feeds);
 
 //updateviewpost
 router.post(
@@ -86,7 +82,7 @@ router.post(
   checkRequestBodyParams("post_id"),
   checkRequestBodyParams("postUserId"),
   validateRequest,
-  updateviewpost
+  catch_error(updateviewpost)
 );
 
 //createReport
@@ -97,38 +93,83 @@ router.post(
   checkRequestBodyParams("post_id"),
   checkRequestBodyParams("report"),
   validateRequest,
-  createReport
-);
-
-//getPostsbyLatLng
-router.get(
-  "/getPostsbyLatLng",
-  checkSession,
-  checkIsactive,
-  checkQuery("lat"),
-  checkQuery("lng"),
-  validateRequest,
-  getPostsbyLatLng
+  catch_error(createReport)
 );
 
 //getPostsbycategory
-router.get(
-  "/getPostsbycategory",
+// router.get(
+//   "/getPostsbycategory",
+//   checkSession,
+//   checkIsactive,
+//   checkQuery("post_id"),
+//   validateRequest,
+//   getPostsbycategory
+// );
+
+
+//HidePost
+router.post(
+  "/hidePost",
   checkSession,
   checkIsactive,
-  checkQuery("post_id"),
+  checkRequestBodyParams("post_id"),
   validateRequest,
-  getPostsbycategory
+  catch_error(hidePost)
 );
 
-//getPostByhashtag
-router.get(
-  "/getPostByhashtag",
+//editPost
+router.post(
+  "/editPost",
   checkSession,
   checkIsactive,
-  checkQuery("hashtag"),
+  checkRequestBodyParams("post_id"),
   validateRequest,
-  getPostByhashtag
+  catch_error(editPost)
 )
+
+//increaseShare_Point
+router.post(
+  "/increaseSharePoint",
+  checkSession,
+  checkIsactive,
+  checkRequestBodyParams("post_id"),
+  validateRequest,
+  catch_error(increaseShare_Point)
+)
+
+
+// update_post privacy
+router.post(
+  "/edit_privacy",
+  checkSession,
+  checkIsactive,
+  checkRequestBodyParams("post_id"),
+  checkRequestBodyParams("privacy_type"),
+  validateRequest,
+  catch_error(edit_privacy)
+)
+
+//trendingPeople
+router.get(
+  "/trendingPeople",
+  checkSession,
+  checkIsactive,
+  catch_error(trendingPeople)
+)
+
+// DeletePost
+router.post(
+  "/delete_post_New",
+  checkSession,
+  checkRequestBodyParams("post_id"),
+  validateRequest,
+  delete_post_New
+);
+// createShare
+
+router.post(
+  "/createShare",
+  createShare
+);
 
 module.exports = router;

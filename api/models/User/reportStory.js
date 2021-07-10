@@ -1,10 +1,11 @@
 const mongoose = require("mongoose");
 const { db_Main } = require("../../db/database")
 
-const reports = new mongoose.Schema({
-    post_id: {
+const reportStory = new mongoose.Schema({
+
+    story_id: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Posts"
+        ref: "stories"
     },
     reportedByid: {
         type: mongoose.Schema.Types.ObjectId,
@@ -16,4 +17,4 @@ const reports = new mongoose.Schema({
     }
 });
 
-module.exports = db_Main.model("reports", reports)
+module.exports = db_Main.model("reportstories", reportStory)

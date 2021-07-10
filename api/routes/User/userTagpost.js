@@ -6,9 +6,9 @@ const { checkRequestBodyParams, validateRequest } = require("../../middlewares/v
 const router = express.Router();
 
 router.post("/getTaggedPost",
-            checkSession,
-            checkIsactive,
-            tagged_post
+    checkSession,
+    checkIsactive,
+    tagged_post
 )
 
 module.exports = router;

@@ -19,12 +19,11 @@ const Notification = new mongoose.Schema({
   },
   post_id:{
     type: mongoose.Schema.Types.ObjectId,
-    ref: "post",
- 
+    ref: "Posts" 
   },
   seen:{
-    type:Number,
-    default:0
+    type:Boolean,
+    default:false
   },
   type:{
     type:Number 

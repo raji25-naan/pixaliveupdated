@@ -6,9 +6,10 @@ const {
   checkQuery,
 } = require("../../middlewares/validator");
 
-const { add_comment,getPost_comments,delete_comment } = require("../../controllers/User/Comment");
+const { add_comment,getPost_comments,delete_comment, addLiketoComment } = require("../../controllers/User/Comment");
 const { checkSession } = require("../../middlewares/checkAuth");
 const { checkIsactive } = require("../../middlewares/checkActive");
+const catch_error = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
 router.post("/comment",
               checkSession,
@@ -16,20 +17,33 @@ router.post("/comment",
               checkRequestBodyParams("post_id"),
               checkRequestBodyParams("comment"),
               validateRequest,
-              add_comment);
+              catch_error(add_comment)
+              );
 
 router.get("/getpost_comments",
             checkSession,
             checkIsactive,
             checkQuery("post_id"),
             validateRequest,
-            getPost_comments);
+            catch_error(getPost_comments)
+            );
 
 router.post("/delete_comment",
             checkSession,
             checkIsactive,
             checkRequestBodyParams("comment_id"),
             validateRequest,
-            delete_comment);
+            catch_error(delete_comment)
+            );
+
+//addLiketoComment
+router.post("/addLiketoComment",
+            checkSession,
+            checkIsactive,
+            checkRequestBodyParams("user_id"),
+            checkRequestBodyParams("comment_id"),
+            validateRequest,
+            catch_error(addLiketoComment)
+            );
 
 module.exports = router

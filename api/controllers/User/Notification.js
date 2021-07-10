@@ -1,10 +1,11 @@
 const Notification = require("../../models/User/Notification");
 
 module.exports.getAllNotificationByuser = async(req,res,next)=>{
-
+ 
     let user_id = req.user_id;
-    const getAllNotify = await Notification.find({receiver_id:user_id}).populate("sender_id","username first_name last_name avatar")
-    .populate("receiver_id","username first_name last_name avatar").exec();
+    const getAllNotify = await Notification.find({receiver_id:user_id}).populate("sender_id","username name avatar follow private")
+    .populate("receiver_id","username name avatar follow private").populate("post_id","thumbnail url").sort({created_at : -1}).exec();
+    
     if(getAllNotify.length>0)
     {
         return res.json({
@@ -60,23 +61,21 @@ module.exports.getUnreadCount = async(req,res,next)=>{
 
     try 
     {
-        let {receiver_id} = req.query.userId;
-        const getUnreadData = await Notification.find({receiver_id:receiver_id,read:false}).exec();
-        let result = [];
+        let receiver_id = req.user_id;
+        const getUnreadData = await Notification.find({receiver_id:receiver_id,seen:false}).exec();
         var count = getUnreadData.length;
-        result.push(getUnreadData);
-        result.push(count);
         if(getUnreadData.length>0)
         {
-            res.json({
+            return res.json({
                 success:true,
-                result:result
+                count:count
             })
         }
         else
         {
-            res.json({
+            return res.json({
                 success:false,
+                count: "",
                 message:"No unread message"
             }) 
         }
@@ -92,23 +91,24 @@ module.exports.updateReadCount = async(req,res,next)=>{
 
     try 
     {
+        const notifyId = req.body.notifyId;
         const saveRead = await Notification.updateOne(
-            {_id:req.body.notifyId},
+            {_id:notifyId},
             {
-                $set:{read:true}
+                $set:{seen:true}
             },
             {new : true}
         );
         if(saveRead)
         {
-            res.json({
+            return res.json({
                 success:true,
-                message:"Updated notification read"
+                message:"Updated notification seen"
             }) 
         }
         else
         {
-            res.json({
+            return res.json({
                 success:false,
                 message:"Error occured"+error
             })

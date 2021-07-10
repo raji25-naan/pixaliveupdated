@@ -16,7 +16,8 @@ const taggedPost = new mongoose.Schema({
     ref: "users"
   },
   created_at: {
-    type: Date
+    type: Date,
+    default : Date.now()
   }
 });
 

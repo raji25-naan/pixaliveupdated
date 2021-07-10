@@ -15,9 +15,16 @@ router.post("/updateNotification",
 updateNotification
 );
 
-router.get("/getUnreadCount",checkQuery("userId"),validateRequest,getUnreadCount);
+router.get("/getUnreadCount",
+            checkSession,
+            checkIsactive,
+            getUnreadCount);
 
-router.post("/updateReadCount",checkRequestBodyParams("notifyId"),validateRequest,updateReadCount);
-
+router.post("/updateReadCount",
+        checkSession,
+        checkIsactive,
+        checkRequestBodyParams("notifyId"),
+        validateRequest,
+        updateReadCount);
 
 module.exports = router;

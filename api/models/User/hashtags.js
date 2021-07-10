@@ -15,6 +15,10 @@ const hashtag = new mongoose.Schema({
   follow: {
     type: Number,
     default: 0
+  },
+  posts: {
+    type: Number,
+    default: 0
   }
 });
 

@@ -16,7 +16,7 @@ dotenv.config({ path: "./dev.env" });
  */
 
 const hostname = "localhost";
-const port = 3000; //normalizePort(process.env.PORT || '3000');
+const port = 5000; //normalizePort(process.env.PORT || '3000');
 app.set("port", port);
 
 /**

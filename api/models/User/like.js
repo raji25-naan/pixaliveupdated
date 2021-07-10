@@ -3,10 +3,12 @@ const { db_Main } = require("../../db/database")
 
 const likes = new mongoose.Schema({
   post_id: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Posts"
   },
   user_id: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "users"
   },
   isLike: {
     type: Number,

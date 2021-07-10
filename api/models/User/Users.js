@@ -2,17 +2,18 @@ const mongoose = require("mongoose");
 const { db_Main } = require("../../db/database")
 
 const user_schema = new mongoose.Schema({
+
   username: {
     type: String,
     default: "",
   },
-  first_name: {
+  name: {
     type: String,
     default: "",
   },
-  last_name: {
-    type: String,
-    default: "",
+  isemail: {
+    type: Boolean,
+    default: true
   },
   email: {
     type: String,
@@ -26,9 +27,20 @@ const user_schema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  isphone: {
+    type: Boolean,
+    default: true
+  },
   phone: {
     type: String,
     default: "",
+  },
+  DOB: {
+    type: String,
+    default: ""
+  },
+  gender: {
+    type: String
   },
   otp: {
     type: String,
@@ -38,12 +50,16 @@ const user_schema = new mongoose.Schema({
     type: String,
     default: "",
   },
-  otp_verified: {
+  phone_verified: {
     type: Boolean,
-    default: false,
+    default: false
+  },
+  email_verified: {
+    type: Boolean,
+    default: false
   },
   otpExpirationTime: {
-    type: String,
+    type: String
   },
   followersCount: {
     type: Number,
@@ -58,6 +74,7 @@ const user_schema = new mongoose.Schema({
   },
   avatar: {
     type: String,
+    default: ""
   },
   created_At: {
     type: Date,
@@ -80,25 +97,64 @@ const user_schema = new mongoose.Schema({
   },
   followedHashtag: [
     {
-      _id: { type: mongoose.Schema.Types.ObjectId },
+      _id: { type: mongoose.Schema.Types.ObjectId,ref: "hashtags" },
       hashtag: { type: String },
     },
   ],
-  lat: {
+  bio: {
     type: String,
-    default: "",
-  },
-  lng: {
-    type: String,
-    default: "",
-  },
-  user_bio: {
-    type: String,
+    maxlength : 200,
+    default: ""
   },
   isActive: {
     type: Boolean,
     default: false,
+  },
+  profession: {
+    type: String,
+    default: "",
+  },
+  CurrentLocation:{
+      type:String,
+      default: "",
+  },
+  Location:{
+      type:String,
+      default: "",
+  },
+  Website:{
+    type:String,
+    default: "",
+  },
+  MaritalStatus:{
+    type:String,
+    default: ""
+  },
+  isQualification: {
+    type : Boolean,
+    default : true
+  },
+  Qualification: [{
+    Degree:{type:String},
+    InstituteName:{type:String},
+    YearofPassedOut:{type:String}
+  }],
+  isWorkExperience: {
+    type : Boolean,
+    default : true
+  },
+  WorkExperience:[{
+    Designation:{type:String},
+    OrganizationName:{type:String},
+    From:{type:Date},
+    To:{type:Date},
+    Present:{type:Boolean,default:false}
+  }],
+  private : {
+    type: Boolean,
+    default: false
   }
+
 });
 const user = db_Main.model("users", user_schema);
 module.exports = user;

@@ -1,21 +1,27 @@
 const express = require("express");
-const { login, getAllUsers, deactivateUser, activateUser, getUserDetail } = require("../../controllers/Admin/register");
+const { login, getAllUsers, deactivateUser, activateUser, getUserDetail, signup } = require("../../controllers/Admin/register");
 const { checkSession } = require("../../middlewares/checkAuth");
-const { checkRequestBodyParams,validateRequest } = require("../../middlewares/validator");
+const { checkRequestBodyParams, checkQuery, validateRequest } = require("../../middlewares/validator");
 const router = express.Router();
 
-router.post("/login",login);
+router.post("/login", login);
+router.post("/signup", signup);
 
-router.get("/getAllUsers",getAllUsers);
+router.get("/getAllUsers", getAllUsers);
 
-router.post("/activateUser",activateUser);
+router.post("/activateUser",
+    checkRequestBodyParams('userId'),
+    validateRequest,
+    activateUser);
 
 router.post("/deactivateUser",
-            checkSession,
-            checkRequestBodyParams('userId'),
-            validateRequest,
-            deactivateUser);
+    checkRequestBodyParams('userId'),
+    validateRequest,
+    deactivateUser);
 
-router.get("/getUserDetail",getUserDetail);
+router.get("/getUserDetail",
+    checkQuery('userId'),
+    validateRequest,
+    getUserDetail);
 
 module.exports = router

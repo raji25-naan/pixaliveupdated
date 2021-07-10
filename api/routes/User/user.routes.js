@@ -2,12 +2,8 @@ const express = require("express");
 const { oneOf } = require("express-validator/check");
 const {
   signup,
-  verifyOtp,
-  resendotp,
   login,
-  login_phone,
   changepassword,
-  facebook_sign,
   user_info,
   is_user,
   updateProfile,
@@ -22,7 +18,10 @@ const {
   search_user,
   socialLogin,
   contactSync,
-  
+  getPostBySearchPlace,
+  checkPhoneVerify,
+  checkEmailVerify,
+  getUserDetails
 } = require("../../controllers/User/User");
 const { checkIsactive } = require("../../middlewares/checkActive");
 const { checkSession } = require("../../middlewares/checkAuth");
@@ -33,60 +32,69 @@ const {
   checkParam,
   checkQuery,
 } = require("../../middlewares/validator");
+const verifiedEmail_Phone = require("../../models/User/verifiedEmail_Phone");
+const catch_error = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+
+// router.post("/create",async(req,res)=>{
+
+//   const data = await new verifiedEmail_Phone({
+//     verifiedPhone : [],
+//     verifiedEmail : []
+//   }).save();
+
+//   if(data)
+//   {
+//     return res.send({message: "Success!"})
+//   }
+// })
+
+//checkPhoneVerify
+router.post(
+  "/checkPhoneVerify",
+  checkRequestBodyParams("country_code"),
+  checkRequestBodyParams("phone"),
+  validateRequest,
+  catch_error(checkPhoneVerify)
+)
+
+//checkEmailVerify
+router.post(
+  "/checkEmailVerify",
+  checkRequestBodyParams("email"),
+  validateRequest,
+  catch_error(checkEmailVerify)
+)
 
 //signup
 router.post(
   "/signup",
-  checkRequestBodyParams("username"),
-  checkRequestBodyParams("email"),
+  checkRequestBodyParams("name"),
+  oneOf([checkRequestBodyParams("phone"), checkRequestBodyParams("email")]),
   checkRequestBodyParams("password"),
-  checkRequestBodyParams("confirm_password"),
-  checkRequestBodyParams("phone"),
-  checkRequestBodyParams("first_name"),
-  checkRequestBodyParams("last_name"),
+  checkRequestBodyParams("DOB"),
+  checkRequestBodyParams("gender"),
   validateRequest,
-  signup
+  catch_error(signup)
 );
 
-router.post(
-  "/verify_otp",
-  checkRequestBodyParams("otp"),
-  checkRequestBodyParams("user_id"),
-  validateRequest,
-  verifyOtp
-);
-
-router.post(
-  "/resendotp",
-  checkRequestBodyParams("user_id"),
-  validateRequest,
-  resendotp
-);
-
+//login
 router.post(
   "/login",
-  checkRequestBodyParams("email"),
+  oneOf([checkRequestBodyParams("phone"), checkRequestBodyParams("email")]),
   checkRequestBodyParams("password"),
   validateRequest,
-  login
+  catch_error(login)
 );
-
-// router.post(
-//   "/login_phone",
-//   checkRequestBodyParams("phone"),
-//   checkRequestBodyParams("password"),
-//   validateRequest,
-//   login_phone
-// );
 
 //facebook and google login
 router.post(
   "/social-login",
-  checkRequestBodyParams("email"),
+  oneOf([checkRequestBodyParams("phone"), checkRequestBodyParams("email")]),
   validateRequest,
-  socialLogin
+  catch_error(socialLogin)
 );
 
+//changepassword
 router.post(
   "/changepassword",
   checkSession,
@@ -96,29 +104,17 @@ router.post(
   checkRequestBodyParams("newpassword"),
   checkRequestBodyParams("confirmpassword"),
   validateRequest,
-  changepassword
+  catch_error(changepassword)
 );
 
-router.post(
-  "/facebook",
-  checkRequestBodyParams("username"),
-  checkRequestBodyParams("email"),
-  checkRequestBodyParams("password"),
-  checkRequestBodyParams("confirm_password"),
-  checkRequestBodyParams("phone"),
-  checkRequestBodyParams("first_name"),
-  checkRequestBodyParams("last_name"),
-  validateRequest,
-  facebook_sign
-);
-
+//userInfo
 router.get(
   "/userInfo",
   checkSession,
   checkIsactive,
-  checkQuery("id"),
+  checkQuery("user_id"),
   validateRequest,
-  user_info
+  catch_error(user_info)
 );
 
 router.post(
@@ -127,22 +123,23 @@ router.post(
   checkIsactive,
   checkRequestBodyParams("phone"),
   validateRequest,
-  is_user
+  catch_error(is_user)
 );
 
+//updateProfile
 router.post(
   "/updateProfile",
   checkSession,
   checkIsactive,
-  updateProfile
+  catch_error(updateProfile)
 );
 
 //reset_passwordstep1
 router.post(
   "/forgotpassword",
-  checkRequestBodyParams("phone"),
+  oneOf([checkRequestBodyParams("phone"), checkRequestBodyParams("email")]),
   validateRequest,
-  forgotpassword
+  catch_error(forgotpassword)
 );
 
 //resetPasswordVerifyOtp
@@ -172,7 +169,7 @@ router.post(
   checkRequestBodyParams("user_id"),
   checkRequestBodyParams("token"),
   validateRequest,
-  gcm_token_updation
+  catch_error(gcm_token_updation)
 );
 
 // Search user
@@ -180,14 +177,15 @@ router.get(
   "/search_user",
   checkSession,
   checkIsactive,
-  search_user
+  catch_error(search_user)
 );
+
 // Search place
 router.get(
   "/search_place",
   checkSession,
   checkIsactive,
-  search_place
+  catch_error(search_place)
 );
 
 // #1 - Upload avatar
@@ -195,7 +193,7 @@ router.post(
   "/upload_avatar",
   checkSession,
   checkIsactive,
-  upload_avatar
+  catch_error(upload_avatar)
 );
 
 // update avatar
@@ -203,7 +201,7 @@ router.post(
   "/change_avatar",
   checkSession,
   checkIsactive,
-  change_avatar
+  catch_error(change_avatar)
 );
 
 // search
@@ -213,17 +211,31 @@ router.get(
   checkIsactive,
   oneOf([checkQuery("search_user"), checkQuery("search_hashtag"), checkQuery("search_category")]),
   validateRequest,
-  search
+  catch_error(search)
 );
+
+//getPostBySearchPlace
+router.get("/getPostBySearchPlace",
+  checkSession,
+  checkIsactive,
+  checkQuery("place"),
+  validateRequest,
+  catch_error(getPostBySearchPlace)
+)
 
 // contactSync
 router.post(
   "/contactSync",
   checkSession,
   checkIsactive,
-  // checkRequestBodyParams(["phone"]),
-  // validateRequest,
-  contactSync
+  catch_error(contactSync)
+)
+
+//getUserDetails
+router.get("/getUserDetails",
+  checkSession,
+  checkIsactive,
+  catch_error(getUserDetails)
 )
 
 module.exports = router;
