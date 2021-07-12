@@ -161,15 +161,18 @@ router.get(
 router.post(
   "/delete_post_New",
   checkSession,
+  checkIsactive,
   checkRequestBodyParams("post_id"),
   validateRequest,
-  delete_post_New
+  catch_error(delete_post_New)
 );
 // createShare
 
-router.post(
+router.get(
   "/createShare",
-  createShare
+  // checkSession,
+  // checkIsactive,
+  catch_error(createShare)
 );
 
 module.exports = router;

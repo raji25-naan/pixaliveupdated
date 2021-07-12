@@ -744,19 +744,42 @@ exports.delete_post_New = async (req, res, next) => {
 
 
 // Edit privacy using Post ID
-
 exports.createShare = async (req, res, next) => {
 
-  // let post_id = "60e67e22ec3af3328924691d";
-  // let encryptdId = cryptr.encrypt(post_id);
-  // console.log(encryptdId)
-  // console.log("Decrypted email = ", cryptr.decrypt(encryptdId));
-
-
-  let post_id = cryptr.decrypt(req.params.postId);
-  console.log(post_id)
-  const get_Post = await postSchema.findOne({ _id: post_id, isActive: true, isDeleted: false }).populate("user_id", "username avatar name private follow").exec();
-  console.log(get_Post)
+  if(req.query.encryptId)
+  {
+    let post_id = cryptr.decrypt(req.query.encryptId);
+    console.log(post_id);
+    const get_Post = await postSchema.findOne({ _id: post_id, isActive: true, isDeleted: false }).populate("user_id", "username avatar name private follow").exec();
+    console.log(get_Post);
+    if(get_Post.post_type == 1)
+    {
+      return res.send(
+        `<!DOCTYPE html> <html> <head> <title> ${get_Post.user_id.username}  ${get_Post.body}  <a href = "https://pixalive.me/" >pixalive.me</a> </title> <link rel="icon" href="${get_Post.thumbnail}"> </head> <body> </body> </html>`
+      )
+    }
+    else if(get_Post.post_type == 3)
+    {
+      return res.send(
+        `<!DOCTYPE html> <html> <head> <title> ${get_Post.user_id.username}  ${get_Post.body} pixalive.me </title> <link rel="icon" href="${get_Post.url}"> </head> <body> </body> </html>`
+      )
+    }
+    else
+    {
+      return res.json({
+        success: false,
+        message: "No data found"
+      })
+    }
+    
+  }
+  else
+  {
+    return res.json({
+      success: false,
+      message: "Please send encrypt Id"
+    })
+  }
 
 }
 

@@ -359,7 +359,7 @@ exports.user_taggedPost = async (req, res, next) => {
 exports.trending_post = async (req, res, next) => {
         const current_user_id = req.user_id;
         let date_obj = new Date();
-        let oneDay = new Date(new Date().setDate(date_obj.getDate() - 1));
+        let oneDay = new Date(new Date().setDate(date_obj.getDate() - 30));
         // let oneHour = new Date(new Date().getTime() - 1000 * 60 * 60)
         let getBlockedUsers = await blocked.distinct("Blocked_user", { Blocked_by: current_user_id }).exec();
 
@@ -370,7 +370,6 @@ exports.trending_post = async (req, res, next) => {
             isDeleted: false,
             privacyType: { $nin: "onlyMe" }
         }).sort({ created_at: -1 }).exec();
-
         if (get_post.length) {
             var arr = []
             get_post.forEach(data => {
@@ -378,7 +377,6 @@ exports.trending_post = async (req, res, next) => {
                     arr.push(data.reloopPostId)
                 }
             })
-
             if (arr.length) {
                 arr.toString();
                 console.log(arr)
@@ -479,8 +477,8 @@ exports.trending_postByCategory = async (req, res, next) => {
         const current_user_id = req.user_id;
         const loop = req.query.loop;
         let date_obj = new Date();
-        let oneHour = new Date(new Date().getTime() - 1000 * 60 * 60);
-        let oneDay = new Date(new Date().setDate(date_obj.getDate() - 1));
+        // let oneHour = new Date(new Date().getTime() - 1000 * 60 * 60);
+        let oneDay = new Date(new Date().setDate(date_obj.getDate() - 30));
         var get_post;
         var get_all_post;
         var arr = []

@@ -9,6 +9,8 @@ const messageSchema = require('../../models/User/chat');
 const user_chatSchema = require('../../models/User/user_chat');
 const blocked_chatSchema = require('../../models/User/chat_blocked');
 const sleep = require('sleep-promise');
+const blocked = require("../../models/User/blocked");
+
 
 
 exports.StoriesUpload = async (req, res, next) => {
@@ -98,13 +100,16 @@ exports.getViewedUsersByStory = async (req, res, next) => {
 exports.getStory = async (req, res, next) => {
 
   const user_id = req.user_id;
+  let getBlockedUsers1 = await blocked.distinct("Blocked_user", { Blocked_by: user_id }).exec();
+  let getBlockedUsers2 = await blocked.distinct("Blocked_by", { Blocked_user: user_id }).exec();
+  let totalBlockedUser = getBlockedUsers1.concat(getBlockedUsers2);
   const data_follower = await follow_unfollow.distinct("followingId", {
     followerId: user_id, status: 1
   })
   const all_ID = data_follower.map(String);
   const totalId = [...new Set(all_ID)];
   const array1 = [];
-  const Stories = await Story.find({ user_id: totalId }).sort({ createdAt: -1 }).exec();
+  const Stories = await Story.find({ user_id: {$in: totalId,$nin: totalBlockedUser} }).sort({ createdAt: -1 }).exec();
   Stories.forEach((values) => {
     array1.push(values.user_id)
   })
