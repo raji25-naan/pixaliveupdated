@@ -53,7 +53,7 @@ router.get(
   "/getPost",
   checkSession,
   checkIsactive,
-  checkQuery("post_id"),
+  oneOf([checkQuery("post_id"), checkQuery("encryptId")]),
   validateRequest,
   catch_error(get_post)
 );

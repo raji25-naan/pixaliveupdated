@@ -327,8 +327,15 @@ async function updateReloopwithPostType(
 exports.get_post = async (req, res, next) => {
 
   const user_id = req.user_id;
-  console.log(user_id);
-  const post_id = req.query.post_id;
+  let post_id;
+  if(req.query.post_id)
+  {
+    post_id = req.query.post_id;
+  }
+  else if(req.query.encryptId)
+  {
+    post_id = cryptr.decrypt(req.query.encryptId);
+  }
 
   const all_Posts = await postSchema.findOne({ _id: post_id, isActive: true, isDeleted: false }).populate("user_id", "username avatar name private follow").exec();
   if (all_Posts) {
