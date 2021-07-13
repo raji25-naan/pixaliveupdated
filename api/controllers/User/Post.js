@@ -462,7 +462,7 @@ exports.feeds = async (req, res, next) => {
   else
   {
     return res.json({
-      success: false,
+      success: true,
       feeds: all_feeds,
       message: "No Feeds"
 
