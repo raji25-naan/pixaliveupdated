@@ -631,6 +631,8 @@ exports.updateProfile = async (req, res, next) => {
   editData["phone"] = req.body.phone;
   editData["avatar"] = req.body.avatar;
   editData["bio"] = req.body.bio;
+  editData["DOB"] = req.body.DOB;
+  editData["gender"] = req.body.gender;
   editData["private"] = req.body.private;
   editData["CurrentLocation"] = req.body.CurrentLocation;
   editData["Location"] = req.body.Location;
