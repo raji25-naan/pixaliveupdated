@@ -28,7 +28,8 @@ exports.messages = async (req, res, next) => {
             else 
             {
                 return res.json({
-                    success: false,
+                    success: true,
+                    result: find_user,
                     message: "No message Data"
                 });
             }
@@ -36,7 +37,8 @@ exports.messages = async (req, res, next) => {
         else 
         {
             return res.json({
-                success: false,
+                success: true,
+                result: find_user,
                 message: "No message Data"
             });
         }
