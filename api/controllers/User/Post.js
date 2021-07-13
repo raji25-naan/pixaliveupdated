@@ -419,43 +419,56 @@ exports.feeds = async (req, res, next) => {
       isDeleted: false
     }).populate("user_id", "username name avatar private follow").sort({ created_at: -1 }).exec();
 
-  let get_like = await likeSchema.distinct("post_id", {
-    user_id: user_id,
-    isLike: 1,
-  }).exec();
-  let likedIds = get_like.map(String);
-  //follow1
-  all_feeds.forEach((data) => {
-    stringFollowerId.forEach((followId) => {
-      if (followId == data.user_id._id) {
-        data.user_id.follow = 1;
-      }
+  if(all_feeds.length > 0)
+  {
+    let get_like = await likeSchema.distinct("post_id", {
+      user_id: user_id,
+      isLike: 1,
+    }).exec();
+    let likedIds = get_like.map(String);
+    //follow1
+    all_feeds.forEach((data) => {
+      stringFollowerId.forEach((followId) => {
+        if (followId == data.user_id._id) {
+          data.user_id.follow = 1;
+        }
+      })
     })
-  })
-  //follow2
-  all_feeds.forEach((data) => {
-    requested.forEach((followId) => {
-      if (followId == data.user_id._id) {
-        data.user_id.follow = 2;
-      }
+    //follow2
+    all_feeds.forEach((data) => {
+      requested.forEach((followId) => {
+        if (followId == data.user_id._id) {
+          data.user_id.follow = 2;
+        }
+      })
     })
-  })
-  //isLiked
-  all_feeds.forEach((post) => {
-    likedIds.forEach((id) => {
-      if (id == post._id) {
-        post.isLiked = 1;
-      }
+    //isLiked
+    all_feeds.forEach((post) => {
+      likedIds.forEach((id) => {
+        if (id == post._id) {
+          post.isLiked = 1;
+        }
+      });
     });
-  });
 
-  sleep(2000).then(function () {
+    sleep(2000).then(function () {
+      return res.json({
+        success: true,
+        feeds: all_feeds,
+        message: "Feeds fetched successfuly.."
+      });
+    });
+  }
+  else
+  {
     return res.json({
-      success: true,
+      success: false,
       feeds: all_feeds,
-    });
-  });
+      message: "No Feeds"
 
+    });
+  }
+  
 };
 
 // sort by date
