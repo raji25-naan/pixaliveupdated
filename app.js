@@ -37,6 +37,7 @@ const storyAdminRouter = require("./api/routes/Admin/story");
 // });
 
 app.use(timeout("20s"));
+app.use(cors());
 
 // app.use(express.json({ limit: "50mb" }));
 // app.use(express.urlencoded({ limit: "50mb" }));
@@ -106,7 +107,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(haltOnTimedout);
 app.use(cookieParser());
 app.use(haltOnTimedout);
-app.use(cors());
 app.use(function (err, req, res, next) {
   return res.json({
     success: false,
