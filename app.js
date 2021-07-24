@@ -144,8 +144,8 @@ function haltOnTimedout(req, res, next) {
 }
 
 //CronJob
-CronJob.schedule('0 05 11 * * *', async () => {
-  console.info(`running cron job a task ${new Date()}`);
-})
+// CronJob.schedule('0 05 11 * * *', async () => {
+//   console.info(`running cron job a task ${new Date()}`);
+// })
 
 module.exports = app;

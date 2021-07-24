@@ -9,11 +9,10 @@ const catch_error = fn => (req, res, next) => Promise.resolve(fn(req, res, next)
 // router.post("/createCategory",catch_error(createCategory));
 
 router.get("/fetchCategory",
-            checkSession,
-            checkIsactive,
-            catch_error(fetchCategory)
-            );
-
+    checkSession,
+    checkIsactive,
+    catch_error(fetchCategory)
+);
 
 //feedBack
 router.post("/sendFeedback",

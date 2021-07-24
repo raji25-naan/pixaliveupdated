@@ -30,12 +30,12 @@ module.exports.SendEmailVerificationLink = function(otp,req,email){
             'user_otp': otp,
             'baseUrl': baseUrl,
             'url': url,
-            forgot_template_text: "This is your OTP Dont share with anyone"
+            forgot_template_text: "Please don't share with anyone..."
         };
         //html
         let html = compiledTmpl(context);
         let mailOptions = {
-            from: 'mail@pixalive.me',
+            from: 'info@pixalive.me',
             to: email,
             subject: 'Verify email',
             html: html

@@ -12,7 +12,8 @@ const userTagpost = require("../../models/User/userTagpost");
 const hidePostSchema = require("../../models/User/HidePost");
 const { increasePost_Point, increaseReloop_Point } = require("./points");
 const blocked = require("../../models/User/blocked");
-
+const { sendNotification } = require("../../helpers/notification");
+const notificationSchema = require("../../models/User/Notification");
 // ************* Create post Using user_Id ***************//
 
 exports.create_postNew = async (req, res, next) => {
@@ -147,20 +148,20 @@ async function update_postwithType(
       return res.json({
         success: true,
         result: createdPost,
-        message: "Post added successfully"
+        message: "loop added successfully"
       });
     }
     else {
       return res.json({
         success: false,
-        message: "Error adding post" + error,
+        message: "Error adding loop" + error,
       });
     }
 
   } catch (error) {
     return res.json({
       success: false,
-      message: "Error adding post" + error,
+      message: "Error adding loop" + error,
     });
   }
 }
@@ -300,11 +301,34 @@ async function updateReloopwithPostType(
       if (updateReloopCount) {
         let userId = updateReloopCount.user_id;
         increaseReloop_Point(userId);
-        return res.json({
-          success: true,
-          result: createdReloop,
-          message: "Relooped successfully"
+        //Notification
+        const senderDetails1 = await postSchema.find({reloopPostId:reloopPostId},{_id:0,user_id:1}).sort({created_at:-1});
+        const arraysorting = [];
+        senderDetails1.forEach((values)=>{
+          arraysorting.push(values["user_id"])
+        })
+        const all_ID = arraysorting.map(String); 
+        const totalId = [...new Set(all_ID)];
+              
+        const updateNotification = new notificationSchema({
+          sender_id: createdReloop.user_id,
+          receiver_id: updateReloopCount.user_id,
+          post_id: reloopPostId,
+          type:6,
+          seen: false,
+          created_at:Date.now()
         });
+        const saveNotificationData = await updateNotification.save();
+        if(saveNotificationData)
+        {
+          sendNotification(totalId, userId,6);
+          return res.json({
+            success: true,
+            result: createdReloop,
+            message: "Relooped successfully"
+          });
+        }
+        
       }
     }
     else {
@@ -336,8 +360,18 @@ exports.get_post = async (req, res, next) => {
   {
     post_id = cryptr.decrypt(req.query.encryptId);
   }
-
-  const all_Posts = await postSchema.findOne({ _id: post_id, isActive: true, isDeleted: false }).populate("user_id", "username avatar name private follow").exec();
+  //totalBlockedUser
+  let getBlockedUsers1 = await blocked.distinct("Blocked_user", { Blocked_by: user_id }).exec();
+  let getBlockedUsers2 = await blocked.distinct("Blocked_by", { Blocked_user: user_id }).exec();
+  const totalBlockedUser = getBlockedUsers1.concat(getBlockedUsers2);
+  //getHidePost
+  let getHidePost = await hidePostSchema.distinct("post_id", { hideByid: user_id }).exec();
+  //all_Posts
+  const all_Posts = await postSchema.findOne({ 
+    _id: {$in: post_id,$nin: getHidePost},
+    user_id: {$nin: totalBlockedUser},
+    isActive: true,
+    isDeleted: false }).populate("user_id", "username avatar name private follow").exec();
   if (all_Posts) {
     //data_follower
     const data_follower = await follow_unfollow.distinct("followingId", {
@@ -386,7 +420,7 @@ exports.get_post = async (req, res, next) => {
   else {
     return res.json({
       success: false,
-      message: "Post not available"
+      message: "loop not available"
     });
   }
 };
@@ -395,6 +429,8 @@ exports.get_post = async (req, res, next) => {
 // Get user feeds using user_id and fix offset
 exports.feeds = async (req, res, next) => {
   const user_id = req.user_id;
+  const offset = req.query.offset;
+  var row = 20;
   //data_follower
   const data_follower = await follow_unfollow.distinct("followingId", { followerId: user_id, status: 1 }).exec();
   const stringFollowerId = data_follower.map(String);
@@ -406,8 +442,8 @@ exports.feeds = async (req, res, next) => {
   var array2 = data_request.map(String);
   var requested = [...new Set(array2)];
   //getReloopPostIdswithoutBody
-  let reloopPostIds = await postSchema.distinct("reloopPostId", { user_id: getAllId }).exec();
-  let relooppostIdsWithoutbody = await postSchema.distinct("_id", { user_id: getAllId, reloopPostId: reloopPostIds, body: "" }).exec();
+  let reloopPostIds = await postSchema.distinct("reloopPostId", { user_id: user_id }).exec();
+  let relooppostIdsWithoutbody = await postSchema.distinct("_id", { user_id: user_id, reloopPostId: reloopPostIds, body: "" }).exec();
 
   //getHidePost
   let getHidePost = await hidePostSchema.distinct("post_id", { hideByid: user_id }).exec();
@@ -417,15 +453,21 @@ exports.feeds = async (req, res, next) => {
   let getBlockedUsers2 = await blocked.distinct("Blocked_by", { Blocked_user: user_id }).exec();
   let totalBlockedUser = getBlockedUsers1.concat(getBlockedUsers2);
 
-  const all_feeds = await postSchema
-    .find({
+  // const all_feeds = await(await postSchema
+  //   .find({
+  //     user_id: { $in: getAllId, $nin: totalBlockedUser },
+  //     _id: { $nin: totalHideandBlockPostId },
+  //     privacyType: { $nin: "onlyMe" },
+  //     isActive: true,
+  //     isDeleted: false
+  //   }).populate("user_id", "username name avatar private follow").sort({ created_at: -1 })).splice(offset == undefined ? 0 : offset, row);
+  const all_feeds = await postSchema.find({
       user_id: { $in: getAllId, $nin: totalBlockedUser },
       _id: { $nin: totalHideandBlockPostId },
       privacyType: { $nin: "onlyMe" },
       isActive: true,
       isDeleted: false
     }).populate("user_id", "username name avatar private follow").sort({ created_at: -1 }).exec();
-
   if(all_feeds.length > 0)
   {
     let get_like = await likeSchema.distinct("post_id", {
@@ -613,7 +655,7 @@ exports.hidePost = async (req, res, next) => {
   if (saveData) {
     return res.json({
       success: true,
-      message: "hide post successfully"
+      message: "Loop hided successfully"
     });
   }
   else {
@@ -696,7 +738,7 @@ exports.editPost = async (req, res, next) => {
       return res.json({
         success: true,
         result: postEdited,
-        message: "Post edited successfully"
+        message: "Loop edited successfully"
       });
     });
 
@@ -731,7 +773,7 @@ exports.edit_privacy = async (req, res, next) => {
     res.json({
       success: true,
       result: update_post,
-      message: "PrivacyType successfully  updated"
+      message: "PrivacyType successfully updated"
     })
   }
 }
@@ -750,13 +792,13 @@ exports.delete_post_New = async (req, res, next) => {
   if (updateDeleted) {
     res.json({
       success: true,
-      message: "Successfully deleted"
+      message: "Loop deleted successfully"
     })
   }
   else {
     res.json({
       success: false,
-      message: "Not delete"
+      message: "Loop not delete"
     })
   }
 }

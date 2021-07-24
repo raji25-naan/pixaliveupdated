@@ -3,6 +3,7 @@ const postSchema = require("../../models/User/Post");
 const notificationSchema = require("../../models/User/Notification");
 const Users = require("../../models/User/Users");
 const { sendNotification } = require("../../helpers/notification");
+const sleep = require('sleep-promise');
 
 // ************create comment*******************
 
@@ -60,19 +61,59 @@ exports.add_comment = async (req, res, next) => {
     }
 };
 
+//editComment
+exports.editComment = async(req,res,next)=>{
+
+  let {comment_id,comment} = req.body;
+  const updateComment = await commentSchema.findByIdAndUpdate({_id:comment_id},
+    {
+    $set:{
+      comment:comment
+    },
+  },{ new: true });
+  if(updateComment)
+  {
+    return res.json({
+      success:true,
+      message:"Comment edited successfully!"
+    })
+  }
+  else
+  {
+    return res.json({
+      success:false,
+      message:"Error"
+    })
+  }
+ 
+}
+
 // get comment using post-id
 
 exports.getPost_comments = async (req, res, next) => {
+    const user_id = req.user_id;
     const post_id = req.query.post_id;
     let inactiveUsers = await Users.distinct("_id", { isActive: false }).exec();
     console.log(inactiveUsers);
-    const getcomment = await commentSchema.find({ post_id: post_id, user_id: { $nin: inactiveUsers } }).populate("user_id", "username name avatar private follow").exec();
+    const getcomment = await commentSchema.find({ post_id: post_id, user_id: { $nin: inactiveUsers } }).populate("user_id", "username name avatar private follow")
+    .populate("Reply.user_id", "username name avatar private follow").exec();
     console.log(getcomment);
-    if (getcomment.length > 0) {
-      return res.json({
-        success: true,
-        comments: getcomment,
-        message: "Comment fetched successfully"
+    if (getcomment.length) 
+    {
+      getcomment.forEach((data)=>{
+        data.LikedUser.forEach((like)=>{
+          if(like._id == user_id)
+          {
+            data.isLiked = 1
+          }
+        })
+      })
+      sleep(2000).then(function () {
+        return res.json({
+          success: true,
+          comments: getcomment,
+          message: "Comment fetched successfully"
+        });
       });
     } else {
       return res.json({
@@ -111,67 +152,121 @@ exports.delete_comment = async (req, res, next) => {
 //addlikeTocomment
 exports.addLiketoComment = async (req, res, next) => {
     const { user_id,comment_id } = req.body;
-
+    //checkCommentLike
+    const checkCommentLike = await commentSchema.findOne({_id: comment_id,LikedUser:{ _id: user_id }}).exec();
     if(req.body.type == 1)
     {
+      if(checkCommentLike !== null)
+      {
+        return res.json({
+          success: false,
+          message: 'Already Existing...check!'
+        })
+      }
+      else
+      {
         const addlike = await commentSchema.findByIdAndUpdate(
-                     {_id: comment_id },
-                     {
-                      $push: {
-                          "LikedUser": {
-                              _id: user_id,
-                             }
-                      }
-                  }, { new: true }).exec();
-
-        const increaseLikeCount = await commentSchema.updateOne(
-        { _id: comment_id },
-        { $inc: { likeCount: 1 } },
-        { new: true });
-
-        if (increaseLikeCount && addlike) {
-          return res.json({
-              success: true,
-              message: 'successfully Liked the Comment'
-          })
-        }
-        else {
-          return res.json({
-              success: false,
-              message: 'error in like comment'
-          })
-        }
-      
+          {_id: comment_id },
+          {
+           $push: {
+               "LikedUser": {
+                   _id: user_id
+                  }
+           }
+           }, { new: true }).exec();
+           //increaseLikeCount
+           const increaseLikeCount = await commentSchema.updateOne(
+            { _id: comment_id },
+            { $inc: { likeCount: 1 } },
+            { new: true });
+            if (increaseLikeCount && addlike) 
+            {
+              return res.json({
+                  success: true,
+                  message: 'successfully Liked the Comment'
+              })
+            }
+            else {
+              return res.json({
+                  success: false,
+                  message: 'error in like comment'
+              })
+            }
+        }  
     } 
     else if(req.body.type == 0) 
     {
-      const unlike = await commentSchema.findByIdAndUpdate(
-        {_id : comment_id },
-        {
-          $pull: {
-              "LikedUser": {
-                  _id: user_id,
-                 }
-          }
-      }, { new: true });
-
-      const decreaseLikeCount = await commentSchema.updateOne(
-        { _id: comment_id },
-        { $inc: { likeCount: -1 } },
-        { new: true }
-      );
-
-      if(unlike && decreaseLikeCount) {
-        res.json({
-          success : true,
-          message : "Unlike successfully"
-        })
-      } else {
-        res.json({
-          success :false,
-          message : "Error occured in unlike"
+      if(checkCommentLike !== null)
+      {
+        const unlike = await commentSchema.findByIdAndUpdate(
+          {_id : comment_id },
+          {
+            $pull: {
+                "LikedUser": {
+                    _id: user_id,
+                   }
+            }
+        }, { new: true });
+        const decreaseLikeCount = await commentSchema.updateOne(
+          { _id: comment_id },
+          { $inc: { likeCount: -1 } },
+          { new: true }
+        );
+        if(unlike && decreaseLikeCount) {
+          return res.json({
+            success : true,
+            message : "Unlike successfully"
+          })
+        } else {
+          return res.json({
+            success :false,
+            message : "Error occured in unlike"
+          })
+        }
+      }
+      else
+      {
+        return res.json({
+          success: false,
+          message: 'Not an Existing...check!'
         })
       }
+      
     }
+}
+
+//addreplyComment
+exports.addreplyComment = async (req, res, next) => {
+  const { user_id,comment_id,replyComment } = req.body;
+  //addReply
+  const addReply = await commentSchema.findByIdAndUpdate(
+                   {_id: comment_id },
+                   {
+                    $push: {
+                        "Reply": {
+                          user_id: user_id,
+                          replyComment: replyComment,
+                          created_at: Date.now()
+                           }
+                    }
+                  }, { new: true }).exec();
+
+  if(addReply) 
+  {
+    return res.json({
+      success : true,
+      message : "Successfully added reply comment.."
+    })
+  }
+  else
+  {
+    return res.json({
+      success :false,
+      message : "Error occured in reply comment"
+    })
+  }
+
+    
+  
 }
 

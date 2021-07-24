@@ -54,6 +54,6 @@ const story = new mongoose.Schema({
 
 }, { timestamps: true });
 
-story.index({ createdAt: 1 }, { expireAfterSeconds: 2592000 });
+story.index({ createdAt: 1 }, { expireAfterSeconds: 1209600 });
 
 module.exports = db_Main.model("stories", story);

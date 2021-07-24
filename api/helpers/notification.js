@@ -43,12 +43,17 @@ module.exports.sendNotification = async function (sender, receiver, type) {
     else if (type == 4) {
         title = 'Accepted';
         message = '  Accepted your Request';
-        message1 = ' Others  Accepted your Request '
+        message1 = ' Others Accepted your Request '
     }
     else if (type == 5) {
         title = 'Received New Message';
         message = '  New Message';
         message1 = ' New Message '
+    }
+    else if (type == 6) {
+        title = 'Relooped your post';
+        message = '  started Relooped you';
+        message1 = ' Others Relooped you'
     }
     //getUserInfo
     const array = [];

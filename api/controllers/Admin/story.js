@@ -32,7 +32,7 @@ exports.getstory_date = async (req, res) => {
  
         var start = moment(created_at).format();
         var end = moment(start).add('days', 1);
-        const storiesbydate = await Story.find({ "created_at": { "$gte": start, "$lt": end } });
+        const storiesbydate = await Story.find({ "created_at": { "$gte": start, "$lt": end } }).populate("user_id", "username avatar name private follow")
         console.log(storiesbydate)
  
         if (storiesbydate.length) {

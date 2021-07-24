@@ -34,7 +34,6 @@ exports.checkPhoneVerify = async (req, res, next) => {
   let MobileNo = country_code + phone;
   console.log(MobileNo);
   const checkPhone = await verifiedPhoneEmail.findOne({ verifiedPhone: MobileNo }).exec();
-  console.log(checkPhone);
   if (checkPhone !== null) {
     return res.json({
       success: false,
@@ -68,7 +67,6 @@ exports.checkEmailVerify = async (req, res, next) => {
   }
   //checkEmail
   const checkEmail = await verifiedPhoneEmail.findOne({ verifiedEmail: email }).exec();
-  console.log(checkEmail);
   if (checkEmail !== null) {
     return res.json({
       success: false,
@@ -91,6 +89,7 @@ exports.checkEmailVerify = async (req, res, next) => {
 //signup
 exports.signup = async (req, res, next) => {
   let {
+    username,
     name,
     phone,
     email,
@@ -123,9 +122,9 @@ exports.signup = async (req, res, next) => {
       }
     }
     else {
-      let a = new Date().valueOf();
-      let userRandom = a.toString().slice(-3);
-      let username = name + userRandom;
+      // let a = new Date().valueOf();
+      // let userRandom = a.toString().slice(-3);
+      // let username = name + userRandom;
       let userData;
       userData = {
         name: name,
@@ -160,7 +159,7 @@ exports.signup = async (req, res, next) => {
       } else {
         return res.json({
           success: false,
-          message: "Error occured!" + error,
+          message: "Error occured!" + error
         });
       }
     }
@@ -185,9 +184,9 @@ exports.signup = async (req, res, next) => {
       }
     }
     else {
-      let a = new Date().valueOf();
-      let userRandom = a.toString().slice(-3);
-      let username = name + userRandom;
+      // let a = new Date().valueOf();
+      // let userRandom = a.toString().slice(-3);
+      // let username = name + userRandom;
       let userData;
       userData = {
         name: name,
@@ -225,7 +224,7 @@ exports.signup = async (req, res, next) => {
       else {
         return res.json({
           success: false,
-          message: "Error occured!" + error,
+          message: "Error occured!" + error
         });
       }
     }
@@ -1103,13 +1102,17 @@ exports.search = async (req, res, next) => {
   const search_user = req.query.search_user;
   const search_hashtag = req.query.search_hashtag;
   const search_category = req.query.search_category;
+  //totalBlockedUser
+  let getBlockedUsers1 = await blocked.distinct("Blocked_user", { Blocked_by: user_id }).exec();
+  let getBlockedUsers2 = await blocked.distinct("Blocked_by", { Blocked_user: user_id }).exec();
+  const totalBlockedUser = getBlockedUsers1.concat(getBlockedUsers2);
   if (search_user) {
     // let reg = new RegExp(search_user);
-    const get_data = await Users.find({ isActive: true }).exec();
+    const get_data = await Users.find({_id: {$nin: totalBlockedUser}, isActive: true }).exec();
 
-    const all_users = get_data.filter(data => new RegExp(search_user, "ig").test(data.username)).sort((a, b) => {
+    const all_users = get_data.filter(data => new RegExp(search_user, "ig").test(data.name)).sort((a, b) => {
       let re = new RegExp("^" + search_user, "i")
-      return re.test(a.username) ? re.test(b.username) ? a.username.localeCompare(b.username) : -1 : 1
+      return re.test(a.name) ? re.test(b.name) ? a.name.localeCompare(b.name) : -1 : 1
     });
     if (all_users.length > 0) {
       const data_follower = await followSchema.distinct("followingId", {
@@ -1224,7 +1227,6 @@ exports.search = async (req, res, next) => {
 //contactSync
 exports.contactSync = async (req, res, next) => {
   const user_id = req.user_id;
-  console.log(req.body);
   let phonelist = [];
   phonelist = req.body.phone;
   const userlist = await Users.find({ phone: { $in: phonelist } }, { _id: 1, username: 1, name: 1, follow: 1, private: 1, phone: 1, avatar: 1 }).exec();
@@ -1285,5 +1287,58 @@ exports.getUserDetails = async (req, res, next) => {
       success: true,
       result: getUserData
     });
+  }
+}
+
+//findUsername
+exports.findUsername = async (req, res, next) => {
+
+  let username = req.query.username;
+  if(req.query.user_id)
+  {
+    const userInfo = await Users.findOne({ _id: req.query.user_id }).exec();
+    if(userInfo.username == username)
+    {
+      return res.json({
+        success: true,
+        message: "Username available!"
+      });
+    }
+    else
+    {
+      const getUsername = await Users.findOne({ username: username }).exec();
+      if (getUsername) 
+      {
+        return res.json({
+          success: false,
+          message: "Username not available!"
+        });
+      }
+      else
+      {
+        return res.json({
+          success: true,
+          message: "Username available!"
+        });
+      }
+    }
+  }
+  else
+  {
+    const getUsername = await Users.findOne({ username: username }).exec();
+    if (getUsername) 
+    {
+      return res.json({
+        success: false,
+        message: "Username not available!"
+      });
+    }
+    else
+    {
+      return res.json({
+        success: true,
+        message: "Username available!"
+      });
+    }
   }
 }

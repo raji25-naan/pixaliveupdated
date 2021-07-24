@@ -374,14 +374,23 @@ exports.get_following = async (req, res, next) => {
 
     const followerId = req.query.id;
     const uid = req.user_id;
-
+    let getFollowingUserData;
     const getFollowingid = await follow_unfollow.distinct("followingId", {
       followerId: followerId, status: 1
     }).exec();
 
-    const getFollowingUserData = await Users.find({
+    getFollowingUserData = await Users.find({
       _id: { $in: getFollowingid }, isActive: true
     }).exec();
+    //search_user
+    if(req.query.search_user)
+    {
+      let search_user = req.query.search_user;
+      getFollowingUserData = getFollowingUserData.filter(data => new RegExp(search_user, "ig").test(data.name)).sort((a, b) => {
+        let re = new RegExp("^" + search_user, "i")
+        return re.test(a.name) ? re.test(b.name) ? a.name.localeCompare(b.name) : -1 : 1
+      });
+    }
     //data_follower
     const data_follower = await follow_unfollow.distinct("followingId", {
       followerId: uid, status: 1

@@ -9,6 +9,36 @@ const commentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "users"
   },
+  Reply: [
+    {
+      user_id :{
+       type : mongoose.Schema.Types.ObjectId,
+       ref: "users"
+      },
+      replyComment :{
+        type: String
+      },
+      created_at: {
+        type: Date
+      },
+      replyLikedUser:[
+        {
+          _id :{
+           type : mongoose.Schema.Types.ObjectId,
+           ref: "users"
+          }
+        }
+      ],
+      ReplyLikeCount: {
+        type : Number,
+        default : 0
+      },
+      isLiked :{
+        type : Number,
+        default : 0
+      }
+    }
+  ],
   LikedUser:[
     {
       _id :{
@@ -21,12 +51,16 @@ const commentSchema = new mongoose.Schema({
     type : Number,
     default : 0
   },
+  isLiked :{
+    type : Number,
+    default : 0
+  },
   comment: {
     type: String,
     default: ''
   },
   created_at: {
-    type: Date,
+    type: Date
   }
 });
 

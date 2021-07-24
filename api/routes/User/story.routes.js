@@ -1,5 +1,5 @@
 const express = require("express");
-const { updateViewedStories, getStory, commentstory, StoriesUpload, getStoryById, deleteStory, createStoryReport, getViewedUsersByStory, addLiketoStory, getStoryByStoryId } = require("../../controllers/User/story");
+const { updateViewedStories, getStory, commentstory, StoriesUpload, getStoryById, deleteStory, createStoryReport, getViewedUsersByStory, addLiketoStory, getStoryByStoryId, storyLikedUser } = require("../../controllers/User/story");
 const { checkIsactive } = require("../../middlewares/checkActive");
 const { checkSession } = require("../../middlewares/checkAuth");
 const router = express.Router();
@@ -108,5 +108,14 @@ router.post(
   validateRequest,
   catch_error(commentstory)
 );
+
+//storyLikedUser
+router.get('/storyLikedUser',
+            checkSession,
+            checkIsactive,
+            checkQuery("story_id"),
+            validateRequest,
+            catch_error(storyLikedUser)
+)
 
 module.exports = router

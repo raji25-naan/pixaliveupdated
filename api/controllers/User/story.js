@@ -388,9 +388,63 @@ exports.addLiketoStory = async (req, res, next) => {
   }
 }
 
+//storyLikedUser
+exports.storyLikedUser = async(req,res,next)=>{
+
+  const user_id = req.user_id;
+  const story_id = req.query.story_id;
+  //likedUserIds
+  let likedUserIds = await Story.distinct("LikedUser._id",{_id: story_id}).exec();
+  //getLikedUserInfo
+  const getLikedUserInfo = await Users.find({_id: likedUserIds},{_id: 1,username: 1,name: 1, follow: 1, private: 1, avatar: 1}).exec();
+  if(getLikedUserInfo)
+  {
+    //data_follower
+    const data_follower = await follow_unfollow.distinct("followingId", {
+      followerId: user_id, status: 1
+    });
+    const all_ID = data_follower.map(String);
+    const followerIds = [...new Set(all_ID)];
+    //data_request
+    const data_request = await follow_unfollow.distinct("followingId", {
+      followerId: user_id, status: 0
+    });
+    const request_ID = data_request.map(String);
+    const requestedIds = [...new Set(request_ID)];
+    //follow1
+    getLikedUserInfo.forEach((data) => {
+      followerIds.forEach((followId) => {
+        if (followId == data._id) {
+          data.follow = 1;
+        }
+      })
+    });
+    //follow2
+    getLikedUserInfo.forEach((data) => {
+      requestedIds.forEach((reqId) => {
+        if (reqId == data._id) {
+          data.follow = 2;
+        }
+      })
+    });
+    sleep(2000).then(function () {
+      return res.json({
+        success: true,
+        result: getLikedUserInfo,
+        message: "Liked Users data",
+      });
+    });
+  }
+  else
+  {
+    return res.json({
+      success: false,
+      message: "No Likes"
+    });
+  }
+}
+
 // story comment
-
-
 exports.commentstory = async (req, res, next) => {
   const userID = req.user_id;
   const story_id = req.body.story_id;

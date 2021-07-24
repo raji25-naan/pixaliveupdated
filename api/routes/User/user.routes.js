@@ -21,7 +21,8 @@ const {
   getPostBySearchPlace,
   checkPhoneVerify,
   checkEmailVerify,
-  getUserDetails
+  getUserDetails,
+  findUsername
 } = require("../../controllers/User/User");
 const { checkIsactive } = require("../../middlewares/checkActive");
 const { checkSession } = require("../../middlewares/checkAuth");
@@ -68,6 +69,7 @@ router.post(
 //signup
 router.post(
   "/signup",
+  checkRequestBodyParams("username"),
   checkRequestBodyParams("name"),
   oneOf([checkRequestBodyParams("phone"), checkRequestBodyParams("email")]),
   checkRequestBodyParams("password"),
@@ -237,5 +239,13 @@ router.get("/getUserDetails",
   checkIsactive,
   catch_error(getUserDetails)
 )
+
+//findUsername
+router.get("/findUsername",
+  checkQuery("username"),
+  validateRequest,
+  catch_error(findUsername)
+)
+
 
 module.exports = router;

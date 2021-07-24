@@ -1,5 +1,7 @@
 const Category = require("../../models/User/category");
 const nodemailer = require("nodemailer");
+const sleep = require('sleep-promise');
+const postSchema = require('../../models/User/Post');
 
 // exports.createCategory = async (req, res, next) => {
 
@@ -55,16 +57,45 @@ const nodemailer = require("nodemailer");
 // }
 
 exports.fetchCategory = async (req, res, next) => {
-
-        const getAllcategory = await Category.find({}).exec();
-        if (getAllcategory) 
-        {
+    const getAllcategory = await Category.find({}).exec();
+ 
+    if (req.query.explore == 'true') {
+        var arr = []
+        getAllcategory.forEach(async data => {
+            const findPhoto = await postSchema
+                .find({
+                    category: data.category,
+                    privacyType: { $nin: "onlyMe" },
+                    isActive: true,
+                    isDeleted: false
+                })
+            if (findPhoto.length) {
+                arr.push({
+                    "_id": data._id,
+                    "category": data.category,
+                    "image": data.image,
+                    "count": findPhoto.length
+                })
+            }
+        })
+        sleep(2000).then(function () {
+            let categoryList = arr.sort((a, b) => parseFloat(b.count) - parseFloat(a.count));
+            return res.json({
+                success: true,
+                category: categoryList,
+                message: "Category fetched successfully"
+            });
+        });
+ 
+    } else {
+        if (getAllcategory) {
             return res.json({
                 success: true,
                 category: getAllcategory,
                 message: "Category fetched successfully"
             })
         }
+    }
 }
 
 
