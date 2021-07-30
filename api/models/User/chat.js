@@ -1,3 +1,5 @@
+//chat model
+
 const mongoose = require("mongoose");
 const { db_Chat } = require("../../db/database")
 const chatSchema = new mongoose.Schema({
@@ -38,6 +40,10 @@ const chatSchema = new mongoose.Schema({
   story_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "story"
+  },
+  isSeen: {
+    type: Boolean,
+    default: false
   },
   created_at: {
     type: Date,

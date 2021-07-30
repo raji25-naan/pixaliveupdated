@@ -14,6 +14,8 @@ const { increasePost_Point, increaseReloop_Point } = require("./points");
 const blocked = require("../../models/User/blocked");
 const { sendNotification } = require("../../helpers/notification");
 const notificationSchema = require("../../models/User/Notification");
+const { sendAllPost } = require("../../helpers/post");
+
 // ************* Create post Using user_Id ***************//
 
 exports.create_postNew = async (req, res, next) => {
@@ -302,33 +304,32 @@ async function updateReloopwithPostType(
         let userId = updateReloopCount.user_id;
         increaseReloop_Point(userId);
         //Notification
-        const senderDetails1 = await postSchema.find({reloopPostId:reloopPostId},{_id:0,user_id:1}).sort({created_at:-1});
+        const senderDetails1 = await postSchema.find({ reloopPostId: reloopPostId }, { _id: 0, user_id: 1 }).sort({ created_at: -1 });
         const arraysorting = [];
-        senderDetails1.forEach((values)=>{
+        senderDetails1.forEach((values) => {
           arraysorting.push(values["user_id"])
         })
-        const all_ID = arraysorting.map(String); 
+        const all_ID = arraysorting.map(String);
         const totalId = [...new Set(all_ID)];
-              
+
         const updateNotification = new notificationSchema({
           sender_id: createdReloop.user_id,
           receiver_id: updateReloopCount.user_id,
           post_id: reloopPostId,
-          type:6,
+          type: 6,
           seen: false,
-          created_at:Date.now()
+          created_at: Date.now()
         });
         const saveNotificationData = await updateNotification.save();
-        if(saveNotificationData)
-        {
-          sendNotification(totalId, userId,6);
+        if (saveNotificationData) {
+          sendNotification(totalId, userId, 6);
           return res.json({
             success: true,
             result: createdReloop,
             message: "Relooped successfully"
           });
         }
-        
+
       }
     }
     else {
@@ -352,12 +353,10 @@ exports.get_post = async (req, res, next) => {
 
   const user_id = req.user_id;
   let post_id;
-  if(req.query.post_id)
-  {
+  if (req.query.post_id) {
     post_id = req.query.post_id;
   }
-  else if(req.query.encryptId)
-  {
+  else if (req.query.encryptId) {
     post_id = cryptr.decrypt(req.query.encryptId);
   }
   //totalBlockedUser
@@ -367,11 +366,12 @@ exports.get_post = async (req, res, next) => {
   //getHidePost
   let getHidePost = await hidePostSchema.distinct("post_id", { hideByid: user_id }).exec();
   //all_Posts
-  const all_Posts = await postSchema.findOne({ 
-    _id: {$in: post_id,$nin: getHidePost},
-    user_id: {$nin: totalBlockedUser},
+  const all_Posts = await postSchema.findOne({
+    _id: { $in: post_id, $nin: getHidePost },
+    user_id: { $nin: totalBlockedUser },
     isActive: true,
-    isDeleted: false }).populate("user_id", "username avatar name private follow").exec();
+    isDeleted: false
+  }).populate("user_id", "username avatar name private follow").exec();
   if (all_Posts) {
     //data_follower
     const data_follower = await follow_unfollow.distinct("followingId", {
@@ -402,7 +402,6 @@ exports.get_post = async (req, res, next) => {
       user_id: user_id,
       isLike: 1,
     }).exec();
-    console.log(get_like);
     let likedIds = get_like.map(String);
     likedIds.forEach((id) => {
       if (id == all_Posts._id) {
@@ -411,10 +410,7 @@ exports.get_post = async (req, res, next) => {
     });
 
     sleep(2000).then(function () {
-      return res.json({
-        success: true,
-        post: all_Posts
-      });
+      sendreloopedPost(all_Posts, user_id, res);
     });
   }
   else {
@@ -424,6 +420,82 @@ exports.get_post = async (req, res, next) => {
     });
   }
 };
+
+async function sendreloopedPost(allPost, userId, res) {
+    if (allPost.reloopPostId) 
+    {
+      const user_id = userId;
+      let post_id = allPost.reloopPostId
+
+      //totalBlockedUser
+      let getBlockedUsers1 = await blocked.distinct("Blocked_user", { Blocked_by: user_id }).exec();
+      let getBlockedUsers2 = await blocked.distinct("Blocked_by", { Blocked_user: user_id }).exec();
+      const totalBlockedUser = getBlockedUsers1.concat(getBlockedUsers2);
+      //getHidePost
+      let getHidePost = await hidePostSchema.distinct("post_id", { hideByid: user_id }).exec();
+      //all_Posts
+      const all_Posts = await postSchema.findOne({
+        _id: { $in: post_id, $nin: getHidePost },
+        user_id: { $nin: totalBlockedUser },
+        isActive: true,
+        isDeleted: false
+      },{_id:1,body:1,url:1,post_type:1,text_content:1,thumbnail:1,user_id:1,isLiked:1,created_at:1}).populate("user_id", "username avatar name private follow").exec();
+      if (all_Posts) {
+        //data_follower
+        const data_follower = await follow_unfollow.distinct("followingId", {
+          followerId: user_id, status: 1
+        });
+        var array1 = data_follower.map(String);
+        var getAllId = [...new Set(array1)];
+        //data_request
+        const data_request = await follow_unfollow.distinct("followingId", {
+          followerId: user_id, status: 0
+        });
+        var array2 = data_request.map(String);
+        var requested = [...new Set(array2)];
+        //follow1
+        getAllId.forEach((followId) => {
+          if (followId == all_Posts.user_id._id) {
+            all_Posts.user_id.follow = 1;
+          }
+        });
+        //follow2
+        requested.forEach((followId) => {
+          if (followId == all_Posts.user_id._id) {
+            all_Posts.user_id.follow = 2;
+          }
+        });
+        //get_like
+        let get_like = await likeSchema.distinct("post_id", {
+          user_id: user_id,
+          isLike: 1,
+        }).exec();
+        let likedIds = get_like.map(String);
+        likedIds.forEach((id) => {
+          if (id == all_Posts._id) {
+            all_Posts.isLiked = 1;
+          }
+        });
+
+        sleep(2000).then(function () {
+          allPost.reloopPostId = all_Posts;
+          return res.json({
+            success: true,
+            feeds: allPost,
+            message: "Feeds fetched successfuly.."
+          });
+        });
+      }
+    }
+    else
+    {
+      return res.json({
+        success: true,
+        feeds: allPost,
+        message: "Feeds fetched successfuly.."
+      });
+    }
+}
 
 
 // Get user feeds using user_id and fix offset
@@ -462,14 +534,13 @@ exports.feeds = async (req, res, next) => {
   //     isDeleted: false
   //   }).populate("user_id", "username name avatar private follow").sort({ created_at: -1 })).splice(offset == undefined ? 0 : offset, row);
   const all_feeds = await postSchema.find({
-      user_id: { $in: getAllId, $nin: totalBlockedUser },
-      _id: { $nin: totalHideandBlockPostId },
-      privacyType: { $nin: "onlyMe" },
-      isActive: true,
-      isDeleted: false
-    }).populate("user_id", "username name avatar private follow").sort({ created_at: -1 }).exec();
-  if(all_feeds.length > 0)
-  {
+    user_id: { $in: getAllId, $nin: totalBlockedUser },
+    _id: { $nin: totalHideandBlockPostId },
+    privacyType: { $nin: "onlyMe" },
+    isActive: true,
+    isDeleted: false
+  }).populate("user_id", "username name avatar private follow").sort({ created_at: -1 }).exec();
+  if (all_feeds.length > 0) {
     let get_like = await likeSchema.distinct("post_id", {
       user_id: user_id,
       isLike: 1,
@@ -501,15 +572,10 @@ exports.feeds = async (req, res, next) => {
     });
 
     sleep(2000).then(function () {
-      return res.json({
-        success: true,
-        feeds: all_feeds,
-        message: "Feeds fetched successfuly.."
-      });
+      sendAllPost(all_feeds, user_id, res)
     });
   }
-  else
-  {
+  else {
     return res.json({
       success: true,
       feeds: all_feeds,
@@ -517,8 +583,109 @@ exports.feeds = async (req, res, next) => {
 
     });
   }
-  
 };
+
+// async function sendAllPost(allPost, userId, res) {
+//   allPost.forEach(async (checkFeed, i) => {
+//     if (checkFeed.reloopPostId) {
+//       const user_id = userId;
+//       let post_id = checkFeed.reloopPostId
+
+//       //totalBlockedUser
+//       let getBlockedUsers1 = await blocked.distinct("Blocked_user", { Blocked_by: user_id }).exec();
+//       let getBlockedUsers2 = await blocked.distinct("Blocked_by", { Blocked_user: user_id }).exec();
+//       const totalBlockedUser = getBlockedUsers1.concat(getBlockedUsers2);
+//       //getHidePost
+//       let getHidePost = await hidePostSchema.distinct("post_id", { hideByid: user_id }).exec();
+//       //all_Posts
+//       const all_Posts = await postSchema.findOne({
+//         _id: { $in: post_id, $nin: getHidePost },
+//         user_id: { $nin: totalBlockedUser },
+//         isActive: true,
+//         isDeleted: false
+//       }).populate("user_id", "username avatar name private follow").exec();
+//       if (all_Posts) {
+//         //data_follower
+//         const data_follower = await follow_unfollow.distinct("followingId", {
+//           followerId: user_id, status: 1
+//         });
+//         var array1 = data_follower.map(String);
+//         var getAllId = [...new Set(array1)];
+//         //data_request
+//         const data_request = await follow_unfollow.distinct("followingId", {
+//           followerId: user_id, status: 0
+//         });
+//         var array2 = data_request.map(String);
+//         var requested = [...new Set(array2)];
+//         //follow1
+//         getAllId.forEach((followId) => {
+//           if (followId == all_Posts.user_id._id) {
+//             all_Posts.user_id.follow = 1;
+//           }
+//         });
+//         //follow2
+//         requested.forEach((followId) => {
+//           if (followId == all_Posts.user_id._id) {
+//             all_Posts.user_id.follow = 2;
+//           }
+//         });
+//         //get_like
+//         let get_like = await likeSchema.distinct("post_id", {
+//           user_id: user_id,
+//           isLike: 1,
+//         }).exec();
+//         let likedIds = get_like.map(String);
+//         likedIds.forEach((id) => {
+//           if (id == all_Posts._id) {
+//             all_Posts.isLiked = 1;
+//           }
+//         });
+//         // checkFeed.reloopPostId = all_Posts;
+
+//         sleep(1000).then(function () {
+//           checkFeed.reloopPostId = all_Posts;
+//         });
+//       }
+//       else
+//       {
+//         checkFeed.reloopPostId = "Loop not available";
+//       }
+
+//     }
+//     if (allPost.length == i + 1) {
+//       if (allPost.length <= 300) {
+//         sleep(5000).then(function () {
+//           console.log("finish300")
+//           return res.json({
+//             success: true,
+//             feeds: allPost,
+//             message: "Feeds fetched successfuly.."
+//           });
+//         });
+//       }
+//       else if (allPost.length <= 500) {
+//         sleep(6000).then(function () {
+//           console.log("finish500")
+//           return res.json({
+//             success: true,
+//             feeds: allPost,
+//             message: "Feeds fetched successfuly.."
+//           });
+//         });
+//       }
+//       else {
+//         sleep(7000).then(function () {
+//           console.log("finish501")
+//           return res.json({
+//             success: true,
+//             feeds: allPost,
+//             message: "Feeds fetched successfuly.."
+//           });
+//         });
+//       }
+//     }
+//   })
+// }
 
 // sort by date
 function sortFunction(a, b) {
@@ -808,35 +975,30 @@ exports.delete_post_New = async (req, res, next) => {
 // Edit privacy using Post ID
 exports.createShare = async (req, res, next) => {
 
-  if(req.query.encryptId)
-  {
+  if (req.query.encryptId) {
     let post_id = cryptr.decrypt(req.query.encryptId);
     console.log(post_id);
     const get_Post = await postSchema.findOne({ _id: post_id, isActive: true, isDeleted: false }).populate("user_id", "username avatar name private follow").exec();
     console.log(get_Post);
-    if(get_Post.post_type == 1)
-    {
+    if (get_Post.post_type == 1) {
       return res.send(
         `<!DOCTYPE html> <html> <head> <title> ${get_Post.user_id.username}  ${get_Post.body}  <a href = "https://pixalive.me/" >pixalive.me</a> </title> <link rel="icon" href="${get_Post.thumbnail}"> </head> <body> </body> </html>`
       )
     }
-    else if(get_Post.post_type == 3)
-    {
+    else if (get_Post.post_type == 3) {
       return res.send(
         `<!DOCTYPE html> <html> <head> <title> ${get_Post.user_id.username}  ${get_Post.body} pixalive.me </title> <link rel="icon" href="${get_Post.url}"> </head> <body> </body> </html>`
       )
     }
-    else
-    {
+    else {
       return res.json({
         success: false,
         message: "No data found"
       })
     }
-    
+
   }
-  else
-  {
+  else {
     return res.json({
       success: false,
       message: "Please send encrypt Id"
@@ -844,5 +1006,3 @@ exports.createShare = async (req, res, next) => {
   }
 
 }
-
-

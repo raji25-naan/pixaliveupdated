@@ -1229,44 +1229,48 @@ exports.contactSync = async (req, res, next) => {
   const user_id = req.user_id;
   let phonelist = [];
   phonelist = req.body.phone;
-  const userlist = await Users.find({ phone: { $in: phonelist } }, { _id: 1, username: 1, name: 1, follow: 1, private: 1, phone: 1, avatar: 1 }).exec();
-  if (userlist.length > 0) {
-    //data_follower
-    const data_follower = await followSchema.distinct("followingId", {
-      followerId: user_id,
-      status: 1
-    });
-    var array1 = data_follower.map(String);
-    var followed = [...new Set(array1)];
-    //data_request
-    const data_request = await followSchema.distinct("followingId", {
-      followerId: user_id,
-      status: 0
-    });
-    var array2 = data_request.map(String);
-    var requested = [...new Set(array2)];
+  //data_follower
+  const data_follower = await followSchema.distinct("followingId", {
+    followerId: user_id,
+    status: 1
+  });
+  //data_request
+  const data_request = await followSchema.distinct("followingId", {
+    followerId: user_id,
+    status: 0
+  });
+  const totalFollowedId = data_follower.concat(data_request);
+  const userlist = await Users.find({ phone: { $in: phonelist },_id: {$nin: totalFollowedId} }, { _id: 1, username: 1, name: 1, follow: 1, private: 1, phone: 1, avatar: 1 }).exec();
+  if (userlist.length > 0) 
+  {
+    
+    // var array1 = data_follower.map(String);
+    // var followed = [...new Set(array1)];
+    
+    // var array2 = data_request.map(String);
+    // var requested = [...new Set(array2)];
     //follow1
-    userlist.forEach((data) => {
-      followed.forEach((main_data) => {
-        if (main_data == data._id) {
-          data.follow = 1;
-        }
-      });
-    });
+    // userlist.forEach((data) => {
+    //   followed.forEach((main_data) => {
+    //     if (main_data == data._id) {
+    //       data.follow = 1;
+    //     }
+    //   });
+    // });
     //follow2
-    userlist.forEach((data) => {
-      requested.forEach((main_data) => {
-        if (main_data == data._id) {
-          data.follow = 2;
-        }
-      });
-    });
-    sleep(2000).then(function () {
+    // userlist.forEach((data) => {
+    //   requested.forEach((main_data) => {
+    //     if (main_data == data._id) {
+    //       data.follow = 2;
+    //     }
+    //   });
+    // });
+    // sleep(2000).then(function () {
       return res.json({
         success: true,
         users: userlist
       });
-    });
+    // });
   }
   else {
     return res.json({

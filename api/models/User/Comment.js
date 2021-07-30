@@ -21,19 +21,11 @@ const commentSchema = new mongoose.Schema({
       created_at: {
         type: Date
       },
-      replyLikedUser:[
-        {
-          _id :{
-           type : mongoose.Schema.Types.ObjectId,
-           ref: "users"
-          }
-        }
-      ],
       ReplyLikeCount: {
         type : Number,
         default : 0
       },
-      isLiked :{
+      isLikedReply :{
         type : Number,
         default : 0
       }

@@ -15,6 +15,10 @@ const user_chatSchema = new mongoose.Schema({
             post_type: {
                 type: Number
             },
+            count: {
+                type: Number,
+                default: 0
+            },
             thumbnail: {
                 type: String,
                 default: ""

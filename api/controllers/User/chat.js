@@ -11,13 +11,10 @@ exports.messages = async (req, res, next) => {
     try {
         const userid = req.user_id
         const find_user = await userchatSchema.find({ user_id: userid }).exec();
-        if (find_user.length)
-         {
-            if (find_user[0].user_data.length) 
-            { 
+        if (find_user.length) {
+            if (find_user[0].user_data.length) {
                 find_user[0].user_data.reverse();
-                if (find_user) 
-                {
+                if (find_user) {
                     return res.json({
                         success: true,
                         result: find_user,
@@ -25,8 +22,7 @@ exports.messages = async (req, res, next) => {
                     });
                 }
             }
-            else 
-            {
+            else {
                 return res.json({
                     success: true,
                     result: find_user,
@@ -34,8 +30,7 @@ exports.messages = async (req, res, next) => {
                 });
             }
         }
-        else 
-        {
+        else {
             return res.json({
                 success: true,
                 result: find_user,
@@ -51,7 +46,6 @@ exports.messages = async (req, res, next) => {
 };
 
 exports.user_messages = async (req, res, next) => {
-
     try {
         const offset = req.query.offset;
         var row = 20;
@@ -60,6 +54,13 @@ exports.user_messages = async (req, res, next) => {
         const getMgeData = await chatSchema.find({ $or: [{ sender_id: currentUser, receiver_id: gettingUser, isDeletedbySender: false }, { sender_id: gettingUser, receiver_id: currentUser, isDeletedbyReceiver: false, isBlocked: false }] }).sort({ created_at: -1 }).exec();
         console.log(getMgeData)
         const send_message = getMgeData.splice(offset == undefined ? 0 : offset, row);
+        const updateSeen = await chatSchema.updateMany(
+            { sender_id: gettingUser, receiver_id: currentUser, isDeletedbyReceiver: false, isBlocked: false },
+            {
+                $set: { isSeen: true },
+            },
+            { new: true }
+        );
         if (getMgeData) {
             return res.json({
                 success: true,
@@ -504,48 +505,71 @@ exports.find_block = async (req, res, next) => {
     }
 }
 
-exports.suggestionChat = async(req,res,next)=>{
+exports.suggestionChat = async (req, res, next) => {
 
-    try 
-    {
+    try {
         let user_id = req.user_id;
         //getFollowingId
-        let getFollowingId = await follow_unfollow.distinct("followingId",{followerId: user_id,status: 1}).exec();
+        let getFollowingId = await follow_unfollow.distinct("followingId", { followerId: user_id, status: 1 }).exec();
         let friendsIds = getFollowingId.map(String);
         //getReceiverId
-        let getReceiverId = await chatSchema.distinct("receiver_id",{sender_id: user_id}).exec();
+        let getReceiverId = await chatSchema.distinct("receiver_id", { sender_id: user_id }).exec();
         //getSenderId
-        let getSenderId = await chatSchema.distinct("sender_id",{receiver_id: user_id}).exec();
+        let getSenderId = await chatSchema.distinct("sender_id", { receiver_id: user_id }).exec();
         //totalChatId
         let totalChatId = getReceiverId.concat(getSenderId).map(String);
         let all_ID = [...new Set(totalChatId)];
         var totalId = friendsIds.filter(item => !all_ID.includes(item));
         //suggestedUserData
-        const suggestedUserData = await Users.find({_id: totalId,isActive: true}).exec();
-        if(suggestedUserData.length > 0)
-        {
+        const suggestedUserData = await Users.find({ _id: totalId, isActive: true }).exec();
+        if (suggestedUserData.length > 0) {
             return res.json({
                 success: true,
                 result: suggestedUserData,
                 message: "Successfully fetched suggestion lists!"
-              });
+            });
         }
-        else
-        {
+        else {
             return res.json({
                 success: true,
                 result: suggestedUserData,
                 message: "No suggestion lists!"
-              });
+            });
         }
-        
 
-    } 
-    catch (error) 
-    {
+
+    }
+    catch (error) {
         return res.json({
             success: false,
             message: "Error getting suggestion chat" + error
-        }); 
+        });
     }
+}
+
+
+exports.notificationChat = async (req, res, next) => {
+
+    try {
+        const currentUser = req.user_id;
+        const findData = await chatSchema.find({ receiver_id: currentUser, seen: false, isBlocked: false }).exec()
+        if (findData.length) {
+            return res.json({
+                success: true,
+                message: "Unseen Message avalible!"
+            });
+        }
+        else {
+            return res.json({
+                success: false,
+                message: "No unseen Message"
+            });
+        }
+    } catch (error) {
+        return res.json({
+            success: false,
+            message: "Error getting suggestion chat" + error
+        });
+    }
+
 }

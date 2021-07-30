@@ -570,8 +570,6 @@ async function chatUpdate(senderId, receiverId, message, url, post_type, thumbna
 async function updateUserChat(type, userId, receiverId, message, url, post_type, thumbnail) {
   var find_user = await user_chatSchema.find({ user_id: userId });
   if (find_user.length) {
-    console.log("hi")
-
     const unfollow = await user_chatSchema.updateOne(
       { user_id: userId },
       {
@@ -583,9 +581,10 @@ async function updateUserChat(type, userId, receiverId, message, url, post_type,
         }
       }, { new: true }
     ).exec();
-
     if (unfollow) {
       if (type == 0) {
+        const findData = await messageSchema.find({ user_id: userId, receiver_id: receiverId, seen: false, isBlocked: false }).exec()
+        const total = (findData.length > 0) ? findData.length : 0;
         const user_follow = await user_chatSchema.updateOne(
           { user_id: userId },
           {
@@ -597,13 +596,16 @@ async function updateUserChat(type, userId, receiverId, message, url, post_type,
                 url: url,
                 thumbnail: thumbnail,
                 post_type: post_type,
+                count: total,
                 created_at: Date.now(),
               }
             }
           }, { new: true }
-        ).exec();
+        ).exec()
       }
-      else if (type == 1) {
+      if (type == 1) {
+        const findData = await messageSchema.find({ user_id: userId, receiver_id: receiverId, seen: false, isBlocked: false }).exec()
+        const total = (findData.length > 0) ? findData.length : 0;
         const receiver_follow = await user_chatSchema.updateOne(
           { user_id: userId },
           {
@@ -614,18 +616,18 @@ async function updateUserChat(type, userId, receiverId, message, url, post_type,
                 receiver_message: message,
                 url: url,
                 thumbnail: thumbnail,
+                count: total,
                 post_type: post_type,
                 created_at: Date.now(),
               }
             }
           }, { new: true }
-        ).exec();
+        ).exec()
       }
 
     }
   }
   else {
-    console.log("hello")
     if (type == 0) {
       var create_newuser = new user_chatSchema({
         user_id: userId,
@@ -637,13 +639,14 @@ async function updateUserChat(type, userId, receiverId, message, url, post_type,
             url: url,
             thumbnail: thumbnail,
             post_type: post_type,
+            count: 1,
             created_at: Date.now(),
           },
         ]
       })
       const saveData = await create_newuser.save();
     }
-    else if (type == 1) {
+    if (type == 1) {
       var create_newuser1 = new user_chatSchema({
         user_id: userId,
         user_data: [
@@ -654,6 +657,7 @@ async function updateUserChat(type, userId, receiverId, message, url, post_type,
             url: url,
             thumbnail: thumbnail,
             post_type: post_type,
+            count: 1,
             created_at: Date.now(),
           },
         ]

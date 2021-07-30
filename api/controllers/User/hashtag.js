@@ -5,6 +5,7 @@ const follow_unfollow = require("../../models/User/follow_unfollow");
 const likeSchema = require("../../models/User/like");
 const blocked = require("../../models/User/blocked");
 const sleep = require('sleep-promise');
+const { sendAllPost } = require("../../helpers/post");
 
 exports.followUnfollowHashtag = async (req, res, next) => {
 
@@ -12,14 +13,14 @@ exports.followUnfollowHashtag = async (req, res, next) => {
     let hashId = req.body.hashId;
     let hashtag = req.body.hashtag;
     let type = req.body.type;
+    const check_hashtag = await User.distinct("followedHashtag", {
+        _id: userId,
+    });
+    var arr = []
+    check_hashtag.forEach(element => {
+        arr.push(element.hashtag)
+    });
     if (type == 1) {
-        const check_hashtag = await User.distinct("followedHashtag", {
-            _id: userId,
-        });
-        var arr = []
-        check_hashtag.forEach(element => {
-            arr.push(element.hashtag)
-        });
         if (arr.indexOf(hashtag) == -1) {
             const follow = await User.updateOne(
                 { _id: userId },
@@ -58,33 +59,44 @@ exports.followUnfollowHashtag = async (req, res, next) => {
         }
     }
     else if (type == 0) {
-        const unfollow = await User.updateOne(
-            { _id: userId },
-            {
-                $pull: {
-                    "followedHashtag": {
-                        _id: hashId,
-                        hashtag: hashtag
+        if (arr.indexOf(hashtag) !== -1) 
+        {
+            const unfollow = await User.updateOne(
+                { _id: userId },
+                {
+                    $pull: {
+                        "followedHashtag": {
+                            _id: hashId,
+                            hashtag: hashtag
+                        }
                     }
-                }
-            }, { new: true }
-        ).exec();
-        const decreaseFollowerCount = await Hashtag.updateOne(
-            { _id: hashId },
-            { $inc: { followerCount: -1 } },
-            { new: true }
-        );
-        if (decreaseFollowerCount && unfollow) {
-            return res.json({
-                success: true,
-                message: 'successfully unfollow',
-            })
+                }, { new: true }
+            ).exec();
+            const decreaseFollowerCount = await Hashtag.updateOne(
+                { _id: hashId },
+                { $inc: { followerCount: -1 } },
+                { new: true }
+            );
+            if (decreaseFollowerCount && unfollow)
+            {
+                return res.json({
+                    success: true,
+                    message: 'successfully unfollow',
+                })
+            }
+            else {
+                return res.json({
+                    success: false,
+                    message: 'error'
+                })
+            }
         }
-        else {
+        else
+        {
             return res.json({
                 success: false,
-                message: 'error'
-            })
+                message: 'Not an existing'
+            }) 
         }
     }
 }
@@ -299,8 +311,8 @@ exports.getPostByhashtag = async (req, res, next) => {
     //     }
     // });
     // let getvideo_post = arr;
-
-    if (getAll_post.length) {
+    if (getAll_post.length)
+    {
         var change_string = follower_data.map(String);
         var getAll_Id = [...new Set(change_string)];
         //request_data_main
@@ -342,13 +354,10 @@ exports.getPostByhashtag = async (req, res, next) => {
         });
 
         sleep(2000).then(function () {
-            return res.json({
-                success: true,
-                result: getAll_post,
-                message: "Post fetched successfully",
-            });
-        });
-    } else {
+            sendAllPost(getAll_post,current_user_id, res)
+          });
+    } 
+    else {
         return res.json({
             success: false,
             message: "No post found!",

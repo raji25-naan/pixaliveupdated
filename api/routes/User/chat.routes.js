@@ -1,3 +1,5 @@
+//chat routes
+
 
 const express = require("express");
 const router = express.Router();
@@ -7,7 +9,7 @@ const {
   checkQuery,
 } = require("../../middlewares/validator");
 
-const { messages, user_messages, deleteSingleChat, find_block, reportIndividualUser, deleteAllChat, block_chatuser, unblock_chatuser, suggestionChat } = require("../../controllers/User/chat");
+const { messages, user_messages, deleteSingleChat, find_block, reportIndividualUser, deleteAllChat, block_chatuser, unblock_chatuser, suggestionChat, notificationChat } = require("../../controllers/User/chat");
 const { checkSession } = require("../../middlewares/checkAuth");
 const { checkIsactive } = require("../../middlewares/checkActive");
 
@@ -86,6 +88,13 @@ router.get("/suggestionChat",
   checkSession,
   checkIsactive,
   suggestionChat
+)
+
+//notification
+router.get("/notificationChat",
+  checkSession,
+  checkIsactive,
+  notificationChat
 )
 
 module.exports = router;

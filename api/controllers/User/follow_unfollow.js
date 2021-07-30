@@ -514,15 +514,14 @@ exports.DiscoverPeople = async (req, res, next) => {
     const userId = req.user_id;
     const Organization = [];
     var Education = [];
-    let getBlockedUsers = await blocked.distinct("Blocked_user",{Blocked_by: userId }).exec();
-    console.log(getBlockedUsers)
+    let getBlockedUsers1 = await blocked.distinct("Blocked_user",{Blocked_by: userId }).exec();
+    let getBlockedUsers2 = await blocked.distinct("Blocked_by",{Blocked_user: userId }).exec();
     const UserDetails = await Users.findOne({ _id: userId })
     UserDetails.WorkExperience.forEach(async(data)=>{
       Organization.push(data.OrganizationName)
       })
     const WorkingDetails = await Users.distinct("_id",{WorkExperience:{$elemMatch:{OrganizationName:Organization}}})
-    const totalIds = [...new Set(WorkingDetails)];
-    console.log(totalIds)
+    const workingIds = [...new Set(WorkingDetails)];
     UserDetails.Qualification.forEach(async(datas)=>{
       Education.push(datas.InstituteName)
     })
@@ -532,6 +531,7 @@ exports.DiscoverPeople = async (req, res, next) => {
     const LocationDetails = await Users.distinct("_id", { Location: UserDetails.Location }).exec();
     const getFollowerId = await follow_unfollow.distinct("followerId", { followingId: userId, status: 1 }).exec();
     const getFollowingId = await follow_unfollow.distinct("followingId", { followerId: userId, status: 1 }).exec();
+    const getRequestedId = await follow_unfollow.distinct("followingId", { followerId: userId, status: 0 }).exec();
     let all_ID = getFollowerId.concat(getFollowingId).map(String);
     let totalId = [...new Set(all_ID)];
     const getfriendFollowerId = await follow_unfollow.distinct("followerId", { followingId: totalId, status: 1 }).exec();
@@ -541,46 +541,49 @@ exports.DiscoverPeople = async (req, res, next) => {
     let ids = new Set(totalId.map((id) => id));
     const filteredFriendoffriends = totalFriendsId.filter((id) => !ids.has(id));
     console.log(filteredFriendoffriends)
-    const Total = totalIds.concat(all_data, LocationDetails, filteredFriendoffriends).map(String);
+    const Total = workingIds.concat(all_data, LocationDetails, filteredFriendoffriends).map(String);
     const TotalDiscovering = [...new Set(Total)];
-    const TotallyDiscovered = arrayRemove(TotalDiscovering, userId)
-    const DiscoveredPeople = await Users.find({ _id: { $in: TotallyDiscovered, $nin: getBlockedUsers }, isActive: true }).exec();
-    if(DiscoveredPeople.length > 0)
+    const TotallyDiscovered = arrayRemove(TotalDiscovering, userId);
+    //TotalBlockedUserId
+    const TotalBlockedUserId = getFollowingId.concat(getBlockedUsers1,getBlockedUsers2,getRequestedId);
+    console.log(TotalBlockedUserId);
+    //DiscoveredPeople
+    const DiscoveredPeople = await Users.find({ _id: { $in: TotallyDiscovered, $nin: TotalBlockedUserId }, isActive: true }).exec();
+    if(DiscoveredPeople.length)
      {
-      let followingIds = getFollowingId.map(String);
-      let followingList = [...new Set(followingIds)];
+      // let followingIds = getFollowingId.map(String);
+      // let followingList = [...new Set(followingIds)];
       //getRequestedId
-      const getRequestedId = await follow_unfollow.distinct("followingId", { followerId: userId, status: 0 }).exec();
-      let requestedIds = getRequestedId.map(String);
-      let requestedList = [...new Set(requestedIds)];
+      // let requestedIds = getRequestedId.map(String);
+      // let requestedList = [...new Set(requestedIds)];
       //follow1
-      DiscoveredPeople.forEach((data) => {
-        followingList.forEach((followingUserId) => {
-          if (followingUserId == data._id) {
-            data.follow = 1;
-          }
-        });
-      });
+      // DiscoveredPeople.forEach((data) => {
+      //   followingList.forEach((followingUserId) => {
+      //     if (followingUserId == data._id) {
+      //       data.follow = 1;
+      //     }
+      //   });
+      // });
       //follow2
-      DiscoveredPeople.forEach((data) => {
-        requestedList.forEach((requestUserId) => {
-          if (requestUserId == data._id) {
-            data.follow = 2;
-          }
-        });
-      });
-      sleep(2000).then(function () {
+      // DiscoveredPeople.forEach((data) => {
+      //   requestedList.forEach((requestUserId) => {
+      //     if (requestUserId == data._id) {
+      //       data.follow = 2;
+      //     }
+      //   });
+      // });
+      // sleep(2000).then(function () {
         return res.json({
           success: true,
           DiscoverPeople: DiscoveredPeople,
           message: "DiscoveredPeople fetched successfully"
         })
-      })
+      // })
       
     } else {
       return res.json({
         success: false,
-        Msg: "Not found"
+        message: "Not found"
       })
     }
 }

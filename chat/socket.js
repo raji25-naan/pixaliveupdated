@@ -1,4 +1,3 @@
-
 const jwt = require('jsonwebtoken');
 const messageSchema = require('../api/models/User/chat');
 const user_chatSchema = require('../api/models/User/user_chat');
@@ -70,13 +69,11 @@ io.on('connection', socket => {
         }
         else {
           if (userID.toString() == senderId.toString()) {
-            notification(senderId, receiverId)
             const updateSchemaChat3 = chatUpdate(senderId, receiverId, message, url, post_type, thumbnail);
             const update_userChatOne = updateUserChat(0, senderId, receiverId, message, url, post_type, thumbnail);
             const update_receiveOne = updateUserChat(1, receiverId, senderId, message, url, post_type, thumbnail)
           }
           if (userID.toString() == receiverId.toString()) {
-            notification(senderId, receiverId)
             const updateSchemaChat2 = chatUpdate(senderId, receiverId, message, url, post_type, thumbnail);
             const update_userChatTwo = updateUserChat(1, senderId, receiverId, message, url, post_type, thumbnail);
             const update_receiveTwo = updateUserChat(0, receiverId, senderId, message, url, post_type, thumbnail)
@@ -88,12 +85,11 @@ io.on('connection', socket => {
       else {
         const updateSchemaChat1 = chatUpdate(senderId, receiverId, message, url, post_type, thumbnail);
         if (userID.toString() == senderId.toString()) {
-          notification(senderId, receiverId)
           const update_userChatOne = updateUserChat(0, senderId, receiverId, message, url, post_type, thumbnail);
           const update_receiveOne = updateUserChat(1, receiverId, senderId, message, url, post_type, thumbnail)
         }
         if (userID.toString() == receiverId.toString()) {
-          notification(senderId, receiverId)
+          // notification(senderId, receiverId)
           const update_userChatTwo = updateUserChat(1, senderId, receiverId, message, url, post_type, thumbnail);
           const update_receiveTwo = updateUserChat(0, receiverId, senderId, message, url, post_type, thumbnail)
 
@@ -103,12 +99,12 @@ io.on('connection', socket => {
     else {
       const updateSchemaChat = chatUpdate(senderId, receiverId, message, url, post_type, thumbnail);
       if (userID.toString() == senderId.toString()) {
-        notification(senderId, receiverId)
+        // notification(senderId, receiverId)
         const update_userChatOne = updateUserChat(0, senderId, receiverId, message, url, post_type, thumbnail);
         const update_receiveOne = updateUserChat(1, receiverId, senderId, message, url, post_type, thumbnail)
       }
       if (userID.toString() == receiverId.toString()) {
-        notification(senderId, receiverId)
+        // notification(senderId, receiverId)
         const update_userChatTwo = updateUserChat(1, senderId, receiverId, message, url, post_type, thumbnail);
         const update_receiveTwo = updateUserChat(0, receiverId, senderId, message, url, post_type, thumbnail)
 
@@ -172,8 +168,6 @@ async function chatUpdate(senderId, receiverId, message, url, post_type, thumbna
 async function updateUserChat(type, userId, receiverId, message, url, post_type, thumbnail) {
   var find_user = await user_chatSchema.find({ user_id: userId });
   if (find_user.length) {
-    console.log("hi")
-
     const unfollow = await user_chatSchema.updateOne(
       { user_id: userId },
       {
@@ -185,9 +179,10 @@ async function updateUserChat(type, userId, receiverId, message, url, post_type,
         }
       }, { new: true }
     ).exec();
-
     if (unfollow) {
       if (type == 0) {
+        const findData = await messageSchema.find({ user_id: userId, receiver_id: receiverId, seen: false, isBlocked: false }).exec()
+        const total = (findData.length > 0) ? findData.length : 0;
         const user_follow = await user_chatSchema.updateOne(
           { user_id: userId },
           {
@@ -199,13 +194,16 @@ async function updateUserChat(type, userId, receiverId, message, url, post_type,
                 url: url,
                 thumbnail: thumbnail,
                 post_type: post_type,
+                count: total,
                 created_at: Date.now(),
               }
             }
           }, { new: true }
-        ).exec();
+        ).exec()
       }
-      else if (type == 1) {
+      if (type == 1) {
+        const findData = await messageSchema.find({ user_id: userId, receiver_id: receiverId, seen: false, isBlocked: false }).exec()
+        const total = (findData.length > 0) ? findData.length : 0;
         const receiver_follow = await user_chatSchema.updateOne(
           { user_id: userId },
           {
@@ -216,18 +214,18 @@ async function updateUserChat(type, userId, receiverId, message, url, post_type,
                 receiver_message: message,
                 url: url,
                 thumbnail: thumbnail,
+                count: total,
                 post_type: post_type,
                 created_at: Date.now(),
               }
             }
           }, { new: true }
-        ).exec();
+        ).exec()
       }
 
     }
   }
   else {
-    console.log("hello")
     if (type == 0) {
       var create_newuser = new user_chatSchema({
         user_id: userId,
@@ -239,13 +237,14 @@ async function updateUserChat(type, userId, receiverId, message, url, post_type,
             url: url,
             thumbnail: thumbnail,
             post_type: post_type,
+            count: 1,
             created_at: Date.now(),
           },
         ]
       })
       const saveData = await create_newuser.save();
     }
-    else if (type == 1) {
+    if (type == 1) {
       var create_newuser1 = new user_chatSchema({
         user_id: userId,
         user_data: [
@@ -256,6 +255,7 @@ async function updateUserChat(type, userId, receiverId, message, url, post_type,
             url: url,
             thumbnail: thumbnail,
             post_type: post_type,
+            count: 1,
             created_at: Date.now(),
           },
         ]
@@ -266,23 +266,23 @@ async function updateUserChat(type, userId, receiverId, message, url, post_type,
   }
 }
 
-async function notification(senderid, receiverid) {
-  const updateNotification_private = new notificationSchema({
-    sender_id: senderid,
-    receiver_id: receiverid,
-    type: 5,
-    seen: false,
-    created_at: Date.now(),
-  });
-  const saveNotificationData_private = await updateNotification_private.save()
-  if (saveNotificationData_private) {
-    sendNotification(senderid, receiverid, 5);
-    return res.json({
-      success: true,
-      message: 'successfully following and notification Sent'
-    });
-  }
-}
+// async function notification(senderid, receiverid) {
+//   const updateNotification_private = new notificationSchema({
+//     sender_id: senderid,
+//     receiver_id: receiverid,
+//     type: 5,
+//     seen: false,
+//     created_at: Date.now(),
+//   });
+//   const saveNotificationData_private = await updateNotification_private.save()
+//   if (saveNotificationData_private) {
+//     sendNotification(senderid, receiverid, 5);
+//     return res.json({
+//       success: true,
+//       message: 'successfully following and notification Sent'
+//     });
+//   }
+// }
 
 
 module.exports = socketApi;

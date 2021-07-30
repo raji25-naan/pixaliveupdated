@@ -4,6 +4,7 @@ const notificationSchema = require("../../models/User/Notification");
 const Users = require("../../models/User/Users");
 const { sendNotification } = require("../../helpers/notification");
 const sleep = require('sleep-promise');
+const replyCommentLike = require("../../models/User/replyCommentLike");
 
 // ************create comment*******************
 
@@ -94,18 +95,32 @@ exports.getPost_comments = async (req, res, next) => {
     const user_id = req.user_id;
     const post_id = req.query.post_id;
     let inactiveUsers = await Users.distinct("_id", { isActive: false }).exec();
-    console.log(inactiveUsers);
     const getcomment = await commentSchema.find({ post_id: post_id, user_id: { $nin: inactiveUsers } }).populate("user_id", "username name avatar private follow")
     .populate("Reply.user_id", "username name avatar private follow").exec();
-    console.log(getcomment);
     if (getcomment.length) 
     {
+      //getReplyCommentLikes
+      const getReplyCommentLikes = await replyCommentLike.distinct("replyComment_id",{likedUser_id: user_id}).exec();
+      const totalReplyCommentLikeIds = getReplyCommentLikes.map(String);
+
+      //isLiked 1
       getcomment.forEach((data)=>{
         data.LikedUser.forEach((like)=>{
           if(like._id == user_id)
           {
             data.isLiked = 1
           }
+        })
+      })
+      //isLikedReply 1
+      getcomment.forEach((data)=>{
+        data.Reply.forEach((likedData)=>{
+          totalReplyCommentLikeIds.forEach((likedCommentId)=>{
+            if(likedData._id == likedCommentId)
+            {
+              likedData.isLikedReply = 1
+            }
+          })
         })
       })
       sleep(2000).then(function () {
@@ -154,6 +169,7 @@ exports.addLiketoComment = async (req, res, next) => {
     const { user_id,comment_id } = req.body;
     //checkCommentLike
     const checkCommentLike = await commentSchema.findOne({_id: comment_id,LikedUser:{ _id: user_id }}).exec();
+    console.log(checkCommentLike);
     if(req.body.type == 1)
     {
       if(checkCommentLike !== null)
@@ -250,7 +266,6 @@ exports.addreplyComment = async (req, res, next) => {
                            }
                     }
                   }, { new: true }).exec();
-
   if(addReply) 
   {
     return res.json({
@@ -264,9 +279,85 @@ exports.addreplyComment = async (req, res, next) => {
       success :false,
       message : "Error occured in reply comment"
     })
-  }
+  } 
+}
 
+//addLiketoReplyComment
+exports.addLiketoReplyComment = async (req, res, next) => {
+  const {user_id,replyComment_id } = req.body;
+  //checkCommentLike
+  const checkCommentLike = await replyCommentLike.findOne({replyComment_id:replyComment_id,likedUser_id:user_id}).exec();
+
+  if(req.body.type == 1)
+  {
+    if(checkCommentLike !== null)
+    {
+      return res.json({
+        success: false,
+        message: 'Already Existing...check!'
+      })
+    }
+    else
+    {
+        const addLike = new replyCommentLike({
+          replyComment_id: replyComment_id,
+          likedUser_id: user_id
+        });
+        const saveLike = await addLike.save();
+        
+         //increaseLikeCount
+         const increaseLikeCount = await commentSchema.findOneAndUpdate(
+          {"Reply._id":replyComment_id},
+          { $inc: {"Reply.$.ReplyLikeCount":1}},
+          {new: true}).exec();
+          if(saveLike && increaseLikeCount) 
+          {
+            return res.json({
+                success: true,
+                message: 'successfully Liked..'
+            })
+          }
+          else {
+            return res.json({
+                success: false,
+                message: 'error in like comment'+error
+            })
+          }
+      }  
+  } 
+  else if(req.body.type == 0) 
+  {
+    if(checkCommentLike !== null)
+    {
+      const unlike = await replyCommentLike.findOneAndDelete({
+        replyComment_id: replyComment_id,
+          likedUser_id: user_id
+      });
+      //decreaseLikeCount  
+      const decreaseLikeCount = await commentSchema.findOneAndUpdate(
+        {"Reply._id":replyComment_id},
+        { $inc: {"Reply.$.ReplyLikeCount":-1}},
+        {new: true}).exec();      
+      if(unlike && decreaseLikeCount) {
+        return res.json({
+          success : true,
+          message : "Unlike successfully"
+        })
+      } else {
+        return res.json({
+          success :false,
+          message : "Error occured in unlike"
+        })
+      }
+    }
+    else
+    {
+      return res.json({
+        success: false,
+        message: 'Not an Existing...check!'
+      })
+    }
     
-  
+  }
 }
 
