@@ -151,14 +151,40 @@ exports.getStory = async (req, res, next) => {
     });
 
   })
-  if (AllfriendStories.length >= 0) {
+  if (AllfriendStories.length >= 0)
+  {
     sleep(2000).then(function () {
-      return res.json({
-        success: true,
-        result: AllfriendStories,
-        message: "Story fetched successfully"
+ 
+      var mainArr = []
+      var mainArr1 = []
+      AllfriendStories.forEach((getArray) => {
+        var count = 0;
+        var countMain = 0;
+        getArray.forEach((data) => {
+          if (data.viewed == 1) {
+            count = count + 1;
+            if (count == getArray.length) {
+              mainArr.push(getArray);
+            }
+          }
+          else {
+            countMain = countMain + 1;
+            if (countMain == 1) {
+              mainArr1.push(getArray);
+            }
+          }
+        })
       })
-    })
+      sleep(1000).then(function () {
+        const array3 = mainArr1.concat(mainArr);
+        return res.json({
+          success: true,
+          result: array3,
+          message: "Story fetched successfully"
+        })
+      })
+    })  
+      
   }
   else {
     return res.json({

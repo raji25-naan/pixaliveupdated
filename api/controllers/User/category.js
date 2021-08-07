@@ -59,17 +59,19 @@ const postSchema = require('../../models/User/Post');
 exports.fetchCategory = async (req, res, next) => {
     const getAllcategory = await Category.find({}).exec();
  
-    if (req.query.explore == 'true') {
-        var arr = []
+    if (req.query.explore == 'true')
+    {
+        var arr = [];
+        var count = 0;
         getAllcategory.forEach(async data => {
-            const findPhoto = await postSchema
-                .find({
+            const findPhoto = await postSchema.find({
                     category: data.category,
-                    privacyType: { $nin: "onlyMe" },
+                    privacyType: { $nin: ["onlyMe","private"] },
                     isActive: true,
                     isDeleted: false
                 })
-            if (findPhoto.length) {
+            if (findPhoto.length) 
+            {
                 arr.push({
                     "_id": data._id,
                     "category": data.category,
@@ -77,17 +79,33 @@ exports.fetchCategory = async (req, res, next) => {
                     "count": findPhoto.length
                 })
             }
+            count = count + 1;
+            if(getAllcategory.length == count)
+            {
+                let getTrending = await Category.findOne({category:"Trending"}).exec();
+                arr.push({
+                    "_id": getTrending._id,
+                    "category": getTrending.category,
+                    "image": getTrending.image,
+                    "count": 0
+                })
+                Response();
+            }
         })
-        sleep(2000).then(function () {
+        //Response
+        function Response()
+        {
             let categoryList = arr.sort((a, b) => parseFloat(b.count) - parseFloat(a.count));
             return res.json({
                 success: true,
                 category: categoryList,
                 message: "Category fetched successfully"
             });
-        });
+        }
  
-    } else {
+    }
+    else 
+    {
         if (getAllcategory) {
             return res.json({
                 success: true,

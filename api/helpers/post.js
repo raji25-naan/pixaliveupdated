@@ -75,9 +75,9 @@ module.exports.sendAllPost = async function(allPost, userId, res) {
         }
   
       }
-      if (allPost.length == i + 1) {
-        if (allPost.length <= 300) {
-          sleep(5000).then(function () {
+      if (allPost.length == i + 1)
+       {
+          sleep(2000).then(function () {
             console.log("finish300")
             return res.json({
               success: true,
@@ -85,27 +85,6 @@ module.exports.sendAllPost = async function(allPost, userId, res) {
               message: "Feeds fetched successfuly.."
             });
           });
-        }
-        else if (allPost.length <= 500) {
-          sleep(6000).then(function () {
-            console.log("finish500")
-            return res.json({
-              success: true,
-              feeds: allPost,
-              message: "Feeds fetched successfuly.."
-            });
-          });
-        }
-        else {
-          sleep(7000).then(function () {
-            console.log("finish501")
-            return res.json({
-              success: true,
-              feeds: allPost,
-              message: "Feeds fetched successfuly.."
-            });
-          });
-        }
       }
     })
   }

@@ -1,6 +1,7 @@
 const follow_unfollow = require("../../models/User/follow_unfollow");
 const pointSchema = require("../../models/User/points");
 const Post = require("../../models/User/Post");
+const Users = require("../../models/User/Users");
 const sleep = require('sleep-promise');
 
 
@@ -72,29 +73,21 @@ async function updateTotalPoint(userId){
 module.exports.trendingPeople = async (req,res,next)=>{
    
         let user_id = req.user_id;
-        console.log(req.query.suggestion);
+        let inactiveUsers = await Users.distinct("_id",{isActive: false}).exec();        
         if(req.query.suggestion == 'true')
         {
-            let trendingPeopleIds = await pointSchema.distinct("_id",{}).exec();
-            trendingPeopleIds = trendingPeopleIds.map(String);
             //following_data
             const following_data = await follow_unfollow.distinct("followingId", {
                 followerId: user_id,status: 1
             }).exec();
-            var totalId = following_data.map(String);
-            var friendlist = [...new Set(totalId)];
             //request_data
             const request_data = await follow_unfollow.distinct("followingId", {
                 followerId: user_id,status: 0
             }).exec();
-            var request_string = request_data.map(String);
-            var requested = [...new Set(request_string)];
-            var friendAndRequest = friendlist.concat(requested);
-            //removeFollowingRequested
-            let ids = new Set(friendAndRequest.map((id) => id));
-            const suggestedfriends = trendingPeopleIds.filter((id) => !ids.has(id));
+            var friendAndRequest = following_data.concat(request_data,inactiveUsers);
+            
             //getTrendingPeople
-            const getTrendingPeople = await pointSchema.find({_id:{$in: suggestedfriends}}).populate("_id","name username avatar private follow").sort({total_Points: -1}).limit(1000).exec();
+            const getTrendingPeople = await pointSchema.find({_id:{$nin: friendAndRequest}}).populate("_id","name username avatar private follow").sort({total_Points: -1}).limit(1000).exec();
             if(getTrendingPeople)
             {
                 return res.json({
@@ -103,11 +96,19 @@ module.exports.trendingPeople = async (req,res,next)=>{
                     message:"Successfully fetched"
                     });
             }
+            else
+            {
+                return res.json({
+                    success:true,
+                    trendingPeople: getTrendingPeople,
+                    message:"No data found"
+                })
+            }
                
         }
         else
         {
-            const getTrendingPeople = await pointSchema.find({}).populate("_id","name username avatar private follow").sort({total_Points: -1}).limit(1000).exec();
+            const getTrendingPeople = await pointSchema.find({_id:{$nin: inactiveUsers}}).populate("_id","name username avatar private follow").sort({total_Points: -1}).limit(1000).exec();
             if(getTrendingPeople.length)
             {            
                 //following_data
@@ -122,32 +123,78 @@ module.exports.trendingPeople = async (req,res,next)=>{
                 }).exec();
                 var request_string = request_data.map(String);
                 var requested = [...new Set(request_string)];
-                //follow1
-                getTrendingPeople.forEach((data)=>{
-                    friendlist.forEach((id)=>{
-                        if(id == data._id._id)
-                        {
-                            data._id.follow = 1
-                        }
-                    });
-                });
-                //follow2
-                getTrendingPeople.forEach((data)=>{
-                    requested.forEach((id)=>{
-                        if(id == data._id._id)
-                        {
-                            data._id.follow = 2
-                        }
-                    });
-                });
 
-                sleep(2000).then(function () {
+                //check
+                if(friendlist.length)
+                {
+                    setFollow1();
+                }
+                else if(requested.length)
+                {
+                    setFollow2();
+                }
+                else
+                {
+                    Response();
+                }
+
+                //setFollow1
+                function setFollow1()
+                {
+                    var count1 = 0;
+                    var totalLength1 = getTrendingPeople.length * friendlist.length;
+                    getTrendingPeople.forEach((data)=>{
+                        friendlist.forEach((id)=>{
+                            if(id == data._id._id)
+                            {
+                                data._id.follow = 1
+                            }
+                            count1 = count1 + 1;
+                            if(totalLength1 == count1)
+                            {
+                                if(requested.length)
+                                {
+                                    setFollow2(); 
+                                }
+                                else
+                                {
+                                    Response();
+                                }
+                            }
+                        });
+                    });
+                }
+
+                //setFollow2
+                function setFollow2()
+                {
+                    var count2 = 0;
+                    var totalLength2 = getTrendingPeople.length * requested.length;
+                    getTrendingPeople.forEach((data)=>{
+                        requested.forEach((id)=>{
+                            if(id == data._id._id)
+                            {
+                                data._id.follow = 2
+                            }
+                            count2 = count2 + 1;
+                            if(totalLength2 == count2)
+                            {
+                                Response();
+                            }
+                        });
+                    });
+                
+                }                
+
+                //Response
+                function Response()
+                {
                     return res.json({
                     success: true,
                     trendingPeople: getTrendingPeople,
                     message:"Successfully fetched"
                     });
-                });
+                }
             }
             else
             {

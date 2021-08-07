@@ -6,8 +6,8 @@ const follow_unfollow = require("../../models/User/follow_unfollow");
 const likeSchema = require("../../models/User/like");
 const jwt = require("jsonwebtoken");
 const sleep = require('sleep-promise');
-const Cryptr = require('cryptr');
-const cryptr = new Cryptr('myTotalySecretKey');
+// const Cryptr = require('cryptr');
+// const cryptr = new Cryptr('s');
 const userTagpost = require("../../models/User/userTagpost");
 const hidePostSchema = require("../../models/User/HidePost");
 const { increasePost_Point, increaseReloop_Point } = require("./points");
@@ -15,6 +15,8 @@ const blocked = require("../../models/User/blocked");
 const { sendNotification } = require("../../helpers/notification");
 const notificationSchema = require("../../models/User/Notification");
 const { sendAllPost } = require("../../helpers/post");
+const Hashids = require("hashids");
+const hashids = new Hashids();
 
 // ************* Create post Using user_Id ***************//
 
@@ -30,11 +32,9 @@ exports.create_postNew = async (req, res, next) => {
   let arr_hash;
   if (body) {
     arr_hash = body.match(/(^|\s)#(\w+)/g);
-    console.log(arr_hash);
   }
   var hash_tag = [];
   if (arr_hash) {
-    console.log(arr_hash);
     arr_hash = arr_hash.map(function (v) {
       return v.trim().substring(1);
     });
@@ -42,12 +42,9 @@ exports.create_postNew = async (req, res, next) => {
     const get_hashtag = await hashtagSchema.distinct("hashtag", {
       hashtag: arr_hash,
     });
-    console.log(get_hashtag);
     hash_tags = new Set(get_hashtag.map((tag) => tag));
 
     arr_hash = arr_hash.filter((id) => !hash_tags.has(id));
-
-    console.log(arr_hash);
 
     arr_hash.forEach(async (element) => {
       const hashtag = new hashtagSchema({
@@ -123,8 +120,8 @@ async function update_postwithType(
 
     if (createdPost) {
       let userId = createdPost.user_id;
-      let postId = createdPost._id;
-      let encryptdId = cryptr.encrypt(postId)
+      let postId = String(createdPost._id);
+      let encryptdId = hashids.encodeHex(postId);
       const updateEncryptId = await postSchema.findOneAndUpdate(
         { _id: postId },
         {
@@ -282,8 +279,8 @@ async function updateReloopwithPostType(
     if (createdReloop) {
       //updateReloopCount
 
-      let postId = createdReloop._id;
-      let encryptdId = cryptr.encrypt(postId)
+      let postId = String(createdReloop._id);
+      let encryptdId = hashids.encodeHex(postId);
       const updateEncryptId = await postSchema.findOneAndUpdate(
         { _id: postId },
         {
@@ -357,7 +354,7 @@ exports.get_post = async (req, res, next) => {
     post_id = req.query.post_id;
   }
   else if (req.query.encryptId) {
-    post_id = cryptr.decrypt(req.query.encryptId);
+    post_id = hashids.decodeHex(req.query.encryptId);
   }
   //totalBlockedUser
   let getBlockedUsers1 = await blocked.distinct("Blocked_user", { Blocked_by: user_id }).exec();
@@ -372,7 +369,8 @@ exports.get_post = async (req, res, next) => {
     isActive: true,
     isDeleted: false
   }).populate("user_id", "username avatar name private follow").exec();
-  if (all_Posts) {
+  if (all_Posts) 
+  {
     //data_follower
     const data_follower = await follow_unfollow.distinct("followingId", {
       followerId: user_id, status: 1
@@ -385,35 +383,108 @@ exports.get_post = async (req, res, next) => {
     });
     var array2 = data_request.map(String);
     var requested = [...new Set(array2)];
-    //follow1
-    getAllId.forEach((followId) => {
-      if (followId == all_Posts.user_id._id) {
-        all_Posts.user_id.follow = 1;
-      }
-    });
-    //follow2
-    requested.forEach((followId) => {
-      if (followId == all_Posts.user_id._id) {
-        all_Posts.user_id.follow = 2;
-      }
-    });
     //get_like
     let get_like = await likeSchema.distinct("post_id", {
       user_id: user_id,
       isLike: 1,
     }).exec();
     let likedIds = get_like.map(String);
-    likedIds.forEach((id) => {
-      if (id == all_Posts._id) {
-        all_Posts.isLiked = 1;
-      }
-    });
 
-    sleep(2000).then(function () {
-      sendreloopedPost(all_Posts, user_id, res);
-    });
+    //check
+    if(getAllId.length)
+    {
+      setFollow1();
+    }
+    else if(requested.length)
+    {
+      setFollow2();
+    }
+    else if(likedIds.length)
+    {
+      setisLiked();
+    }
+    else
+    {
+      sendToResponse();
+    }
+
+    //setFollow1
+    function setFollow1()
+    {
+      var count1 = 0;
+      getAllId.forEach((followId) => {
+        if(followId == all_Posts.user_id._id) 
+        {
+          all_Posts.user_id.follow = 1;
+        }
+        count1 = count1 + 1;
+        if(getAllId.length == count1)
+        {
+          if(requested.length)
+          {
+            setFollow2();
+          }
+          else if(likedIds.length)
+          {
+            setisLiked();
+          }
+          else
+          {
+            sendToResponse();
+          }
+        }
+      });
+    }
+
+    //setFollow2
+    function setFollow2()
+    {
+      var count2 = 0;
+      requested.forEach((followId) => {
+        if(followId == all_Posts.user_id._id) 
+        {
+          all_Posts.user_id.follow = 2;
+        }
+        count2 = count2 + 1;
+        if(requested.length == count2)
+        {
+          if(likedIds.length)
+          {
+            setisLiked();
+          }
+          else
+          {
+            sendToResponse();
+          }
+        }
+      });
+    }
+
+    //setisLiked
+    function setisLiked()
+    {
+      var count3 = 0;
+      likedIds.forEach((id) => {
+        if(id == all_Posts._id) 
+        {
+          all_Posts.isLiked = 1;
+        }
+        count3 = count3 + 1;
+        if(likedIds.length == count3)
+        {
+          sendToResponse();
+        }
+      });
+    }
+    
+    //sendToResponse
+    function sendToResponse()
+    {
+      sendreloopedPost(all_Posts, user_id, getAllId, requested, likedIds, res);
+    }
   }
-  else {
+  else 
+  {
     return res.json({
       success: false,
       message: "loop not available"
@@ -421,71 +492,144 @@ exports.get_post = async (req, res, next) => {
   }
 };
 
-async function sendreloopedPost(allPost, userId, res) {
-    if (allPost.reloopPostId) 
-    {
-      const user_id = userId;
-      let post_id = allPost.reloopPostId
+async function sendreloopedPost(allPost, userId, getAllId, requested, likedIds, res) {
+  if (allPost.reloopPostId) 
+  {
+    const user_id = userId;
+    let post_id = allPost.reloopPostId
 
-      //totalBlockedUser
-      let getBlockedUsers1 = await blocked.distinct("Blocked_user", { Blocked_by: user_id }).exec();
-      let getBlockedUsers2 = await blocked.distinct("Blocked_by", { Blocked_user: user_id }).exec();
-      const totalBlockedUser = getBlockedUsers1.concat(getBlockedUsers2);
-      //getHidePost
-      let getHidePost = await hidePostSchema.distinct("post_id", { hideByid: user_id }).exec();
-      //all_Posts
-      const all_Posts = await postSchema.findOne({
-        _id: { $in: post_id, $nin: getHidePost },
-        user_id: { $nin: totalBlockedUser },
-        isActive: true,
-        isDeleted: false
-      },{_id:1,body:1,url:1,post_type:1,text_content:1,thumbnail:1,user_id:1,isLiked:1,created_at:1}).populate("user_id", "username avatar name private follow").exec();
-      if (all_Posts) {
-        //data_follower
-        const data_follower = await follow_unfollow.distinct("followingId", {
-          followerId: user_id, status: 1
-        });
-        var array1 = data_follower.map(String);
-        var getAllId = [...new Set(array1)];
-        //data_request
-        const data_request = await follow_unfollow.distinct("followingId", {
-          followerId: user_id, status: 0
-        });
-        var array2 = data_request.map(String);
-        var requested = [...new Set(array2)];
-        //follow1
+    //totalBlockedUser
+    let getBlockedUsers1 = await blocked.distinct("Blocked_user", { Blocked_by: user_id }).exec();
+    let getBlockedUsers2 = await blocked.distinct("Blocked_by", { Blocked_user: user_id }).exec();
+    const totalBlockedUser = getBlockedUsers1.concat(getBlockedUsers2);
+    //getHidePost
+    let getHidePost = await hidePostSchema.distinct("post_id", { hideByid: user_id }).exec();
+    //all_Posts
+    const all_Posts = await postSchema.findOne({
+      _id: { $in: post_id, $nin: getHidePost },
+      user_id: { $nin: totalBlockedUser },
+      isActive: true,
+      isDeleted: false
+    },{_id:1,body:1,url:1,post_type:1,text_content:1,thumbnail:1,user_id:1,isLiked:1,created_at:1}).populate("user_id", "username avatar name private follow").exec();
+    if (all_Posts) 
+    {
+      //data_follower
+      // const data_follower = await follow_unfollow.distinct("followingId", {
+      //   followerId: user_id, status: 1
+      // });
+      // var array1 = data_follower.map(String);
+      // var getAllId = [...new Set(array1)];
+      //data_request
+      // const data_request = await follow_unfollow.distinct("followingId", {
+      //   followerId: user_id, status: 0
+      // });
+      // var array2 = data_request.map(String);
+      // var requested = [...new Set(array2)];
+      //get_like
+      // let get_like = await likeSchema.distinct("post_id", {
+      //   user_id: user_id,
+      //   isLike: 1,
+      // }).exec();
+      // let likedIds = get_like.map(String);
+
+      //check
+      if(getAllId.length)
+      {
+        setFollow1();
+      }
+      else if(requested.length)
+      {
+        setFollow2();
+      }
+      else if(likedIds.length)
+      {
+        setisLiked();
+      }
+      else
+      {
+        Response();
+      }
+
+      //setFollow1
+      function setFollow1()
+      {
+        var count1 = 0;
         getAllId.forEach((followId) => {
-          if (followId == all_Posts.user_id._id) {
+          if(followId == all_Posts.user_id._id) 
+          {
             all_Posts.user_id.follow = 1;
           }
-        });
-        //follow2
-        requested.forEach((followId) => {
-          if (followId == all_Posts.user_id._id) {
-            all_Posts.user_id.follow = 2;
+          count1 = count1 + 1;
+          if(getAllId.length == count1)
+          {
+            if(requested.length)
+            {
+              setFollow2();
+            }
+            else if(likedIds.length)
+            {
+              setisLiked();
+            }
+            else
+            {
+              Response();
+            }
           }
-        });
-        //get_like
-        let get_like = await likeSchema.distinct("post_id", {
-          user_id: user_id,
-          isLike: 1,
-        }).exec();
-        let likedIds = get_like.map(String);
-        likedIds.forEach((id) => {
-          if (id == all_Posts._id) {
-            all_Posts.isLiked = 1;
-          }
-        });
-
-        sleep(2000).then(function () {
-          allPost.reloopPostId = all_Posts;
-          return res.json({
-            success: true,
-            feeds: allPost,
-            message: "Feeds fetched successfuly.."
-          });
         });
       }
+
+      //setFollow2
+      function setFollow2()
+      {
+        var count2 = 0;
+        requested.forEach((followId) => {
+          if(followId == all_Posts.user_id._id) 
+          {
+            all_Posts.user_id.follow = 2;
+          }
+          count2 = count2 + 1;
+          if(requested.length == count2)
+          {
+            if(likedIds.length)
+            {
+              setisLiked();
+            }
+            else
+            {
+              Response();
+            }
+          }
+        });
+      }
+
+      //setisLiked
+      function setisLiked()
+      {
+        var count3 = 0;
+        likedIds.forEach((id) => {
+          if(id == all_Posts._id) 
+          {
+            all_Posts.isLiked = 1;
+          }
+          count3 = count3 + 1;
+          if(likedIds.length == count3)
+          {
+            Response();
+          }
+        });
+      }
+
+      //Response
+      function Response()
+      {
+        allPost.reloopPostId = all_Posts;
+        return res.json({
+          success: true,
+          feeds: allPost,
+          message: "Feeds fetched successfuly.."
+        });
+      }
+
     }
     else
     {
@@ -495,94 +639,175 @@ async function sendreloopedPost(allPost, userId, res) {
         message: "Feeds fetched successfuly.."
       });
     }
+  }
+  else
+  {
+    return res.json({
+      success: true,
+      feeds: allPost,
+      message: "Feeds fetched successfuly.."
+    });
+  }
 }
 
 
 // Get user feeds using user_id and fix offset
 exports.feeds = async (req, res, next) => {
-  const user_id = req.user_id;
-  const offset = req.query.offset;
-  var row = 20;
-  //data_follower
-  const data_follower = await follow_unfollow.distinct("followingId", { followerId: user_id, status: 1 }).exec();
-  const stringFollowerId = data_follower.map(String);
-  data_follower.push(user_id);
-  var array1 = data_follower.map(String);
-  var getAllId = [...new Set(array1)];
-  //data_request
-  const data_request = await follow_unfollow.distinct("followingId", { followerId: user_id, status: 0 }).exec();
-  var array2 = data_request.map(String);
-  var requested = [...new Set(array2)];
-  //getReloopPostIdswithoutBody
-  let reloopPostIds = await postSchema.distinct("reloopPostId", { user_id: user_id }).exec();
-  let relooppostIdsWithoutbody = await postSchema.distinct("_id", { user_id: user_id, reloopPostId: reloopPostIds, body: "" }).exec();
 
-  //getHidePost
-  let getHidePost = await hidePostSchema.distinct("post_id", { hideByid: user_id }).exec();
-  let totalHideandBlockPostId = relooppostIdsWithoutbody.concat(getHidePost);
-  //getBlockedUsers
-  let getBlockedUsers1 = await blocked.distinct("Blocked_user", { Blocked_by: user_id }).exec();
-  let getBlockedUsers2 = await blocked.distinct("Blocked_by", { Blocked_user: user_id }).exec();
-  let totalBlockedUser = getBlockedUsers1.concat(getBlockedUsers2);
+    const user_id = req.user_id;
+    const offset = req.query.offset;
+    var row = 10;
+    //data_follower
+    const data_follower = await follow_unfollow.distinct("followingId", { followerId: user_id, status: 1 }).exec();
+    const stringFollowerId = data_follower.map(String);
+    data_follower.push(user_id);
+    var array1 = data_follower.map(String);
+    var getAllId = [...new Set(array1)];
+    //data_request
+    const data_request = await follow_unfollow.distinct("followingId", { followerId: user_id, status: 0 }).exec();
+    var array2 = data_request.map(String);
+    var requested = [...new Set(array2)];
+    //getReloopPostIdswithoutBody
+    let reloopPostIds = await postSchema.distinct("reloopPostId", { user_id: user_id }).exec();
+    let relooppostIdsWithoutbody = await postSchema.distinct("_id", { user_id: user_id, reloopPostId: reloopPostIds, body: "" }).exec();
 
-  // const all_feeds = await(await postSchema
-  //   .find({
-  //     user_id: { $in: getAllId, $nin: totalBlockedUser },
-  //     _id: { $nin: totalHideandBlockPostId },
-  //     privacyType: { $nin: "onlyMe" },
-  //     isActive: true,
-  //     isDeleted: false
-  //   }).populate("user_id", "username name avatar private follow").sort({ created_at: -1 })).splice(offset == undefined ? 0 : offset, row);
-  const all_feeds = await postSchema.find({
-    user_id: { $in: getAllId, $nin: totalBlockedUser },
-    _id: { $nin: totalHideandBlockPostId },
-    privacyType: { $nin: "onlyMe" },
-    isActive: true,
-    isDeleted: false
-  }).populate("user_id", "username name avatar private follow").sort({ created_at: -1 }).exec();
-  if (all_feeds.length > 0) {
-    let get_like = await likeSchema.distinct("post_id", {
-      user_id: user_id,
-      isLike: 1,
-    }).exec();
-    let likedIds = get_like.map(String);
-    //follow1
-    all_feeds.forEach((data) => {
-      stringFollowerId.forEach((followId) => {
-        if (followId == data.user_id._id) {
-          data.user_id.follow = 1;
-        }
-      })
-    })
-    //follow2
-    all_feeds.forEach((data) => {
-      requested.forEach((followId) => {
-        if (followId == data.user_id._id) {
-          data.user_id.follow = 2;
-        }
-      })
-    })
-    //isLiked
-    all_feeds.forEach((post) => {
-      likedIds.forEach((id) => {
-        if (id == post._id) {
-          post.isLiked = 1;
-        }
-      });
-    });
+    //getHidePost
+    let getHidePost = await hidePostSchema.distinct("post_id", { hideByid: user_id }).exec();
+    let totalHideandBlockPostId = relooppostIdsWithoutbody.concat(getHidePost);
+    //getBlockedUsers
+    let getBlockedUsers1 = await blocked.distinct("Blocked_user", { Blocked_by: user_id }).exec();
+    let getBlockedUsers2 = await blocked.distinct("Blocked_by", { Blocked_user: user_id }).exec();
+    let totalBlockedUser = getBlockedUsers1.concat(getBlockedUsers2);
 
-    sleep(2000).then(function () {
-      sendAllPost(all_feeds, user_id, res)
-    });
-  }
-  else {
+    const all_feeds = await(await postSchema
+      .find({
+        user_id: { $in: getAllId, $nin: totalBlockedUser },
+        _id: { $nin: totalHideandBlockPostId },
+        privacyType: { $nin: "onlyMe" },
+        isActive: true,
+        isDeleted: false
+      }).populate("user_id", "username name avatar private follow").sort({ created_at: -1 })).splice(offset == undefined ? 0 : offset, row);
+  // const all_feeds = await postSchema.find({
+  //   user_id: { $in: getAllId, $nin: totalBlockedUser },
+  //   _id: { $nin: totalHideandBlockPostId },
+  //   privacyType: { $nin: "onlyMe" },
+  //   isActive: true,
+  //   isDeleted: false
+  // }).populate("user_id", "username name avatar private follow").sort({ created_at: -1 }).exec();
+    if (all_feeds.length > 0) 
+    {
+      let get_like = await likeSchema.distinct("post_id", {
+        user_id: user_id,
+        isLike: 1,
+      }).exec();
+      let likedIds = get_like.map(String);
+      //follow1
+      if(stringFollowerId.length)
+      {
+        setFollow1();
+      }
+      else if(requested.length)
+      {
+        setFollow2();
+      }
+      else if(likedIds.length)
+      {
+        setisLiked();
+      }
+      else
+      {
+        sendtoResponse();
+      }
+      //setFollow1
+      function setFollow1()
+      {
+        var count1 = 0;
+        var totalLength1 = all_feeds.length * stringFollowerId.length;
+        all_feeds.forEach((data) => {
+          stringFollowerId.forEach((followId) => {
+            if (followId == data.user_id._id) 
+            {
+              data.user_id.follow = 1;
+            }
+            count1 = count1 + 1;
+            if(totalLength1 == count1)
+            {
+              if(requested.length)
+              {
+                setFollow2();
+              }
+              else if(likedIds.length)
+              {
+                setisLiked();
+              }
+              else
+              {
+                sendtoResponse();
+              }
+            }
+          })
+        })
+      }
+      //setFollow2
+      function setFollow2()
+      {
+        var count2 = 0;
+        var totalLength2 = all_feeds.length * requested.length;
+        all_feeds.forEach((data) => {
+          requested.forEach((followId) => {
+            if (followId == data.user_id._id) 
+            {
+              data.user_id.follow = 2;
+            }
+            count2 = count2 + 1;
+            if(totalLength2 == count2)
+            {
+              if(likedIds.length)
+              {
+                setisLiked();
+              }
+              else
+              {
+                sendtoResponse();
+              }
+            }
+          })
+        })
+      }
+      
+      //setisLiked
+      function setisLiked()
+      {
+        var count3 = 0;
+        var totalLength3 = all_feeds.length * likedIds.length;
+        all_feeds.forEach((post) => {
+          likedIds.forEach((id) => {
+            if (id == post._id) 
+            {
+              post.isLiked = 1;
+            }
+            count3 = count3 + 1;
+            if(totalLength3 == count3)
+            {
+              sendtoResponse();
+            }
+          });
+        });
+      }
+
+      function sendtoResponse()
+      {
+        sendAllPost(all_feeds, user_id, res)
+      }
+    }
+    else {
     return res.json({
       success: true,
       feeds: all_feeds,
       message: "No Feeds"
 
     });
-  }
+    }
 };
 
 // async function sendAllPost(allPost, userId, res) {
@@ -970,30 +1195,74 @@ exports.delete_post_New = async (req, res, next) => {
   }
 }
 
-
-
-// Edit privacy using Post ID
+//createShare
 exports.createShare = async (req, res, next) => {
 
   if (req.query.encryptId) {
-    let post_id = cryptr.decrypt(req.query.encryptId);
-    console.log(post_id);
+    let post_id = hashids.decodeHex(req.query.encryptId);
     const get_Post = await postSchema.findOne({ _id: post_id, isActive: true, isDeleted: false }).populate("user_id", "username avatar name private follow").exec();
-    console.log(get_Post);
     if (get_Post.post_type == 1) {
       return res.send(
-        `<!DOCTYPE html> <html> <head> <title> ${get_Post.user_id.username}  ${get_Post.body}  <a href = "https://pixalive.me/" >pixalive.me</a> </title> <link rel="icon" href="${get_Post.thumbnail}"> </head> <body> </body> </html>`
+        `<!DOCTYPE html>
+          <html> 
+            <head>
+              <style type="text/css" >
+                html {
+                  overflow: auto;
+                }
+                html, body, div, iframe {
+                  margin: 0px;
+                  padding: 0px;
+                  height: 100%;
+                  border: none;
+                }
+                iframe {
+                  display: block;
+                  width: 100%;
+                  border: none;
+                  overflow-y: auto;
+                  overflow-x: hidden;
+                }
+              </style>
+              <title> ${get_Post.user_id.username}  ${get_Post.body}  <a href = "https://pixalive.me/" >pixalive.me</a> </title> <link rel="icon" href="${get_Post.thumbnail}"> 
+            </head>
+            <body> <iframe src = "https://pixalive.me" frameborder="0" marginheight="0" marginwidth="0" width="100%" height="100%" scrolling="auto" ></iframe> </body>
+          </html>`
       )
     }
     else if (get_Post.post_type == 3) {
       return res.send(
-        `<!DOCTYPE html> <html> <head> <title> ${get_Post.user_id.username}  ${get_Post.body} pixalive.me </title> <link rel="icon" href="${get_Post.url}"> </head> <body> </body> </html>`
+        `<!DOCTYPE html>
+          <html>
+            <head>
+              <style type="text/css" >
+                html {
+                  overflow: auto;
+                }
+                html, body, div, iframe {
+                  margin: 0px;
+                  padding: 0px;
+                  height: 100%;
+                  border: none;
+                }
+                iframe {
+                  display: block;
+                  width: 100%;
+                  border: none;
+                  overflow-y: auto;
+                  overflow-x: hidden;
+                }
+              </style>
+              <title> ${get_Post.user_id.username}  ${get_Post.body} pixalive.me </title> <link rel="icon" href="${get_Post.url}"> 
+            </head>
+            <body> <iframe src = "https://pixalive.me" frameborder="0" marginheight="0" marginwidth="0" width="100%" height="100%" scrolling="auto" ></iframe> </body>
+          </html>`
       )
     }
     else {
       return res.json({
         success: false,
-        message: "No data found"
+        message: "Post Unavailable"
       })
     }
 

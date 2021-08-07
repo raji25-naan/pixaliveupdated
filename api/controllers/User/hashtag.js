@@ -124,40 +124,79 @@ exports.create_hashtag = async (req, res, next) => {
     }
 }
 
+//fetch_hashtag
 exports.fetch_hashtag = async (req, res, next) => {
     const user_id = req.user_id;
     const search = req.body.search_hash;
+    // blocked User
+    let getBlockedUsers1 = await blocked.distinct("Blocked_user", { Blocked_by: user_id }).exec();
+    let getBlockedUsers2 = await blocked.distinct("Blocked_by", { Blocked_user: user_id }).exec();
+    let totalBlockedUser = getBlockedUsers1.concat(getBlockedUsers2);
+
     const get_data = await Hashtag.find({}).exec();
     const getHashtags = get_data.filter(data => new RegExp(search, "ig").test(data.hashtag)).sort((a, b) => {
         let re = new RegExp("^" + search, "i")
         return re.test(a.hashtag) ? re.test(b.hashtag) ? a.hashtag.localeCompare(b.hashtag) : -1 : 1
     });
-    if (getHashtags.length > 0) {
-        getHashtags.forEach(async (data) => {
-            let postCount = await postSchema.find({ hashtag: data.hashtag,isActive: true,isDeleted: false }).exec();
-            data.posts = postCount.length;
-            console.log(data.posts);
-        })
-
+    if (getHashtags.length > 0) 
+    {
+        //userFollowedHashtagList
         let userFollowedHashtagList = await User.distinct(
             "followedHashtag._id",
             { _id: user_id }
         ).exec();
         userFollowedHashtagList = userFollowedHashtagList.map(String);
         var followedHashtagId = [...new Set(userFollowedHashtagList)];
-        getHashtags.forEach((data) => {
-            followedHashtagId.forEach((hashId) => {
-                if (hashId == data._id) {
-                    data.follow = 1;
+
+        var counter1 = 0;
+        getHashtags.forEach(async (data) => {
+            let postCount = await postSchema.find({
+                 hashtag: data.hashtag,
+                 user_id: { $nin: totalBlockedUser },
+                 isActive: true,
+                 isDeleted: false,
+                 privacyType: { $nin: ["onlyMe", "private"] } }).exec();
+            data.posts = postCount.length;
+            counter1 = counter1 + 1;
+            if(getHashtags.length == counter1)
+            {
+                if(followedHashtagId.length)
+                {
+                    setFollow1();
                 }
+                else
+                {
+                    sendResponse();
+                }
+            }
+        })
+
+        function setFollow1()
+        {
+            var counter2 = 0;
+            var totalLength = getHashtags.length * followedHashtagId.length;
+            getHashtags.forEach((data) => {
+                followedHashtagId.forEach((hashId) => {
+                    if (hashId == data._id) {
+                        data.follow = 1;
+                    }
+                    counter2 = counter2 + 1;
+                    if(totalLength == counter2)
+                    {
+                        sendResponse();
+                    }
+                });
             });
-        });
-        sleep(2000).then(function () {
+        }
+
+        //Response
+        function sendResponse()
+        {
             return res.json({
                 success: true,
                 result: getHashtags
             });
-        });
+        }
 
     } else {
         return res.json({
@@ -170,12 +209,9 @@ exports.fetch_hashtag = async (req, res, next) => {
 // get related video using hashtag
 exports.getvideo_hashtag = async (req, res, next) => {
 
-    var arr = []
     let hashtagList = [];
     hashtagList = req.body.hashtag;
-    console.log(hashtagList);
     const current_user_id = req.user_id;
-    // const current_user_id = "60df25ff7426aa255702c3bc";
     // blocked User
     let getBlockedUsers1 = await blocked.distinct("Blocked_user", { Blocked_by: current_user_id }).exec();
     let getBlockedUsers2 = await blocked.distinct("Blocked_by", { Blocked_user: current_user_id }).exec();
@@ -206,13 +242,7 @@ exports.getvideo_hashtag = async (req, res, next) => {
         privacyType: { $nin: ["onlyMe", "private"] }
     }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 }).exec();
 
-    let getAll_post = post_hashtagWithFollowing.concat(post_hashtagWithoutFollowing);
-    getAll_post.forEach((data) => {
-        if (data.reloopPostId == undefined) {
-            arr.push(data);
-        }
-    });
-    let getvideo_post = arr;
+    let getvideo_post = post_hashtagWithFollowing.concat(post_hashtagWithoutFollowing);
 
     if (getvideo_post.length) {
         var change_string = follower_data.map(String);
@@ -256,11 +286,7 @@ exports.getvideo_hashtag = async (req, res, next) => {
         });
 
         sleep(2000).then(function () {
-            return res.json({
-                success: true,
-                result: getvideo_post,
-                message: "Post fetched successfully",
-            });
+            sendAllPost(getvideo_post,current_user_id, res)
         });
     } else {
         return res.json({
@@ -285,32 +311,27 @@ exports.getPostByhashtag = async (req, res, next) => {
         followerId: current_user_id,
         status: 1
     }).exec();
-    let blockedAndFollowing = totalBlockedUser.concat(follower_data);
+    // let blockedAndFollowing = totalBlockedUser.concat(follower_data);
 
     //post_hashtagWithFollowing
-    const post_hashtagWithFollowing = await postSchema.find({
-        hashtag: { $in: hashtag },
-        user_id: { $in: follower_data, $nin: totalBlockedUser },
-        isDeleted: false,
-        isActive: true,
-        privacyType: { $nin: ["onlyMe"] }
-    }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 }).exec();
+    // const post_hashtagWithFollowing = await postSchema.find({
+    //     hashtag: { $in: hashtag },
+    //     user_id: { $in: follower_data, $nin: totalBlockedUser },
+    //     isDeleted: false,
+    //     isActive: true,
+    //     privacyType: { $nin: ["onlyMe"] }
+    // }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 }).exec();
     //post_hashtagWithoutFollowing
-    const post_hashtagWithoutFollowing = await postSchema.find({
+    const getAll_post = await postSchema.find({
         hashtag: { $in: hashtag },
-        user_id: { $nin: blockedAndFollowing },
+        user_id: { $nin: totalBlockedUser },
         isDeleted: false,
         isActive: true,
         privacyType: { $nin: ["onlyMe", "private"] }
     }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 }).exec();
 
-    let getAll_post = post_hashtagWithFollowing.concat(post_hashtagWithoutFollowing);
-    // getAll_post.forEach((data) => {
-    //     if (data.reloopPostId == undefined) {
-    //         arr.push(data);
-    //     }
-    // });
-    // let getvideo_post = arr;
+    // let getAll_post = post_hashtagWithFollowing.concat(post_hashtagWithoutFollowing);
+    
     if (getAll_post.length)
     {
         var change_string = follower_data.map(String);

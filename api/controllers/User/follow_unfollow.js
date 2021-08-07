@@ -403,29 +403,77 @@ exports.get_following = async (req, res, next) => {
     }).exec();
     const request_ID = data_request.map(String);
     const requestedId = [...new Set(request_ID)];
-    //follow1
-    getFollowingUserData.forEach((data) => {
-      totalId.forEach((followingUserId) => {
-        if (followingUserId == data._id) {
-          data.follow = 1;
-        }
+
+    //check
+    if(totalId.length)
+    {
+      setFollow1();
+    }
+    else if(requestedId.length)
+    {
+      setFollow2();
+    }
+    else
+    {
+      Response();
+    }
+
+    //setFollow1
+    function setFollow1()
+    {
+      var count1 = 0;
+      var totalLength1 = getFollowingUserData.length * totalId.length;
+      getFollowingUserData.forEach((data) => {
+        totalId.forEach((followingUserId) => {
+          if (followingUserId == data._id) 
+          {
+            data.follow = 1;
+          }
+          count1 = count1 + 1;
+          if(totalLength1 == count1)
+          {
+            if(requestedId.length)
+            {
+              setFollow2();
+            }
+            else
+            {
+              Response();
+            }
+          }
+        });
       });
-    });
-    //follow2
-    getFollowingUserData.forEach((data) => {
-      requestedId.forEach((reqId) => {
-        if (reqId == data._id) {
-          data.follow = 2;
-        }
+    }
+
+    //setFollow2
+    function setFollow2()
+    {
+      var count2 = 0;
+      var totalLength2 = getFollowingUserData.length * requestedId.length;
+      getFollowingUserData.forEach((data) => {
+        requestedId.forEach((reqId) => {
+          if (reqId == data._id) 
+          {
+            data.follow = 2;
+          }
+          count2 = count2 + 1;
+          if(totalLength2 == count2)
+          {
+            Response();
+          }
+        });
       });
-    });
-    sleep(2000).then(function () {
+    }
+      
+    //Response
+    function Response()
+    {
       return res.json({
         success: true,
         result: getFollowingUserData,
         message: "Successfully fetched following users!"
       });
-    })
+    }
 }
 
 exports.get_followers = async (req, res, next) => {
@@ -451,30 +499,78 @@ exports.get_followers = async (req, res, next) => {
     });    
     const request_ID = data_request.map(String);
     const requestedId = [...new Set(request_ID)];
-    //follow1
-    getFollowerUserData.forEach((data) => {
-      totalId.forEach((followerUserId) => {
-        if (followerUserId == data._id) {
-          data.follow = 1;
-        }
+
+    //check
+    if(totalId.length)
+    {
+      setFollow1();
+    }
+    else if(requestedId.length)
+    {
+      setFollow2();
+    }
+    else
+    {
+      Response();
+    }
+
+    //setFollow1
+    function setFollow1()
+    {
+      var count1 = 0;
+      var totalLength1 = getFollowerUserData.length * totalId.length;
+      getFollowerUserData.forEach((data) => {
+        totalId.forEach((followerUserId) => {
+          if (followerUserId == data._id) 
+          {
+            data.follow = 1;
+          }
+          count1 = count1 + 1;
+          if(totalLength1 == count1)
+          {
+            if(requestedId.length)
+            {
+              setFollow2();
+            }
+            else
+            {
+              Response();
+            }
+          }
+        });
       });
-    });
-    //follow2
-    getFollowerUserData.forEach((data) => {
-      requestedId.forEach((reqId) => {
-        if (reqId == data._id) {
-          data.follow = 2;
-        }
+    }
+
+    //setFollow2
+    function setFollow2()
+    {
+      var count2 = 0;
+      var totalLength2 = getFollowerUserData.length * requestedId.length;
+      getFollowerUserData.forEach((data) => {
+        requestedId.forEach((reqId) => {
+          if (reqId == data._id) 
+          {
+            data.follow = 2;
+          }
+          count2 = count2 + 1;
+          if(totalLength2 == count2)
+          {
+            Response();
+          }
+        });
       });
-    });
-    sleep(2000).then(function () {
+    }
+    
+    //Response
+    function Response()
+    {
       let sortedFollowerUserData = getFollowerUserData.sort((a,b) => ((a.follow)-(b.follow)));
       return res.json({
         success: true,
         result: sortedFollowerUserData,
         message: "Successfully fetched followers!"
       });
-    })
+    }
     
 };
 
@@ -572,13 +668,11 @@ exports.DiscoverPeople = async (req, res, next) => {
       //     }
       //   });
       // });
-      // sleep(2000).then(function () {
         return res.json({
           success: true,
           DiscoverPeople: DiscoveredPeople,
           message: "DiscoveredPeople fetched successfully"
         })
-      // })
       
     } else {
       return res.json({

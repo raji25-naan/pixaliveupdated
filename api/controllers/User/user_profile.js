@@ -19,7 +19,8 @@ exports.user_allPost = async (req, res, next) => {
         //getHidePost
         let getHidePost = await hidePostSchema.distinct("post_id", { hideByid: current_user_id }).exec();
         var get_post;
-        if ((current_user_id).toString() == (getpost_user_id).toString()) {
+        if ((current_user_id).toString() == (getpost_user_id).toString()) 
+        {
             get_post = await Post.find({
                 _id: {$nin: getHidePost},
                 user_id: getpost_user_id,
@@ -27,7 +28,8 @@ exports.user_allPost = async (req, res, next) => {
                 isDeleted: false
             }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 }).exec();
         }
-        else {
+        else
+        {
             const follower_data = await follow_unfollow.findOne({ followerId: current_user_id, followingId: getpost_user_id, status: 1 });
             if (follower_data) {
                 get_post = await Post.find({
@@ -48,7 +50,8 @@ exports.user_allPost = async (req, res, next) => {
             }
 
         }
-        if (get_post.length) {
+        if (get_post.length) 
+        {
             const arr_post = []
             get_post.forEach(post => {
                 if (post.reloopPostId == undefined) {
@@ -56,7 +59,7 @@ exports.user_allPost = async (req, res, next) => {
                 }
             })
             if (arr_post.length)
-             {
+            {
                 //follower_data_main
                 const follower_data_main = await follow_unfollow.distinct("followingId", {
                     followerId: current_user_id,
@@ -77,40 +80,116 @@ exports.user_allPost = async (req, res, next) => {
                     isLike: 1,
                 }).exec();
                 const liked_Ids = getUser_like.map(String);
-                //follow1
-                arr_post.forEach((data) => {
-                    getAll_Id.forEach((followId) => {
-                        if (followId == data.user_id._id) {
-                            data.user_id.follow = 1;
-                        }
-                    })
-                });
-                //follow2
-                arr_post.forEach((data) => {
-                    requested.forEach((followId) => {
-                        if (followId == data.user_id._id) {
-                            data.user_id.follow = 2;
-                        }
-                    })
-                });
-                //isLiked
-                arr_post.forEach((post) => {
-                    liked_Ids.forEach((id) => {
-                        if (id == post._id) {
-                            post.isLiked = 1;
-                        }
+                
+                //check
+                if(getAll_Id.length)
+                {
+                    setFollow1();
+                }
+                else if(requested.length)
+                {
+                    setFollow2();
+                }
+                else if(liked_Ids.length)
+                {
+                    setisLiked();
+                }
+                else
+                {
+                    Response();
+                } 
+                
+                //setFollow1
+                function setFollow1()
+                {
+                    var count1 = 0;
+                    var totalLength1 = arr_post.length * getAll_Id.length;
+                    arr_post.forEach((data) => {
+                        getAll_Id.forEach((followId) => {
+                            if (followId == data.user_id._id) 
+                            {
+                                data.user_id.follow = 1;
+                            }
+                            count1 = count1 + 1;
+                            if(totalLength1 == count1)
+                            {
+                                if(requested.length)
+                                {
+                                    setFollow2();
+                                }
+                                else if(liked_Ids.length)
+                                {
+                                    setisLiked();
+                                }
+                                else
+                                {
+                                    Response();
+                                }
+                            }
+                        })
                     });
-                });
+                }
 
-                sleep(2000).then(function () {
+                //setFollow2
+                function setFollow2()
+                {
+                    var count2 = 0;
+                    var totalLength2 = arr_post.length * requested.length;
+                    arr_post.forEach((data) => {
+                        requested.forEach((followId) => {
+                            if (followId == data.user_id._id) 
+                            {
+                                data.user_id.follow = 2;
+                            }
+                            count2 = count2 + 1;
+                            if(totalLength2 == count2)
+                            {                       
+                                if(liked_Ids.length)
+                                {
+                                    setisLiked();
+                                }
+                                else
+                                {
+                                    Response();
+                                }
+                            }
+                        })
+                    });
+                }
+                
+                //setisLiked
+                function setisLiked()
+                {
+                    var count3 = 0;
+                    var totalLength3 = arr_post.length * liked_Ids.length;
+                    arr_post.forEach((post) => {
+                        liked_Ids.forEach((id) => {
+                            if (id == post._id) 
+                            {
+                                post.isLiked = 1;
+                            }
+                            count3 = count3 + 1;
+                            if(totalLength3 == count3)
+                            {
+                                Response();
+                            }
+                        });
+                    });
+                }
+
+                //Response
+                function Response()
+                {
                     return res.json({
                         success: true,
                         feeds: arr_post,
+                        message: "Loops fetched successfully..."
                     });
-                });
+                }   
 
             }
-            else {
+            else
+            {
                 return res.json({
                     success: true,
                     feeds: [],
@@ -119,7 +198,8 @@ exports.user_allPost = async (req, res, next) => {
             }
 
         }
-        else {
+        else
+        {
             return res.json({
                 success: false,
                 feeds: [],
@@ -127,7 +207,6 @@ exports.user_allPost = async (req, res, next) => {
             });
         }
 }
-
 
 // Relooped posts
 exports.user_reloopPost = async (req, res, next) => {
@@ -169,8 +248,8 @@ exports.user_reloopPost = async (req, res, next) => {
 
         }
         const arr_post = [];
-        if (get_post.length) {
-
+        if (get_post.length) 
+        {
             get_post.forEach(post => {
                 if (post.reloopPostId) {
                     arr_post.push(post)
@@ -197,37 +276,111 @@ exports.user_reloopPost = async (req, res, next) => {
                     isLike: 1,
                 }).exec();
                 const liked_Ids = getUser_like.map(String);
-                //follow1
-                arr_post.forEach((data) => {
-                    getAll_Id.forEach((followId) => {
-                        if (followId == data.user_id._id) {
-                            data.user_id.follow = 1;
-                        }
-                    })
-                });
-                //follow2
-                arr_post.forEach((data) => {
-                    requested.forEach((followId) => {
-                        if (followId == data.user_id._id) {
-                            data.user_id.follow = 2;
-                        }
-                    })
-                });
-                //isLiked
-                arr_post.forEach((post) => {
-                    liked_Ids.forEach((id) => {
-                        if (id == post._id) {
-                            post.isLiked = 1;
-                        }
+
+                //check
+                if(getAll_Id.length)
+                {
+                    setFollow1();
+                }
+                else if(requested.length)
+                {
+                    setFollow2();
+                }
+                else if(liked_Ids.length)
+                {
+                    setisLiked();
+                }
+                else
+                {
+                    sendToResponse();
+                } 
+
+                //setFollow1
+                function setFollow1()
+                {
+                    var count1 = 0;
+                    var totalLength1 = arr_post.length * getAll_Id.length;
+                    arr_post.forEach((data) => {
+                        getAll_Id.forEach((followId) => {
+                            if (followId == data.user_id._id) 
+                            {
+                                data.user_id.follow = 1;
+                            }
+                            count1 = count1 + 1;
+                            if(totalLength1 == count1)
+                            {
+                                if(requested.length)
+                                {
+                                    setFollow2();
+                                }
+                                else if(liked_Ids.length)
+                                {
+                                    setisLiked();
+                                }
+                                else
+                                {
+                                    sendToResponse();
+                                }
+                            }
+                        })
                     });
-                });
+                }
 
-                sleep(2000).then(function () {
+                //setFollow2
+                function setFollow2()
+                {
+                    var count2 = 0;
+                    var totalLength2 = arr_post.length * requested.length;
+                    arr_post.forEach((data) => {
+                        requested.forEach((followId) => {
+                            if (followId == data.user_id._id) 
+                            {
+                                data.user_id.follow = 2;
+                            }
+                            count2 = count2 + 1;
+                            if(totalLength2 == count2)
+                            {                       
+                                if(liked_Ids.length)
+                                {
+                                    setisLiked();
+                                }
+                                else
+                                {
+                                    sendToResponse();
+                                }
+                            }
+                        })
+                    });
+                }
+
+                //setisLiked
+                function setisLiked()
+                {
+                    var count3 = 0;
+                    var totalLength3 = arr_post.length * liked_Ids.length;
+                    arr_post.forEach((post) => {
+                        liked_Ids.forEach((id) => {
+                            if (id == post._id) 
+                            {
+                                post.isLiked = 1;
+                            }
+                            count3 = count3 + 1;
+                            if(totalLength3 == count3)
+                            {
+                                sendToResponse();
+                            }
+                        });
+                    });
+                }
+
+                //sendToResponse
+                function sendToResponse()
+                {
                     sendAllPost(arr_post,current_user_id,res)
-                  });
-
+                }
             }
-            else {
+            else 
+            {
                 return res.json({
                     success: true,
                     feeds: [],
@@ -236,7 +389,8 @@ exports.user_reloopPost = async (req, res, next) => {
             }
 
         }
-        else {
+        else 
+        {
             return res.json({
                 success: false,
                 feeds: [],
@@ -252,7 +406,8 @@ exports.user_taggedPost = async (req, res, next) => {
 
         const get_taggedPost = await TagPost.distinct("post_id", { tagged_userId: getpost_user_id }).exec();
         console.log(get_taggedPost);
-        if (get_taggedPost.length) {
+        if (get_taggedPost.length) 
+        {
             //totalBlockedUser
             let getBlockedUsers1 = await blocked.distinct("Blocked_user", { Blocked_by: current_user_id }).exec();
             let getBlockedUsers2 = await blocked.distinct("Blocked_by", { Blocked_user: current_user_id }).exec();
@@ -260,7 +415,8 @@ exports.user_taggedPost = async (req, res, next) => {
             //getHidePost
             let getHidePost = await hidePostSchema.distinct("post_id", { hideByid: current_user_id }).exec();
             var get_post;
-            if ((current_user_id).toString() == (getpost_user_id).toString()) {
+            if ((current_user_id).toString() == (getpost_user_id).toString()) 
+            {
                 get_post = await Post.find({
                     _id: {$in: get_taggedPost,$nin: getHidePost},
                     user_id: { $nin: totalBlockedUser },
@@ -268,9 +424,11 @@ exports.user_taggedPost = async (req, res, next) => {
                     isActive: true, isDeleted: false
                 }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 }).exec();
             }
-            else {
+            else 
+            {
                 const follower_data = await follow_unfollow.findOne({ followerId: current_user_id, followingId: getpost_user_id, status: 1 });
-                if (follower_data) {
+                if (follower_data)
+                {
                     get_post = await Post.find({
                         user_id: { $nin: totalBlockedUser },
                         _id: {$in: get_taggedPost,$nin: getHidePost},
@@ -278,7 +436,8 @@ exports.user_taggedPost = async (req, res, next) => {
                         isActive: true, isDeleted: false
                     }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 }).exec();
                 }
-                else {
+                else 
+                {
                     get_post = await Post.find({
                         user_id: { $nin: totalBlockedUser },
                         _id: {$in: get_taggedPost,$nin: getHidePost},
@@ -288,14 +447,14 @@ exports.user_taggedPost = async (req, res, next) => {
                 }
 
             }
-            if (get_post.length) {
+            if (get_post.length) 
+            {
                 const arr_post = []
                 get_post.forEach(post => {
                     if (post.reloopPostId == undefined) {
                         arr_post.push(post)
                     }
                 })
-                console.log(arr_post)
                 if (arr_post.length) 
                 {
                     //follower_data
@@ -318,40 +477,124 @@ exports.user_taggedPost = async (req, res, next) => {
                         isLike: 1,
                     }).exec();
                     const liked_Ids = getUser_like.map(String);
-                    //follow1
-                    arr_post.forEach((data) => {
-                        getAll_Id.forEach((followId) => {
-                            if (followId == data.user_id._id) {
-                                data.user_id.follow = 1;
-                            }
-                        })
-                    });
-                    //follow2
-                    arr_post.forEach((data) => {
-                        requested.forEach((followId) => {
-                            if (followId == data.user_id._id) {
-                                data.user_id.follow = 2;
-                            }
-                        })
-                    });
-                    //isLiked
-                    arr_post.forEach((post) => {
-                        liked_Ids.forEach((id) => {
-                            if (id == post._id) {
-                                post.isLiked = 1;
-                            }
-                        });
-                    });
 
-                    sleep(2000).then(function () {
+                    //check
+                    if(getAll_Id.length)
+                    {
+                        setFollow1();
+                    }
+                    else if(requested.length)
+                    {
+                        setFollow2();
+                    }
+                    else if(liked_Ids.length)
+                    {
+                        setisLiked();
+                    }
+                    else
+                    {
+                        Response();
+                    } 
+
+                    //setFollow1
+                    function setFollow1()
+                    {
+                        var count1 = 0;
+                        var totalLength1 = arr_post.length * getAll_Id.length;
+                        arr_post.forEach((data) => {
+                            getAll_Id.forEach((followId) => {
+                                if (followId == data.user_id._id) 
+                                {
+                                    data.user_id.follow = 1;
+                                }
+                                count1 = count1 + 1;
+                                if(totalLength1 == count1)
+                                {
+                                    if(requested.length)
+                                    {
+                                        setFollow2();
+                                    }
+                                    else if(liked_Ids.length)
+                                    {
+                                        setisLiked();
+                                    }
+                                    else
+                                    {
+                                        Response();
+                                    }
+                                }
+                            })
+                        });
+                    }
+
+                    //setFollow2
+                    function setFollow2()
+                    {
+                        var count2 = 0;
+                        var totalLength2 = arr_post.length * requested.length;
+                        arr_post.forEach((data) => {
+                            requested.forEach((followId) => {
+                                if (followId == data.user_id._id) 
+                                {
+                                    data.user_id.follow = 2;
+                                }
+                                count2 = count2 + 1;
+                                if(totalLength2 == count2)
+                                {                       
+                                    if(liked_Ids.length)
+                                    {
+                                        setisLiked();
+                                    }
+                                    else
+                                    {
+                                        Response();
+                                    }
+                                }
+                            })
+                        });
+                    }
+                    
+                    //setisLiked
+                    function setisLiked()
+                    {
+                        var count3 = 0;
+                        var totalLength3 = arr_post.length * liked_Ids.length;
+                        arr_post.forEach((post) => {
+                            liked_Ids.forEach((id) => {
+                                if (id == post._id) 
+                                {
+                                    post.isLiked = 1;
+                                }
+                                count3 = count3 + 1;
+                                if(totalLength3 == count3)
+                                {
+                                    Response();
+                                }
+                            });
+                        });
+                    }
+                    
+                    //Response
+                    function Response()
+                    {
                         return res.json({
                             success: true,
                             feeds: arr_post,
+                            message: "Tagged loops fetched successfully.."
                         });
+                    }
+                }
+                else
+                {
+                    return res.json({
+                        success: false,
+                        feeds: [],
+                        message: " No tagged loop"
                     });
                 }
             }
-            else {
+            else 
+            {
                 return res.json({
                     success: false,
                     feeds: [],
@@ -359,7 +602,8 @@ exports.user_taggedPost = async (req, res, next) => {
                 });
             }
         }
-        else {
+        else
+        {
             return res.json({
                 success: false,
                 feeds: [],
@@ -371,6 +615,8 @@ exports.user_taggedPost = async (req, res, next) => {
 // trending Post
 exports.trending_post = async (req, res, next) => {
     const current_user_id = req.user_id;
+    const offset = req.query.offset;
+    var row = 10;
     //totalBlockedUser
     let getBlockedUsers1 = await blocked.distinct("Blocked_user", { Blocked_by: current_user_id }).exec();
     let getBlockedUsers2 = await blocked.distinct("Blocked_by", { Blocked_user: current_user_id }).exec();
@@ -380,14 +626,14 @@ exports.trending_post = async (req, res, next) => {
     //reloopPostIds
     let reloopPostIds = await Post.distinct("reloopPostId", {}).exec();
     //get_post
-    const get_post = await Post.find({
+    const get_post = await(await Post.find({
         _id: {$nin: getHidePost},
         user_id: { $nin: totalBlockedUser },
         reloopPostId: { $nin: reloopPostIds },
         isActive: true,
         isDeleted: false,
         privacyType: { $nin: ["onlyMe","private"] }
-    }).populate("user_id", "username avatar name private follow").sort({likeCount : -1 }).exec();
+    }).populate("user_id", "username avatar name private follow").sort({likeCount : -1 })).splice(offset == undefined ? 0 : offset, row);
     if (get_post.length) 
     {            
         //follower_data
@@ -410,37 +656,111 @@ exports.trending_post = async (req, res, next) => {
             isLike: 1,
         }).exec();
         const liked_Ids = getUser_like.map(String);
-        //follow1
-        get_post.forEach((data) => {
-            getAll_Id.forEach((followId) => {
-                if (followId == data.user_id._id) {
-                    data.user_id.follow = 1;
-                }
-            })
-        });
-        //follow2
-        get_post.forEach((data) => {
-            requested.forEach((followId) => {
-                if (followId == data.user_id._id) {
-                    data.user_id.follow = 2;
-                }
-            })
-        });
-        //isLiked
-        get_post.forEach((post) => {
-            liked_Ids.forEach((id) => {
-                if (id == post._id) {
-                    post.isLiked = 1;
-                }
+
+        //check
+        if(getAll_Id.length)
+        {
+            setFollow1();
+        }
+        else if(requested.length)
+        {
+            setFollow2();
+        }
+        else if(liked_Ids.length)
+        {
+            setisLiked();
+        }
+        else
+        {
+            Response();
+        }        
+        
+        //setFollow1
+        function setFollow1()
+        {
+            var count1 = 0;
+            var totalLength1 = get_post.length * getAll_Id.length;
+            get_post.forEach((data) => {
+                getAll_Id.forEach((followId) => {
+                    if (followId == data.user_id._id) 
+                    {
+                        data.user_id.follow = 1;
+                    }
+                    count1 = count1 + 1;
+                    if(totalLength1 == count1)
+                    {
+                        if(requested.length)
+                        {
+                            setFollow2();
+                        }
+                        else if(liked_Ids.length)
+                        {
+                            setisLiked();
+                        }
+                        else
+                        {
+                            Response();
+                        }
+                    }
+                })
             });
-        });
-        sleep(2000).then(function () {
+        }
+        
+        //setFollow2
+        function setFollow2()
+        {
+            var count2 = 0;
+            var totalLength2 = get_post.length * requested.length;
+            get_post.forEach((data) => {
+                requested.forEach((followId) => {
+                    if (followId == data.user_id._id) 
+                    {
+                        data.user_id.follow = 2;
+                    }
+                    count2 = count2 + 1;
+                    if(totalLength2 == count2)
+                    {                       
+                        if(liked_Ids.length)
+                        {
+                            setisLiked();
+                        }
+                        else
+                        {
+                            Response();
+                        }
+                    }
+                })
+            });
+        }
+        
+        //setisLiked
+        function setisLiked()
+        {
+            var count3 = 0;
+            var totalLength3 = get_post.length * liked_Ids.length;
+            get_post.forEach((post) => {
+                liked_Ids.forEach((id) => {
+                    if (id == post._id) 
+                    {
+                        post.isLiked = 1;
+                    }
+                    count3 = count3 + 1;
+                    if(totalLength3 == count3)
+                    {
+                        Response();
+                    }
+                });
+            });
+        }
+
+        function Response()
+        {
             return res.json({
                 success: true,
                 feeds: get_post,
                 message: "Trending loop fetched successfully",
             });
-        });               
+        }              
         
     }
     else 
@@ -459,6 +779,8 @@ exports.trending_postByCategory = async (req, res, next) => {
 
         const category_name = req.query.category_name;
         const current_user_id = req.user_id;
+        const offset = req.query.offset;
+        var row = 10;
         const loop = req.query.loop;
         let date_obj = new Date();
         // let oneHour = new Date(new Date().getTime() - 1000 * 60 * 60);
@@ -480,7 +802,7 @@ exports.trending_postByCategory = async (req, res, next) => {
                 category: category_name,
                 isActive: true,
                 isDeleted: false,
-                privacyType: { $nin: "onlyMe" }
+                privacyType: { $nin: ["onlyMe","private"] }
             }).sort({ created_at: -1 }).exec();
 
             if (get_post.length) {
@@ -497,12 +819,9 @@ exports.trending_postByCategory = async (req, res, next) => {
                         prev[cur] = (prev[cur] || 0) + 1;
                         return prev;
                     }, {})
-                    console.log(result)
                     var keysSorted = Object.keys(result).sort(function (a, b) { return result[b] - result[a] })
-                    console.log(keysSorted);
 
-                    get_all_post = await Post.find({ _id: keysSorted }).populate("user_id", "username avatar name private follow")
-                    console.log(get_all_post)
+                    get_all_post = await(await Post.find({ _id: keysSorted }).populate("user_id", "username avatar name private follow")).splice(offset == undefined ? 0 : offset, row);
                 }
                 else {
                     return res.json({
@@ -517,18 +836,16 @@ exports.trending_postByCategory = async (req, res, next) => {
                     message: "No Trending loop"
                 });
             }
-
-
         }
         else if (loop == 2) {
-            get_post = await Post.find({
+            get_post = await(await Post.find({
                 _id: {$nin: getHidePost},
                 user_id: { $nin: totalBlockedUser },
                 category: category_name,
                 isActive: true,
                 isDeleted: false,
-                privacyType: { $nin: "onlyMe" }
-            }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 }).exec();
+                privacyType: { $nin: ["onlyMe","private"] }
+            }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 })).splice(offset == undefined ? 0 : offset, row);
             if (get_post.length) {
                 get_post.forEach(data => {
                     if (data.reloopPostId == undefined) {
@@ -545,7 +862,8 @@ exports.trending_postByCategory = async (req, res, next) => {
             }
         }
 
-        if (get_all_post.length) {
+        if (get_all_post.length)
+        {
             //follower_data
             const follower_data = await follow_unfollow.distinct("followingId", {
                 followerId: current_user_id,
@@ -566,39 +884,116 @@ exports.trending_postByCategory = async (req, res, next) => {
                 isLike: 1,
             }).exec();
             const liked_Ids = getUser_like.map(String);
-            //follow1
-            get_all_post.forEach((data) => {
-                getAll_Id.forEach((followId) => {
-                    if (followId == data.user_id._id) {
-                        data.user_id.follow = 1;
-                    }
-                })
-            });
-            //follow2
-            get_all_post.forEach((data) => {
-                requested.forEach((followId) => {
-                    if (followId == data.user_id._id) {
-                        data.user_id.follow = 2;
-                    }
-                })
-            });
-            //isLiked
-            get_all_post.forEach((post) => {
-                liked_Ids.forEach((id) => {
-                    if (id == post._id) {
-                        post.isLiked = 1;
-                    }
+
+            //check
+            if(getAll_Id.length)
+            {
+                setFollow1();
+            }
+            else if(requested.length)
+            {
+                setFollow2();
+            }
+            else if(liked_Ids.length)
+            {
+                setisLiked();
+            }
+            else
+            {
+                Response();
+            }
+            
+            //setFollow1
+            function setFollow1()
+            {
+                var count1 = 0;
+                var totalLength1 = get_all_post.length * getAll_Id.length;
+                get_all_post.forEach((data) => {
+                    getAll_Id.forEach((followId) => {
+                        if (followId == data.user_id._id) 
+                        {
+                            data.user_id.follow = 1;
+                        }
+                        count1 = count1 + 1;
+                        if(totalLength1 == count1)
+                        {
+                            if(requested.length)
+                            {
+                                setFollow2();
+                            }
+                            else if(liked_Ids.length)
+                            {
+                                setisLiked();
+                            }
+                            else
+                            {
+                                Response();
+                            }
+                        }
+                    })
                 });
-            });
-            sleep(2000).then(function () {
+            }
+
+
+            //setFollow2
+            function setFollow2()
+            {
+                var count2 = 0;
+                var totalLength2 = get_all_post.length * requested.length;
+                get_all_post.forEach((data) => {
+                    requested.forEach((followId) => {
+                        if (followId == data.user_id._id) 
+                        {
+                            data.user_id.follow = 2;
+                        }
+                        count2 = count2 + 1;
+                        if(totalLength2 == count2)
+                        {                       
+                            if(liked_Ids.length)
+                            {
+                                setisLiked();
+                            }
+                            else
+                            {
+                                Response();
+                            }
+                        }
+                    })
+                });
+            }
+
+            //setisLiked
+            function setisLiked()
+            {
+                var count3 = 0;
+                var totalLength3 = get_all_post.length * liked_Ids.length;
+                get_all_post.forEach((post) => {
+                    liked_Ids.forEach((id) => {
+                        if (id == post._id) 
+                        {
+                            post.isLiked = 1;
+                        }
+                        count3 = count3 + 1;
+                        if(totalLength3 == count3)
+                        {
+                            Response();
+                        }
+                    });
+                });
+            }
+
+            //Response
+            function Response()
+            {
                 return res.json({
                     success: true,
                     feeds: get_all_post,
                     message: "Trending loop fetched successfully"
                 });
-            });
+            }
         }
-        else {
+        else 
+        {
             return res.json({
                 success: false,
                 message: "No Trending loop"

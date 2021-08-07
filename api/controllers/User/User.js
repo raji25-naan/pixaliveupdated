@@ -493,50 +493,97 @@ exports.user_info = async (req, res, next) => {
 
   let user_id = req.user_id;
   let getUserInfo = await Users.findOne({ _id: req.query.user_id, isActive: true }).exec();
-  let getUserPosts = await postSchema.find({ user_id: req.query.user_id, isActive: true, isDeleted: false }).exec();
-  //getFriendslist
-  const data_follower = await followSchema.distinct("followingId", {
-    followerId: user_id,
-    status: 1
-  });
-  var array1 = data_follower.map(String);
-  var uniq_id = [...new Set(array1)];
-  //data_request
-  const data_request = await followSchema.distinct("followingId", {
-    followerId: user_id,
-    status: 0
-  });
-  var array2 = data_request.map(String);
-  var requested = [...new Set(array2)];
-  //follow1
-  uniq_id.forEach((main_data) => {
-    if (main_data == getUserInfo._id) {
-      getUserInfo.follow = 1;
+  if(getUserInfo)
+  {
+    let getUserPosts = await postSchema.find({ user_id: req.query.user_id, isActive: true, isDeleted: false }).exec();
+    //getFriendslist
+    const data_follower = await followSchema.distinct("followingId", {
+      followerId: user_id,
+      status: 1
+    });
+    var array1 = data_follower.map(String);
+    var uniq_id = [...new Set(array1)];
+    //data_request
+    const data_request = await followSchema.distinct("followingId", {
+      followerId: user_id,
+      status: 0
+    });
+    var array2 = data_request.map(String);
+    var requested = [...new Set(array2)];
+    //check
+    if(uniq_id.length)
+    {
+      setFollow1();
     }
-  });
-  //follow2
-  requested.forEach((main_data) => {
-    if (main_data == getUserInfo._id) {
-      getUserInfo.follow = 2;
+    else if(requested.length)
+    {
+      setFollow2();
     }
-  });
-  var obj_set = { posts: getUserPosts.length };
-  const obj = Object.assign({}, getUserInfo._doc, obj_set);
-  if (obj) {
-    sleep(2000).then(function () {
+    else
+    {
+      Response();
+    }
+
+    //setFollow1
+    function setFollow1()
+    {
+      var count1 = 0;
+      uniq_id.forEach((main_data) => {
+        if (main_data == getUserInfo._id) 
+        {
+          getUserInfo.follow = 1;
+        }
+        count1 = count1 + 1;
+        if(uniq_id.length == count1)
+        {
+          if(requested.length)
+          {
+            setFollow2();
+          }
+          else
+          {
+            Response();
+          }
+        }
+      });
+    }
+
+    //setFollow2
+    function setFollow2()
+    {
+      var count2 = 0;
+      requested.forEach((main_data) => {
+        if (main_data == getUserInfo._id) 
+        {
+          getUserInfo.follow = 2;
+        }
+        count2 = count2 + 1;
+        if(requested.length == count2)
+        {
+          Response();
+        }
+      });
+    }
+    
+    //Response
+    function Response()
+    {
+      var obj_set = { posts: getUserPosts.length };
+      const obj = Object.assign({}, getUserInfo._doc, obj_set);
       return res.json({
         success: true,
         user: obj,
         message: "successfully fetched user information"
       });
-    });
-
-  } else {
+    }
+  }
+  else
+  {
     return res.json({
       success: false,
       message: "User not found",
     });
-  }
+  } 
 };
 
 //is_user
@@ -1106,7 +1153,8 @@ exports.search = async (req, res, next) => {
   let getBlockedUsers1 = await blocked.distinct("Blocked_user", { Blocked_by: user_id }).exec();
   let getBlockedUsers2 = await blocked.distinct("Blocked_by", { Blocked_user: user_id }).exec();
   const totalBlockedUser = getBlockedUsers1.concat(getBlockedUsers2);
-  if (search_user) {
+  if (search_user)
+  {
     // let reg = new RegExp(search_user);
     const get_data = await Users.find({_id: {$nin: totalBlockedUser}, isActive: true }).exec();
 
@@ -1114,7 +1162,8 @@ exports.search = async (req, res, next) => {
       let re = new RegExp("^" + search_user, "i")
       return re.test(a.name) ? re.test(b.name) ? a.name.localeCompare(b.name) : -1 : 1
     });
-    if (all_users.length > 0) {
+    if (all_users.length) 
+    {
       const data_follower = await followSchema.distinct("followingId", {
         followerId: user_id,
         status: 1
@@ -1128,28 +1177,77 @@ exports.search = async (req, res, next) => {
       var array2 = followRequest.map(String);
       var requested = [...new Set(array2)];
       //follow1
-      all_users.forEach((data) => {
-        followed.forEach((main_data) => {
-          if (main_data == data._id) {
-            data.follow = 1;
-          }
+      if(followed.length)
+      {
+        setFollow1();
+      }
+      else if(requested.length)
+      {
+        setFollow2();
+      }
+      else
+      {
+        Response();
+      }
+
+      //setFollow1
+      function setFollow1()
+      {
+        var count1 = 0;
+        var totalLength1 = all_users.length * followed.length;
+        all_users.forEach((data) => {
+          followed.forEach((main_data) => {
+            if (main_data == data._id) 
+            {
+              data.follow = 1;
+            }
+            count1 = count1 + 1;
+            if(totalLength1 == count1)
+            {
+              if(requested.length)
+              {
+                setFollow2();
+              }
+              else
+              {
+                Response();
+              }
+            }
+          });
         });
-      });
-      //follow2
-      all_users.forEach((data) => {
-        requested.forEach((main_data) => {
-          if (main_data == data._id) {
-            data.follow = 2;
-          }
+      }
+
+      //setFollow2
+      function setFollow2()
+      {
+        var count2 = 0;
+        var totalLength2 = all_users.length * requested.length;
+        all_users.forEach((data) => {
+          requested.forEach((main_data) => {
+            if (main_data == data._id) 
+            {
+              data.follow = 2;
+            }
+            count2 = count2 + 1;
+            if(totalLength2 == count2)
+            {
+              Response();
+            }
+          });
         });
-      });
-      sleep(2000).then(function () {
+      }
+      
+      //Response
+      function Response()
+      {
         return res.json({
           success: true,
           result: all_users
         });
-      });
-    } else {
+      }
+    } 
+    else
+    {
       return res.json({
         success: false,
         message: "user not found ",
@@ -1265,12 +1363,10 @@ exports.contactSync = async (req, res, next) => {
     //     }
     //   });
     // });
-    // sleep(2000).then(function () {
       return res.json({
         success: true,
         users: userlist
       });
-    // });
   }
   else {
     return res.json({
