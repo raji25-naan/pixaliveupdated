@@ -437,29 +437,75 @@ exports.storyLikedUser = async(req,res,next)=>{
     });
     const request_ID = data_request.map(String);
     const requestedIds = [...new Set(request_ID)];
-    //follow1
-    getLikedUserInfo.forEach((data) => {
-      followerIds.forEach((followId) => {
-        if (followId == data._id) {
-          data.follow = 1;
-        }
-      })
-    });
-    //follow2
-    getLikedUserInfo.forEach((data) => {
-      requestedIds.forEach((reqId) => {
-        if (reqId == data._id) {
-          data.follow = 2;
-        }
-      })
-    });
-    sleep(2000).then(function () {
+    //check
+    if(followerIds.length)
+    {
+      setFollow1();
+    }
+    else if(requestedIds.length)
+    {
+      setFollow2();
+    }
+    else
+    {
+      Response();
+    }
+    //setFollow1
+    function setFollow1()
+    {
+      var count1 = 0;
+      var totalLength1 = getLikedUserInfo.length * followerIds.length;
+      getLikedUserInfo.forEach((data) => {
+        followerIds.forEach((followId) => {
+          if(followId == data._id) 
+          {
+            data.follow = 1;
+          }
+          count1 = count1 + 1;
+          if(totalLength1 == count1)
+          {
+            if(requestedIds.length)
+            {
+              setFollow2();
+            }
+            else
+            {
+              Response();
+            }
+          }
+        })
+      });
+    }
+    
+    //setFollow2
+    function setFollow2()
+    {
+      var count2 = 0;
+      var totalLength2 = getLikedUserInfo.length * requestedIds.length;
+      getLikedUserInfo.forEach((data) => {
+        requestedIds.forEach((reqId) => {
+          if(reqId == data._id) 
+          {
+            data.follow = 2;
+          }
+          count2 = count2 + 1;
+          if(totalLength2 == count2)
+          {
+            Response();
+          }
+        })
+      });
+    }
+    
+    //Response
+    function Response()
+    {
       return res.json({
         success: true,
         result: getLikedUserInfo,
         message: "Liked Users data",
       });
-    });
+    }
   }
   else
   {

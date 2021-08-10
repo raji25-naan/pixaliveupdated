@@ -244,7 +244,8 @@ exports.getvideo_hashtag = async (req, res, next) => {
 
     let getvideo_post = post_hashtagWithFollowing.concat(post_hashtagWithoutFollowing);
 
-    if (getvideo_post.length) {
+    if(getvideo_post.length) 
+    {
         var change_string = follower_data.map(String);
         var getAll_Id = [...new Set(change_string)];
         //request_data_main
@@ -260,38 +261,112 @@ exports.getvideo_hashtag = async (req, res, next) => {
             isLike: 1,
         }).exec();
         const liked_Ids = getUser_like.map(String);
-        //follow1
-        getvideo_post.forEach((data) => {
-            getAll_Id.forEach((followId) => {
-                if (followId == data.user_id._id) {
-                    data.user_id.follow = 1;
-                }
-            })
-        });
-        //follow2
-        getvideo_post.forEach((data) => {
-            requested.forEach((followId) => {
-                if (followId == data.user_id._id) {
-                    data.user_id.follow = 2;
-                }
-            })
-        });
-        //isLiked
-        getvideo_post.forEach((post) => {
-            liked_Ids.forEach((id) => {
-                if (id == post._id) {
-                    post.isLiked = 1;
-                }
-            });
-        });
 
-        sleep(2000).then(function () {
+        //check
+        if(getAll_Id.length)
+        {
+            setFollow1();
+        }
+        else if(requested.length)
+        {
+            setFollow2();
+        }
+        else if(liked_Ids.length)
+        {
+            setisLiked();
+        }
+        else
+        {
+            sendToResponse();
+        }
+        
+        //setFollow1
+        function setFollow1()
+        {
+            var count1 = 0;
+            var totalLength1 = getvideo_post.length * getAll_Id.length;
+            getvideo_post.forEach((data) => {
+                getAll_Id.forEach((followId) => {
+                    if(followId == data.user_id._id) 
+                    {
+                        data.user_id.follow = 1;
+                    }
+                    count1 = count1 + 1;
+                    if(totalLength1 == count1)
+                    {
+                        if(requested.length)
+                        {
+                            setFollow2();
+                        }
+                        else if(liked_Ids.length)
+                        {
+                            setisLiked();
+                        }
+                        else
+                        {
+                            sendToResponse();
+                        }
+                    }
+                })
+            });
+        }
+        
+        //setFollow2
+        function setFollow2()
+        {
+            var count2 = 0;
+            var totalLength2 = getvideo_post.length * requested.length;
+            getvideo_post.forEach((data) => {
+                requested.forEach((followId) => {
+                    if(followId == data.user_id._id) 
+                    {
+                        data.user_id.follow = 2;
+                    }
+                    count2 = count2 + 1;
+                    if(totalLength2 == count2)
+                    {
+                       if(liked_Ids.length) 
+                       {
+                         setisLiked();
+                       }
+                       else
+                       {
+                         sendToResponse();
+                       }
+                    }
+                })
+            });
+        }
+        
+        //setisLiked
+        function setisLiked()
+        {
+            var count3 = 0;
+            var totalLength3 = getvideo_post.length * liked_Ids.length;
+            getvideo_post.forEach((post) => {
+                liked_Ids.forEach((id) => {
+                    if(id == post._id) 
+                    {
+                        post.isLiked = 1;
+                    }
+                    count3 = count3 + 1;
+                    if(totalLength3 == count3)
+                    {
+                        sendToResponse();
+                    }
+                });
+            });
+        }
+        
+        function sendToResponse()
+        {
             sendAllPost(getvideo_post,current_user_id, res)
-        });
-    } else {
+        }
+    } 
+    else {
         return res.json({
             success: false,
-            message: "No post found!",
+            message: "No post found!"
         });
     }
 }
@@ -349,34 +424,108 @@ exports.getPostByhashtag = async (req, res, next) => {
             isLike: 1,
         }).exec();
         const liked_Ids = getUser_like.map(String);
-        //follow1
-        getAll_post.forEach((data) => {
-            getAll_Id.forEach((followId) => {
-                if (followId == data.user_id._id) {
-                    data.user_id.follow = 1;
-                }
-            })
-        });
-        //follow2
-        getAll_post.forEach((data) => {
-            requested.forEach((followId) => {
-                if (followId == data.user_id._id) {
-                    data.user_id.follow = 2;
-                }
-            })
-        });
-        //isLiked
-        getAll_post.forEach((post) => {
-            liked_Ids.forEach((id) => {
-                if (id == post._id) {
-                    post.isLiked = 1;
-                }
-            });
-        });
 
-        sleep(2000).then(function () {
+        //check
+        if(getAll_Id.length)
+        {
+            setFollow1();
+        }
+        else if(requested.length)
+        {
+            setFollow2();
+        }
+        else if(liked_Ids.length)
+        {
+            setisLiked();
+        }
+        else
+        {
+            sendToResponse();
+        }
+
+        //setFollow1
+        function setFollow1()
+        {
+            var count1 = 0;
+            var totalLength1 = getAll_post.length * getAll_Id.length;
+            getAll_post.forEach((data) => {
+                getAll_Id.forEach((followId) => {
+                    if(followId == data.user_id._id) 
+                    {
+                        data.user_id.follow = 1;
+                    }
+                    count1 = count1 + 1;
+                    if(totalLength1 == count1)
+                    {
+                        if(requested.length)
+                        {
+                            setFollow2();
+                        }
+                        else if(liked_Ids.length)
+                        {
+                            setisLiked();
+                        }
+                        else
+                        {
+                            sendToResponse();
+                        }
+                    }
+                })
+            });
+        }
+
+        //setFollow2
+        function setFollow2()
+        {
+            var count2 = 0;
+            var totalLength2 = getAll_post.length * requested.length;
+            getAll_post.forEach((data) => {
+                requested.forEach((followId) => {
+                    if(followId == data.user_id._id) 
+                    {
+                        data.user_id.follow = 2;
+                    }
+                    count2 = count2 + 1;
+                    if(totalLength2 == count2)
+                    {
+                       if(liked_Ids.length) 
+                       {
+                         setisLiked();
+                       }
+                       else
+                       {
+                         sendToResponse();
+                       }
+                    }
+                })
+            });
+        }
+
+        //setisLiked
+        function setisLiked()
+        {
+            var count3 = 0;
+            var totalLength3 = getAll_post.length * liked_Ids.length;
+            getAll_post.forEach((post) => {
+                liked_Ids.forEach((id) => {
+                    if(id == post._id) 
+                    {
+                        post.isLiked = 1;
+                    }
+                    count3 = count3 + 1;
+                    if(totalLength3 == count3)
+                    {
+                        sendToResponse();
+                    }
+                });
+            });
+        }
+        
+        //sendToResponse
+        function sendToResponse()
+        {
             sendAllPost(getAll_post,current_user_id, res)
-          });
+        }
     } 
     else {
         return res.json({

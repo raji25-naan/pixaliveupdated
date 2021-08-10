@@ -178,28 +178,76 @@ exports.liked_user = async (req, res, next) => {
       var requestData = request_data_main.map(String);
       var requested = [...new Set(requestData)];
    
-      get_likedPost.forEach((data) => {
-        getAll_Id.forEach((followId) => {
-          if (followId == data._id) {
-            data.follow = 1;
-          }
-        })
-      });
-      //follow2
-      get_likedPost.forEach((data) => {
-        requested.forEach((followId) => {
-          if (followId == data._id) {
-            data.follow = 2;
-          }
-        })
-      });
-      sleep(2000).then(function () {
+      //check
+      if(getAll_Id.length)
+      {
+          setFollow1();
+      }
+      else if(requested.length)
+      {
+          setFollow2();
+      }
+      else
+      {
+          Response();
+      }
+
+      //setFollow1
+      function setFollow1()
+      {
+        var count1 = 0;
+        var totalLength1 = get_likedPost.length * getAll_Id.length;
+        get_likedPost.forEach((data) => {
+          getAll_Id.forEach((followId) => {
+            if (followId == data._id) 
+            {
+              data.follow = 1;
+            }
+            count1 = count1 + 1;
+            if(totalLength1 == count1)
+            {
+              if(requested.length)
+              {
+                setFollow2();
+              }
+              else
+              {
+                Response();
+              }
+            }
+          })
+        });
+      }
+      
+      //setFollow2
+      function setFollow2()
+      {
+        var count2 = 0;
+        var totalLength2 = get_likedPost.length * requested.length;
+        get_likedPost.forEach((data) => {
+          requested.forEach((followId) => {
+            if (followId == data._id) 
+            {
+              data.follow = 2;
+            }
+            count2 = count2 + 1;
+            if(totalLength2 == count2)
+            {
+              Response();
+            }
+          })
+        });
+      }
+              
+      //Response
+      function Response()
+      {
         return res.json({
           success: true,
           result: get_likedPost,
-          message: "Liked Users data",
+          message: "Liked Users data"
         });
-      });
+      }
     }
     else {
       return res.json({

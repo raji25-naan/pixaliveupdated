@@ -144,11 +144,11 @@ function haltOnTimedout(req, res, next) {
   if (!req.timedout) next();
 }
 
-CronJob.schedule('0 05 18 * * *', async () => {
-  console.info(`running cron job a task ${new Date()}`);
+// CronJob.schedule('0 48 15 * * *', async () => {
+  // console.info(`running cron job a task ${new Date()}`);
 
-  await updateEncryptId();
+  // await updateEncryptId();
   
-})
+// })
 
 module.exports = app;
