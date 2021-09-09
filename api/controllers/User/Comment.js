@@ -5,6 +5,7 @@ const Users = require("../../models/User/Users");
 const { sendNotification } = require("../../helpers/notification");
 const sleep = require('sleep-promise');
 const replyCommentLike = require("../../models/User/replyCommentLike");
+const { checkNotification } = require("../../helpers/post");
 
 // ************create comment*******************
 
@@ -46,8 +47,14 @@ exports.add_comment = async (req, res, next) => {
           seen: false
         });
         const saveNotificationData = await updateNotification.save();
-        if (saveNotificationData) {
-          sendNotification(totalId, userPost.user_id, 1);
+        if (saveNotificationData) 
+        {
+          var userId = userPost.user_id;
+          var checkNotify = await checkNotification(userId);
+          if(checkNotify == true)
+          {
+            sendNotification(totalId, userPost.user_id, 1);
+          }
           return res.json({
             success: true,
             message: "Comment added",

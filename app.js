@@ -21,6 +21,7 @@ const chatRouter = require("./api/routes/User/chat.routes");
 const notificationRouter = require("./api/routes/User/Notification");
 const user_profileRouter = require("./api/routes/User/user_profile.routes");
 const blockedRouter = require("./api/routes/User/blockedUser.routes");
+const groupRouter = require("./api/routes/User/group");
 const CronJob = require('node-cron');
 const fileUpload = require("express-fileupload");
 
@@ -28,7 +29,7 @@ const fileUpload = require("express-fileupload");
 const registerRouter = require("./api/routes/Admin/register");
 const postAdminRouter = require("./api/routes/Admin/post");
 const storyAdminRouter = require("./api/routes/Admin/story");
-const { updateEncryptId } = require("./api/helpers/cronjobFunction");
+const { updateEncryptId, addNotification, addMediaDatatype } = require("./api/helpers/cronjobFunction");
 //firebaseAdmin
 // global.admin = require("firebase-admin");
 // const serviceAccount = require("./api/serviceAccountkey.json");
@@ -76,13 +77,33 @@ let userRoutes = [].concat(
   notificationRouter,
   chatRouter,
   user_profileRouter,
-  blockedRouter
+  blockedRouter,
+  groupRouter
 );
 //adminRoutes
 let adminRoutes = [].concat(registerRouter, postAdminRouter, storyAdminRouter);
 
 app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);
+
+//apple-app-site
+app.get("/.well-known/apple-app-site-association",(req,res)=>{
+  res.json({
+    "applinks": {
+      "apps": [],
+      "details": [
+        {
+          "appID": "ZPDMUQZHR2.com.Pixalive",
+          "paths": [
+            "*"
+          ]
+        }
+      ]
+    }
+  })
+  
+
+})
 //user router
 // app.use("/api/User/user", userRouter);
 // app.use("/api/User/posts", postRouter);
@@ -144,11 +165,13 @@ function haltOnTimedout(req, res, next) {
   if (!req.timedout) next();
 }
 
-// CronJob.schedule('0 48 15 * * *', async () => {
+// CronJob.schedule('0 05 15 * * *', async () => {
   // console.info(`running cron job a task ${new Date()}`);
 
   // await updateEncryptId();
-  
+  // await addNotification();
+  // await addMediaDatatype();
 // })
+
 
 module.exports = app;

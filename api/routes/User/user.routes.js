@@ -22,7 +22,10 @@ const {
   checkPhoneVerify,
   checkEmailVerify,
   getUserDetails,
-  findUsername
+  findUsername,
+  notificationEnableDisable,
+  updateCategorytoUser,
+  recentJoined
 } = require("../../controllers/User/User");
 const { checkIsactive } = require("../../middlewares/checkActive");
 const { checkSession } = require("../../middlewares/checkAuth");
@@ -245,6 +248,30 @@ router.get("/findUsername",
   checkQuery("username"),
   validateRequest,
   catch_error(findUsername)
+)
+
+//notificationEnableDisable
+router.post("/notificationEnableDisable",
+  checkSession,
+  checkIsactive,
+  checkRequestBodyParams("Notification"),
+  validateRequest,
+  catch_error(notificationEnableDisable)
+
+)
+
+//updateCategorytoUser
+router.post("/updateCategorytoUser",
+  checkSession,
+  checkIsactive,
+  updateCategorytoUser
+)
+
+//recentJoined
+router.get("/recentJoined",
+  checkSession,
+  checkIsactive,
+  catch_error(recentJoined)
 )
 
 

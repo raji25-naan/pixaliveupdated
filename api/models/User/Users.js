@@ -153,7 +153,12 @@ const user_schema = new mongoose.Schema({
   private : {
     type: Boolean,
     default: false
-  }
+  },
+  Notification : {
+    type: Boolean,
+    default: true
+  },
+  category: []
 
 });
 const user = db_Main.model("users", user_schema);

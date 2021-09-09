@@ -6,6 +6,7 @@ const notificationSchema = require("../../models/User/Notification");
 const { sendNotification } = require("../../helpers/notification");
 const blocked = require("../../models/User/blocked");
 const sleep = require('sleep-promise');
+const { checkNotification } = require("../../helpers/post");
 
 //createFollowNew
 exports.createFollowNew = async (req, res, next) => {
@@ -54,8 +55,13 @@ exports.createFollowNew = async (req, res, next) => {
               created_at: Date.now(),
             });
             const saveNotificationData_private = await updateNotification_private.save()
-            if (saveNotificationData_private) {
-              sendNotification(totalId, followingId, 3);
+            if (saveNotificationData_private) 
+            {
+              var checkNotify = await checkNotification(followingId);
+              if(checkNotify == true)
+              {
+                sendNotification(totalId, followingId, 3);
+              }
               return res.json({
                 success: true,
                 message: 'successfully following and notification Sent'
@@ -104,8 +110,13 @@ exports.createFollowNew = async (req, res, next) => {
                 created_at: Date.now(),
               });
               const saveNotificationData = await updateNotification.save()
-              if (saveNotificationData) {
-                sendNotification(totalIds, followingId, 2);
+              if (saveNotificationData) 
+              {
+                var checkNotify = await checkNotification(followingId);
+                if(checkNotify == true)
+                {
+                  sendNotification(totalIds, followingId, 2);
+                }
                 return res.json({
                   success: true,
                   message: 'successfully following and notification Sent'
@@ -295,7 +306,11 @@ exports.update_follow = async (req, res, next) => {
             }).exec();
             if (saveNotificationData && Remove_Notification) 
             {
-              sendNotification(totalId, followerId, 4);
+              var checkNotify = await checkNotification(followerId);
+              if(checkNotify == true)
+              {
+                sendNotification(totalId, followerId, 4);
+              }
               return res.json({
                 success: true,
                 message: 'successfully following and notification Sent'
@@ -636,15 +651,26 @@ exports.DiscoverPeople = async (req, res, next) => {
     let totalFriendsId = [...new Set(friends_ID)];
     let ids = new Set(totalId.map((id) => id));
     const filteredFriendoffriends = totalFriendsId.filter((id) => !ids.has(id));
-    console.log(filteredFriendoffriends)
     const Total = workingIds.concat(all_data, LocationDetails, filteredFriendoffriends).map(String);
     const TotalDiscovering = [...new Set(Total)];
     const TotallyDiscovered = arrayRemove(TotalDiscovering, userId);
     //TotalBlockedUserId
     const TotalBlockedUserId = getFollowingId.concat(getBlockedUsers1,getBlockedUsers2,getRequestedId);
-    console.log(TotalBlockedUserId);
     //DiscoveredPeople
-    const DiscoveredPeople = await Users.find({ _id: { $in: TotallyDiscovered, $nin: TotalBlockedUserId }, isActive: true }).exec();
+    const discoveredPeopleList = await Users.find({ _id: { $in: TotallyDiscovered, $nin: TotalBlockedUserId }, isActive: true }).exec();
+    let DiscoveredPeople;
+    if(req.query.search)
+    {
+      let search = req.query.search;
+      DiscoveredPeople = discoveredPeopleList.filter(data => new RegExp(search, "ig").test(data.name)).sort((a, b) => {
+                         let re = new RegExp("^" + search, "i")
+                         return re.test(a.name) ? re.test(b.name) ? a.name.localeCompare(b.name) : -1 : 1
+                         });
+    }
+    else
+    {
+      DiscoveredPeople = discoveredPeopleList;
+    }
     if(DiscoveredPeople.length)
      {
       // let followingIds = getFollowingId.map(String);

@@ -1,4 +1,5 @@
 const Post = require("../models/User/Post");
+const Users = require("../models/User/Users");
 const Hashids = require("hashids");
 const hashids = new Hashids();
 
@@ -20,5 +21,17 @@ exports.updateEncryptId = async function(){
             },{new: true}
         );
     })
+
+}
+
+exports.addNotification = async (req,res,next)=>{
+
+    await Users.updateMany({Notification: true});
+
+}
+
+exports.addMediaDatatype = async (req,res,next)=>{
+
+    await Post.updateMany({media_datatype: ""});
 
 }

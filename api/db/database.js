@@ -28,8 +28,8 @@ function makeNewConnection(uri) {
     return db;
 }
 
-const db_Main = makeNewConnection("mongodb+srv://Pixalive-Live:pixalive@123@cluster0.3nhlt.mongodb.net/pixaliveDB?retryWrites=true&w=majority");
-const db_Chat = makeNewConnection("mongodb+srv://pixaliveChat_db:pixalive123@cluster0.gmuwr.mongodb.net/pixaliveChat_db?retryWrites=true&w=majority");
+const db_Main = makeNewConnection("mongodb+srv://pixaliveDuplicate:pixadupe123@cluster0.rjdpc.mongodb.net/pixaliveDuplicate?retryWrites=true&w=majority");
+const db_Chat = makeNewConnection("mongodb+srv://pixalivesamplechat:pixalive123@cluster0.q8rqk.mongodb.net/pixalivesamplechat?retryWrites=true&w=majority");
 module.exports = { db_Main, db_Chat };
 
 

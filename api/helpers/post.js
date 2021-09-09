@@ -6,7 +6,20 @@ const Users = require("../models/User/Users");
 const likeSchema = require("../models/User/like");
 const sleep = require('sleep-promise');
 
+//checkNotification
+module.exports.checkNotification = async function(userId){
 
+  const findUser = await Users.findOne({_id: userId}).exec();
+  if(findUser.Notification == true)
+  {
+    return true;
+  }
+  else if(findUser.Notification == false)
+  {
+    return false;
+  }
+
+}
 
 module.exports.sendAllPost = async function(allPost, userId, res) {
     allPost.forEach(async (checkFeed, i) => {
@@ -26,7 +39,7 @@ module.exports.sendAllPost = async function(allPost, userId, res) {
           user_id: { $nin: totalBlockedUser },
           isActive: true,
           isDeleted: false
-        },{_id:1,body:1,url:1,post_type:1,text_content:1,thumbnail:1,user_id:1,isLiked:1,created_at:1}).populate("user_id", "username avatar name private follow").exec();
+        },{_id:1,body:1,url:1,post_type:1,text_content:1,thumbnail:1,user_id:1,isLiked:1,media_datatype:1,created_at:1}).populate("user_id", "username avatar name private follow").exec();
         if (all_Posts) {
           //data_follower
           const data_follower = await follow_unfollow.distinct("followingId", {

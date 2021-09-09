@@ -69,6 +69,10 @@ const postSchema = new mongoose.Schema({
   encryptId: {
     type: String,
     default: ""
+  },
+  media_datatype: {
+    type: String,
+    default: ""
   }
 
 });

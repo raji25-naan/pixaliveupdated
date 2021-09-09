@@ -11,7 +11,8 @@ exports.messages = async (req, res, next) => {
     try {
         const userid = req.user_id
         const find_user = await userchatSchema.find({ user_id: userid }).exec();
-        if (find_user.length) {
+        if (find_user.length) 
+        {
             if (find_user[0].user_data.length) {
                 find_user[0].user_data.reverse();
                 if (find_user) {

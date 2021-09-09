@@ -6,6 +6,7 @@ const { sendNotification } = require('../../helpers/notification');
 const follow_unfollow = require('../../models/User/follow_unfollow');
 const sleep = require('sleep-promise');
 const User = require('../../models/User/Users');
+const { checkNotification } = require('../../helpers/post');
 
 exports.add_like = async (req, res, next) => {
 
@@ -70,8 +71,14 @@ exports.add_like = async (req, res, next) => {
                     });
                     
                     const saveNotificationData = await updateNotification.save();
-                    if (saveNotificationData) {
-                      sendNotification(totalId, LikePost.user_id,0);
+                    if (saveNotificationData) 
+                    {
+                      var userId = LikePost.user_id;
+                      var checkNotify = await checkNotification(userId);
+                      if(checkNotify == true)
+                      {
+                        sendNotification(totalId, LikePost.user_id,0);
+                      }
                         return res.json({
                         success: true,
                         message:"Like added and notification Sent"

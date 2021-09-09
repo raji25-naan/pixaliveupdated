@@ -1,5 +1,5 @@
 const express = require("express");
-const { user_allPost, user_reloopPost, user_taggedPost, trending_post, trending_postByCategory } = require("../../controllers/User/user_profile");
+const { user_allPost, user_reloopPost, user_taggedPost, trending_post, trending_postByCategory, multipleCategoryPost, categoryPostForYou } = require("../../controllers/User/user_profile");
 const { checkIsactive } = require("../../middlewares/checkActive");
 const { checkSession } = require("../../middlewares/checkAuth");
 const { checkQuery, validateRequest } = require("../../middlewares/validator");
@@ -44,4 +44,17 @@ router.get("/trending_postByCategory",
     validateRequest,
     catch_error(trending_postByCategory)
 )
+
+router.get("/multipleCategoryPost",
+    checkSession,
+    checkIsactive,
+    catch_error(multipleCategoryPost)
+)
+
+router.get("/categoryPostForYou",
+    checkSession,
+    checkIsactive,
+    catch_error(categoryPostForYou)
+)
+
 module.exports = router;

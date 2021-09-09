@@ -14,7 +14,7 @@ const { increasePost_Point, increaseReloop_Point } = require("./points");
 const blocked = require("../../models/User/blocked");
 const { sendNotification } = require("../../helpers/notification");
 const notificationSchema = require("../../models/User/Notification");
-const { sendAllPost } = require("../../helpers/post");
+const { sendAllPost, checkNotification } = require("../../helpers/post");
 const Hashids = require("hashids");
 const hashids = new Hashids();
 
@@ -22,7 +22,7 @@ const hashids = new Hashids();
 
 exports.create_postNew = async (req, res, next) => {
 
-  const { text, url, body, thumbnail, type, privacyType, tagged_userId, category } = req.body;
+  const { text, url, body, thumbnail, type, privacyType, tagged_userId, category,media_datatype } = req.body;
   const user_id = req.user_id;
   let place;
   if (req.body.place) {
@@ -68,6 +68,7 @@ exports.create_postNew = async (req, res, next) => {
       privacyType,
       tagged_userId,
       category,
+      media_datatype,
       res
     );
   if (type == 4)
@@ -83,6 +84,7 @@ exports.create_postNew = async (req, res, next) => {
       privacyType,
       tagged_userId,
       category,
+      media_datatype,
       res
     );
 };
@@ -99,6 +101,7 @@ async function update_postwithType(
   privacyType,
   tagged_userId,
   category,
+  media_datatype,
   res
 ) {
   try {
@@ -114,6 +117,7 @@ async function update_postwithType(
       privacyType: privacyType,
       tagged_userId: tagged_userId,
       category: category,
+      media_datatype: media_datatype,
       isActive: true,
       created_at: Date.now(),
     }).save();
@@ -318,8 +322,13 @@ async function updateReloopwithPostType(
           created_at: Date.now()
         });
         const saveNotificationData = await updateNotification.save();
-        if (saveNotificationData) {
-          sendNotification(totalId, userId, 6);
+        if (saveNotificationData) 
+        {
+          var checkNotify = await checkNotification(userId);
+          if(checkNotify == true)
+          {
+            sendNotification(totalId, userId, 6);
+          }
           return res.json({
             success: true,
             result: createdReloop,
@@ -510,7 +519,7 @@ async function sendreloopedPost(allPost, userId, getAllId, requested, likedIds, 
       user_id: { $nin: totalBlockedUser },
       isActive: true,
       isDeleted: false
-    },{_id:1,body:1,url:1,post_type:1,text_content:1,thumbnail:1,user_id:1,isLiked:1,created_at:1}).populate("user_id", "username avatar name private follow").exec();
+    },{_id:1,body:1,url:1,post_type:1,text_content:1,thumbnail:1,user_id:1,isLiked:1,media_datatype:1,created_at:1}).populate("user_id", "username avatar name private follow").exec();
     if (all_Posts) 
     {
       //data_follower
@@ -1062,7 +1071,7 @@ exports.hidePost = async (req, res, next) => {
 exports.editPost = async (req, res, next) => {
 
   let user_id = req.user_id;
-  let { post_id, body, tagged_userId, privacyType, category } = req.body;
+  let { post_id, body, tagged_userId, privacyType, category, media_datatype } = req.body;
 
   let arr_hash;
   if (body) {
@@ -1082,12 +1091,9 @@ exports.editPost = async (req, res, next) => {
       hashtag: arr_hash,
     });
 
-    console.log(get_hashtag);
     hash_tags = new Set(get_hashtag.map((tag) => tag));
 
     arr_hash = arr_hash.filter((id) => !hash_tags.has(id));
-
-    console.log(arr_hash);
 
     arr_hash.forEach(async (element) => {
       const hashtag = new hashtagSchema({
@@ -1106,7 +1112,8 @@ exports.editPost = async (req, res, next) => {
         hashtag: hash_tag,
         tagged_userId: tagged_userId,
         privacyType: privacyType,
-        category: category
+        category: category,
+        media_datatype: media_datatype
       }
     }, { new: true }).exec();
 

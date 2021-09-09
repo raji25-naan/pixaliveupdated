@@ -274,7 +274,9 @@ exports.login = async (req, res, next) => {
               gender: data.gender,
               DOB: data.DOB,
               bio: data.bio,
-              followingCount: data.followingCount
+              category: data.category,
+              followingCount: data.followingCount,
+              Notification: data.Notification
             },
             token: token,
             message: "you have logged in successfully"
@@ -329,7 +331,9 @@ exports.login = async (req, res, next) => {
               gender: data.gender,
               DOB: data.DOB,
               bio: data.bio,
-              followingCount: data.followingCount
+              category: data.category,
+              followingCount: data.followingCount,
+              Notification: data.Notification
             },
             token: token,
             message: "you have logged in successfully"
@@ -383,7 +387,9 @@ exports.socialLogin = async (req, res, next) => {
             gender: data.gender,
             DOB: data.DOB,
             bio: data.bio,
-            followingCount: data.followingCount
+            category: data.category,
+            followingCount: data.followingCount,
+            Notification: data.Notification
           },
           token: token,
           message: "you have logged in successfully"
@@ -430,7 +436,9 @@ exports.socialLogin = async (req, res, next) => {
             gender: data.gender,
             DOB: data.DOB,
             bio: data.bio,
-            followingCount: data.followingCount
+            category: data.category,
+            followingCount: data.followingCount,
+            Notification: data.Notification
           },
           token: token,
           message: "you have logged in successfully"
@@ -1441,4 +1449,107 @@ exports.findUsername = async (req, res, next) => {
       });
     }
   }
+}
+
+//notificationEnableDisable
+exports.notificationEnableDisable = async(req,res,next)=>{
+
+  let user_id = req.user_id;
+  let Notification = req.body.Notification;
+  //notificationUpdate
+  const notificationUpdate = await Users.updateOne(
+    {_id: user_id},
+    {
+      $set:{Notification: Notification}
+    },
+    {new: true}
+  ).exec();
+
+  if(notificationUpdate)
+  {
+    return res.json({
+      success: true,
+      message: "Successfully updated.."
+    });
+  }
+  else
+  {
+    return res.json({
+      success: false,
+      message: "Error Occured!"
+    });
+  }
+   
+}
+
+//updateCategorytoUser
+exports.updateCategorytoUser = async(req,res,next)=>{
+
+  let user_id = req.user_id;
+  let {category} = req.body;
+  //updateCategory
+  const updateCategory = await Users.findOneAndUpdate(
+    {_id: user_id},
+    {
+      $set: {
+        category: category
+      }
+    },
+    {new: true}
+  );
+  if(updateCategory)
+  {
+    return res.json({
+      success: true,
+      message: "Successfully updated.."
+    });
+  }
+  else
+  {
+    return res.json({
+      success: false,
+      message: "Error Occured!"
+    });
+  }
+
+}
+
+//recentJoined
+exports.recentJoined = async(req,res,next)=>{
+
+  let user_id = req.user_id;
+
+  //followingData
+  const followingData = await followSchema.distinct("followingId", {
+    followerId: user_id,
+    status: 1
+  });
+  
+  //data_request
+  const data_request = await followSchema.distinct("followingId", {
+    followerId: user_id,
+    status: 0
+  });
+
+  let totalId = followingData.concat(data_request,user_id);
+  //latestUsers
+  const latestUsers = await Users.find({_id: {$nin: totalId}}).sort({created_At: -1}).limit(1000).exec();
+  if(latestUsers.length)
+  {
+    return res.json({
+      success: true,
+      result: latestUsers,
+      message: "Successfully fetched.."
+    });
+  }
+  else
+  {
+    return res.json({
+      success: true,
+      result: [],
+      message: "No data found"
+    });
+  }
+  
+
 }
