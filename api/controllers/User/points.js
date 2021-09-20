@@ -87,7 +87,7 @@ module.exports.trendingPeople = async (req,res,next)=>{
             var friendAndRequest = following_data.concat(request_data,inactiveUsers);
             
             //getTrendingPeople
-            const getTrendingPeople = await pointSchema.find({_id:{$nin: friendAndRequest}}).populate("_id","name username avatar private followersCount follow").sort({total_Points: -1}).limit(1000).exec();
+            const getTrendingPeople = await pointSchema.find({_id:{$nin: friendAndRequest}}).populate("_id","name username avatar private followersCount follow").sort({total_Points: -1}).limit(500).exec();
             if(getTrendingPeople)
             {
                 return res.json({
