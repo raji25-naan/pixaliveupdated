@@ -108,7 +108,7 @@ module.exports.trendingPeople = async (req,res,next)=>{
         }
         else
         {
-            const trendingPeopleList = await pointSchema.find({_id:{$nin: inactiveUsers}}).populate("_id","name username avatar private followersCount follow").sort({total_Points: -1}).limit(1000).exec();
+            const trendingPeopleList = await pointSchema.find({_id:{$nin: inactiveUsers}}).populate("_id","name username avatar private followersCount follow").sort({total_Points: -1}).limit(500).exec();
             let getTrendingPeople;
             if(req.query.search)
             {
