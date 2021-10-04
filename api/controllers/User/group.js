@@ -189,7 +189,7 @@ exports.getMembers = async(req,res,next)=>{
     //members
     let members = await group.distinct("groupMembersId._id",{_id: group_id}).exec();
     //membersDetail
-    const membersDetail = await User.find({_id: members},{name: 1, avatar: 1}).exec();
+    const membersDetail = await User.find({_id: members},{name: 1,username: 1, avatar: 1}).exec();
     if(membersDetail.length)
     {
         return res.json({
@@ -214,7 +214,7 @@ exports.getAdmins = async(req,res,next)=>{
     //groupAdmins
     let groupAdmins = await group.distinct("groupAdminsId._id",{_id: group_id}).exec();
     //groupAdminsDetail
-    const groupAdminsDetail = await User.find({_id: groupAdmins},{name: 1, avatar: 1}).exec();
+    const groupAdminsDetail = await User.find({_id: groupAdmins},{name: 1,username: 1, avatar: 1}).exec();
     if(groupAdminsDetail.length)
     {
         return res.json({
@@ -239,7 +239,7 @@ exports.getPendings = async(req,res,next)=>{
     //groupPendings
     let groupPendings = await group.distinct("pendingMembersId._id",{_id: group_id}).exec();
     //groupAdminsDetail
-    const groupPendingsDetail = await User.find({_id: groupPendings},{name: 1, avatar: 1}).exec();
+    const groupPendingsDetail = await User.find({_id: groupPendings},{name: 1,username: 1, avatar: 1}).exec();
     if(groupPendingsDetail.length)
     {
         return res.json({
@@ -515,77 +515,105 @@ exports.joinGroup = async (req,res,next)=>{
     const groupInfo = await group.findOne({_id: group_id}).exec();
     if(groupInfo.allowAdminAccept == true)
     {
-        //addToPendingList
-        const addToPendingList = await group.findOneAndUpdate(
-            {_id: group_id},
-            {
-                $push: {
-                    "pendingMembersId":{_id: user_id}
-                }
-            },
-            {new: true}
-        );
+        let pendingUserIds = await group.distinct("pendingMembersId._id",{_id: group_id}).exec();
+        pendingUserIds = pendingUserIds.toString();
 
-        //incpendingMembersCount
-        const incpendingMembersCount = await group.findOneAndUpdate(
-            {_id: group_id},
-            {
-                $inc:{
-                    pendingMembers: 1,
-                }
-            },
-            {new: true}
-        );
-        if(addToPendingList)
-        {
-            return res.json({
-                success: true,
-                message: "Successfully sent request"
-            })
-        }
-        else
+        if(pendingUserIds.includes(user_id.toString()))
         {
             return res.json({
                 success: false,
-                message: "Error occured"
-            })
+                message: "Already you are in pending list"
+            })  
         }
+        else
+        {
+            //addToPendingList
+            const addToPendingList = await group.findOneAndUpdate(
+                {_id: group_id},
+                {
+                    $push: {
+                        "pendingMembersId":{_id: user_id}
+                    }
+                },
+                {new: true}
+            );
+
+            //incpendingMembersCount
+            const incpendingMembersCount = await group.findOneAndUpdate(
+                {_id: group_id},
+                {
+                    $inc:{
+                        pendingMembers: 1,
+                    }
+                },
+                {new: true}
+            );
+
+            if(addToPendingList && incpendingMembersCount)
+            {
+                return res.json({
+                    success: true,
+                    message: "Successfully sent request"
+                })
+            }
+            else
+            {
+                return res.json({
+                    success: false,
+                    message: "Error occured"
+                })
+            }
+        }
+
     }
     else
     {
-        //addToMemberList
-        const addToMemberList = await group.findOneAndUpdate(
-            {_id: group_id},
-            {
-                $push: {
-                    "groupMembersId":{_id: user_id}
-                }
-            },
-            {new: true}
-        );
-        //incMembersCount
-        const incMembersCount = await group.findOneAndUpdate(
-            {_id: group_id},
-            {
-                $inc:{
-                    members: 1,
-                }
-            },
-            {new: true}
-        );
-        if(addToMemberList && incMembersCount)
+        let groupMembersUserIds = await group.distinct("groupMembersId._id",{_id: group_id}).exec();
+        groupMembersUserIds = groupMembersUserIds.toString();
+
+        if(groupMembersUserIds.includes(user_id.toString()))
         {
             return res.json({
-                success: true,
-                message: "Successfully joined"
+                success: false,
+                message: "Already you are a member"
             })
         }
         else
         {
-            return res.json({
-                success: false,
-                message: "Error occured"
-            })
+            //addToMemberList
+            const addToMemberList = await group.findOneAndUpdate(
+                {_id: group_id},
+                {
+                    $push: {
+                        "groupMembersId":{_id: user_id}
+                    }
+                },
+                {new: true}
+            );
+            //incMembersCount
+            const incMembersCount = await group.findOneAndUpdate(
+                {_id: group_id},
+                {
+                    $inc:{
+                        members: 1,
+                    }
+                },
+                {new: true}
+            );
+            if(addToMemberList && incMembersCount)
+            {
+                return res.json({
+                    success: true,
+                    message: "Successfully joined"
+                })
+            }
+            else
+            {
+                return res.json({
+                    success: false,
+                    message: "Error occured"
+                })
+            }
         }
     }
 
@@ -599,68 +627,82 @@ exports.makeMemberfromPendingList = async (req,res,next)=>{
     let pendingUserIds = await group.distinct("pendingMembersId._id",{_id: group_id}).exec();
     pendingUserIds = pendingUserIds.toString();
 
+    let groupMembersUserIds = await group.distinct("groupMembersId._id",{_id: group_id}).exec();
+    groupMembersUserIds = groupMembersUserIds.toString();
+
     if(type == 1)
     {
         if(pendingUserIds.includes(user_id.toString()))
         {
-            //removeIdfromPendingList
-            const removeIdfromPendingList = await group.findOneAndUpdate(
-                {_id: group_id},
-                {
-                    $pull: {
-                        "pendingMembersId":{_id: user_id}
-                    }
-                },
-                {new: true}
-            );
-
-            //decpendingMembersCount
-            const decpendingMembersCount = await group.findOneAndUpdate(
-                {_id: group_id},
-                {
-                    $inc:{
-                        pendingMembers: -1,
-                    }
-                },
-                {new: true}
-            );
-
-            //addIdtoMemberList
-            const addIdtoMemberList = await group.findOneAndUpdate(
-                {_id: group_id},
-                {
-                    $push: {
-                        "groupMembersId":{_id: user_id}
-                    }
-                },
-                {new: true}
-            );
-
-            //incMembersCount
-            const incMembersCount = await group.findOneAndUpdate(
-                {_id: group_id},
-                {
-                    $inc:{
-                        members: 1,
-                    }
-                },
-                {new: true}
-            );
-
-            if(removeIdfromPendingList && decpendingMembersCount && addIdtoMemberList && incMembersCount)
+            if(groupMembersUserIds.includes(user_id.toString()))
             {
                 return res.json({
-                    success: true,
-                    message: "Successfully added"
+                    success: false,
+                    message: "User is already member"
                 })
             }
             else
             {
-                return res.json({
-                    success: false,
-                    message: "Error occured"
-                })
+                //removeIdfromPendingList
+                const removeIdfromPendingList = await group.findOneAndUpdate(
+                    {_id: group_id},
+                    {
+                        $pull: {
+                            "pendingMembersId":{_id: user_id}
+                        }
+                    },
+                    {new: true}
+                );
+
+                //decpendingMembersCount
+                const decpendingMembersCount = await group.findOneAndUpdate(
+                    {_id: group_id},
+                    {
+                        $inc:{
+                            pendingMembers: -1,
+                        }
+                    },
+                    {new: true}
+                );
+
+                //addIdtoMemberList
+                const addIdtoMemberList = await group.findOneAndUpdate(
+                    {_id: group_id},
+                    {
+                        $push: {
+                            "groupMembersId":{_id: user_id}
+                        }
+                    },
+                    {new: true}
+                );
+
+                //incMembersCount
+                const incMembersCount = await group.findOneAndUpdate(
+                    {_id: group_id},
+                    {
+                        $inc:{
+                            members: 1,
+                        }
+                    },
+                    {new: true}
+                );
+
+                if(removeIdfromPendingList && decpendingMembersCount && addIdtoMemberList && incMembersCount)
+                {
+                    return res.json({
+                        success: true,
+                        message: "Successfully added"
+                    })
+                }
+                else
+                {
+                    return res.json({
+                        success: false,
+                        message: "Error occured"
+                    })
+                }
             }
+            
         }
         else
         {
