@@ -158,7 +158,13 @@ const user_schema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
-  category: []
+  category: [],
+  savedPosts: [{
+    _id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Posts" 
+    }
+}],
 
 });
 const user = db_Main.model("users", user_schema);

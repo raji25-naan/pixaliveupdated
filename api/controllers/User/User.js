@@ -503,7 +503,7 @@ exports.user_info = async (req, res, next) => {
   let getUserInfo = await Users.findOne({ _id: req.query.user_id, isActive: true }).exec();
   if(getUserInfo)
   {
-    let getUserPosts = await postSchema.find({ user_id: req.query.user_id, isActive: true, isDeleted: false }).exec();
+    let getUserPosts = await postSchema.find({ user_id: req.query.user_id, isActive: true, isDeleted: false, groupPost: false }).exec();
     //getFriendslist
     const data_follower = await followSchema.distinct("followingId", {
       followerId: user_id,
@@ -1518,7 +1518,8 @@ exports.updateCategorytoUser = async(req,res,next)=>{
 exports.recentJoined = async(req,res,next)=>{
 
   let user_id = req.user_id;
-
+  const offset = req.query.offset;
+  var row = 100;
   //followingData
   const followingData = await followSchema.distinct("followingId", {
     followerId: user_id,
@@ -1533,7 +1534,7 @@ exports.recentJoined = async(req,res,next)=>{
 
   let totalId = followingData.concat(data_request,user_id);
   //latestUsers
-  const latestUsers = await Users.find({_id: {$nin: totalId}}).sort({created_At: -1}).limit(1000).exec();
+  const latestUsers = await(await Users.find({_id: {$nin: totalId}}).sort({created_At: -1})).splice(offset == undefined ? 0 : offset, row);
   if(latestUsers.length)
   {
     return res.json({

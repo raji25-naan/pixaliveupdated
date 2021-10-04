@@ -181,8 +181,9 @@ async function updateUserChat(type, userId, receiverId, message, url, post_type,
     ).exec();
     if (unfollow) {
       if (type == 0) {
-        const findData = await messageSchema.find({ user_id: userId, receiver_id: receiverId, seen: false, isBlocked: false }).exec()
-        const total = (findData.length > 0) ? findData.length : 0;
+        console.log(userId,receiverId);
+        const findData = await messageSchema.find({ sender_id: receiverId, receiver_id: userId, isSeen: false, isBlocked: false }).exec()
+        const total = findData.length;
         const user_follow = await user_chatSchema.updateOne(
           { user_id: userId },
           {
@@ -199,11 +200,12 @@ async function updateUserChat(type, userId, receiverId, message, url, post_type,
               }
             }
           }, { new: true }
-        ).exec()
+        ).exec();
       }
       if (type == 1) {
-        const findData = await messageSchema.find({ user_id: userId, receiver_id: receiverId, seen: false, isBlocked: false }).exec()
-        const total = (findData.length > 0) ? findData.length : 0;
+        console.log(userId,receiverId);
+        const findData = await messageSchema.find({ sender_id: receiverId, receiver_id: userId, isSeen: false, isBlocked: false }).exec()
+        const total = findData.length;
         const receiver_follow = await user_chatSchema.updateOne(
           { user_id: userId },
           {
@@ -220,7 +222,7 @@ async function updateUserChat(type, userId, receiverId, message, url, post_type,
               }
             }
           }, { new: true }
-        ).exec()
+        ).exec();
       }
 
     }

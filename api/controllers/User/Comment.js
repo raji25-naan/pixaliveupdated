@@ -10,26 +10,44 @@ const { checkNotification } = require("../../helpers/post");
 // ************create comment*******************
 
 exports.add_comment = async (req, res, next) => {
-    //    get id and comment
+
     let user_id = req.body.user_id;
     var { comment, post_id } = req.body;
 
-    // create document for user in db
-    const updateComment = new commentSchema({
-      post_id: post_id,
-      user_id: user_id,
-      comment: comment,
-      created_at: new Date(),
-    });
-    const saveData = await updateComment.save();
-    const updatecommentCount = await postSchema.updateOne(
-      { _id: post_id },
-      { $inc: { commentCount: 1 } },
-      { new: true }
-    );
-    if (updatecommentCount) {
+    let updateComment;
+    let saveData;
+    if(req.body.group_id)
+    {
+      updateComment = new commentSchema({
+        post_id: post_id,
+        user_id: user_id,
+        group_id: req.body.group_id,
+        comment: comment,
+        created_at: new Date(),
+      });
+      saveData = await updateComment.save();
+    }
+    else
+    {
+      updateComment = new commentSchema({
+        post_id: post_id,
+        user_id: user_id,
+        comment: comment,
+        created_at: new Date()
+      });
+      saveData = await updateComment.save();
+    }
+    if(saveData)
+    {
+      const updatecommentCount = await postSchema.updateOne(
+        { _id: post_id },
+        { $inc: { commentCount: 1 } },
+        { new: true }
+      );
+    
       const userPost = await postSchema.findOne({ _id: post_id });
-      if (user_id != userPost.user_id) {
+      if (user_id != userPost.user_id) 
+      {
         const senderDetails1 = await commentSchema.find({post_id:post_id},{_id:0,user_id:1}).sort({created_at:-1})
         const arraysorting = [];
         senderDetails1.forEach((values)=>{
@@ -61,7 +79,9 @@ exports.add_comment = async (req, res, next) => {
           });
         }
       }
-    } else {
+    } 
+    else 
+    {
       return res.json({
         success: true,
         message: "Error Occured" + error

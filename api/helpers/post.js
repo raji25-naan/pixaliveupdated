@@ -76,7 +76,15 @@ module.exports.sendAllPost = async function(allPost, userId, res) {
               all_Posts.isLiked = 1;
             }
           });
-          // checkFeed.reloopPostId = all_Posts;
+
+          //isSaved
+          let getSavedPostIds = await Users.distinct("savedPosts._id", {_id: user_id }).exec();
+          getSavedPostIds = getSavedPostIds.map(String);
+          getSavedPostIds.forEach((id) => {
+            if (id == all_Posts._id) {
+              all_Posts.isSaved = 1;
+            }
+          });
   
           sleep(1000).then(function () {
             checkFeed.reloopPostId = all_Posts;

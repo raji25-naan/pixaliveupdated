@@ -20,6 +20,21 @@ module.exports.increasePost_Point = async function(userId){
     }
 }
 
+module.exports.decreasePost_Point = async function(userId){
+
+    let postPoint = await pointSchema.updateOne(
+        {_id : userId},
+        {
+            $inc : {post_Points : -50}
+        },
+        {new : true}
+    ).exec();
+    if(postPoint)
+    {
+        updateTotalPoint(userId) 
+    }
+}
+
 module.exports.increaseReloop_Point = async function(userId){
 
     let reloopPoint = await pointSchema.updateOne(
@@ -73,6 +88,9 @@ async function updateTotalPoint(userId){
 module.exports.trendingPeople = async (req,res,next)=>{
    
         let user_id = req.user_id;
+        const offset = req.query.offset;
+        var row = 100;
+
         let inactiveUsers = await Users.distinct("_id",{isActive: false}).exec();        
         if(req.query.suggestion == 'true')
         {
@@ -87,7 +105,7 @@ module.exports.trendingPeople = async (req,res,next)=>{
             var friendAndRequest = following_data.concat(request_data,inactiveUsers);
             
             //getTrendingPeople
-            const getTrendingPeople = await pointSchema.find({_id:{$nin: friendAndRequest}}).populate("_id","name username avatar private followersCount follow").sort({total_Points: -1}).limit(1000).exec();
+            const getTrendingPeople = await(await pointSchema.find({_id:{$nin: friendAndRequest}}).populate("_id","name username avatar private followersCount follow").sort({total_Points: -1})).splice(offset == undefined ? 0 : offset, row);
             if(getTrendingPeople)
             {
                 return res.json({
@@ -108,7 +126,7 @@ module.exports.trendingPeople = async (req,res,next)=>{
         }
         else
         {
-            const trendingPeopleList = await pointSchema.find({_id:{$nin: inactiveUsers}}).populate("_id","name username avatar private followersCount follow").sort({total_Points: -1}).limit(1000).exec();
+            const trendingPeopleList = await(await pointSchema.find({_id:{$nin: inactiveUsers}}).populate("_id","name username avatar private followersCount follow").sort({total_Points: -1})).splice(offset == undefined ? 0 : offset, row);
             let getTrendingPeople;
             if(req.query.search)
             {

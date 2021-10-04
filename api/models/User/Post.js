@@ -53,6 +53,10 @@ const postSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  isSaved: {
+    type: Number,
+    default: 0
+  },
   privacyType: {
     type: String,
     default: ""
@@ -66,6 +70,30 @@ const postSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  comment_option: {
+    type: Boolean,
+    default: true
+  },
+  download_option: {
+    type: Boolean,
+    default: true
+  },
+  group_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "groups"
+  },
+  showInFeeds: {
+    type: Boolean,
+    default: true
+  },
+  groupPost: {
+    type: Boolean,
+    default: false
+  },
+  verified: {
+    type: Boolean,
+    default: true
+  },
   encryptId: {
     type: String,
     default: ""
@@ -73,6 +101,18 @@ const postSchema = new mongoose.Schema({
   media_datatype: {
     type: String,
     default: ""
+  },
+  viewCount: {
+    type: Number,
+    default: 0
+  },
+  shareCount: {
+    type: Number,
+    default: 0
+  },
+  downloadCount: {
+    type: Number,
+    default: 0
   }
 
 });

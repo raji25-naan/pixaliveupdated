@@ -1,5 +1,5 @@
 const express = require("express");
-const { createGroup, updateGroup, groupInfo, getMembers, getAdmins, muteGroup, getPendings, getGroups, searchGroup, joinGroup, makeMemberfromPendingList, makeAdmin, blockUnblockMembers, getBlockedMembers } = require("../../controllers/User/group");
+const { createGroup, updateGroup, groupInfo, getMembers, getAdmins, muteGroup, getPendings, getGroups, searchGroup, joinGroup, makeMemberfromPendingList, makeAdmin, blockUnblockMembers, getBlockedMembers, getDiscoverGroups, searchDiscoverGroups, exitGroupByUser, deleteGroup, removeMember } = require("../../controllers/User/group");
 const router = express.Router();
 const { checkIsactive } = require("../../middlewares/checkActive");
 const { checkSession } = require("../../middlewares/checkAuth");
@@ -69,6 +69,20 @@ router.get("/searchGroup",
             catch_error(searchGroup)
             )
 
+//getDiscoverGroups
+router.get("/getDiscoverGroups",
+            checkSession,
+            checkIsactive,
+            catch_error(getDiscoverGroups)
+            )
+
+//searchDiscoverGroups
+router.get("/searchDiscoverGroups",
+            checkSession,
+            checkIsactive,
+            catch_error(searchDiscoverGroups)
+            )
+
 //joinGroup
 router.post("/joinGroup",
             checkSession,
@@ -84,16 +98,18 @@ router.post("/makeMemberfromPendingList",
             checkIsactive,
             checkRequestBodyParams('group_id'),
             checkRequestBodyParams('user_id'),
+            checkRequestBodyParams('type'),
             validateRequest,
             catch_error(makeMemberfromPendingList)
             )
 
-//makeAdmin
+//makeAdminandRemoveAdmin
 router.post("/makeAdmin",
             checkSession,
             checkIsactive,
             checkRequestBodyParams('group_id'),
             checkRequestBodyParams('user_id'),
+            checkRequestBodyParams('type'),
             validateRequest,
             catch_error(makeAdmin)
             )
@@ -118,4 +134,33 @@ router.get("/getBlockedMembers",
             catch_error(getBlockedMembers)
             )
 
+//exitGroupByUser
+router.post("/exitGroupByUser",
+            checkSession,
+            checkIsactive,
+            checkRequestBodyParams('group_id'),
+            validateRequest,
+            catch_error(exitGroupByUser)
+        )
+
+//deleteGroup
+router.post("/deleteGroup",
+            checkSession,
+            checkIsactive,
+            checkRequestBodyParams('group_id'),
+            validateRequest,
+            catch_error(deleteGroup)
+        )
+
+//removeMember
+router.post("/removeMember",
+            checkSession,
+            checkIsactive,
+            checkRequestBodyParams('group_id'),
+            checkRequestBodyParams('user_id'),
+            validateRequest,
+            catch_error(removeMember)
+        )
+
+        
 module.exports = router

@@ -20,7 +20,12 @@ const {
   editPost,
   edit_privacy,
   delete_post_New,
-  createShare
+  createShare,
+  saveUnsavePosts,
+  getSavedPosts,
+  increaseViewCount,
+  increaseShareCount,
+  increaseDownloadCount
 } = require("../../controllers/User/Post");
 const { checkSession } = require("../../middlewares/checkAuth");
 const { checkIsactive } = require("../../middlewares/checkActive");
@@ -174,5 +179,54 @@ router.get(
   // checkIsactive,
   catch_error(createShare)
 );
+
+//saveUnsavePosts
+router.post(
+  "/saveUnsavePosts",
+  checkSession,
+  checkIsactive,
+  checkRequestBodyParams("post_id"),
+  checkRequestBodyParams("type"),
+  validateRequest,
+  catch_error(saveUnsavePosts) 
+)
+
+//getSavedPosts
+router.get(
+  "/getSavedPosts",
+  checkSession,
+  checkIsactive,
+  catch_error(getSavedPosts)
+);
+
+//increaseViewCount
+router.post(
+  "/increaseViewCount",
+  checkSession,
+  checkIsactive,
+  checkRequestBodyParams("post_id"),
+  validateRequest,
+  catch_error(increaseViewCount) 
+)
+
+//increaseShareCount
+router.post(
+  "/increaseShareCount",
+  checkSession,
+  checkIsactive,
+  checkRequestBodyParams("post_id"),
+  validateRequest,
+  catch_error(increaseShareCount) 
+)
+
+//increaseDownloadCount
+router.post(
+  "/increaseDownloadCount",
+  checkSession,
+  checkIsactive,
+  checkRequestBodyParams("post_id"),
+  validateRequest,
+  catch_error(increaseDownloadCount) 
+)
 
 module.exports = router;

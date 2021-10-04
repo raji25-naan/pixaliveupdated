@@ -22,6 +22,8 @@ const notificationRouter = require("./api/routes/User/Notification");
 const user_profileRouter = require("./api/routes/User/user_profile.routes");
 const blockedRouter = require("./api/routes/User/blockedUser.routes");
 const groupRouter = require("./api/routes/User/group");
+const groupPostRouter = require("./api/routes/User/groupPost");
+const draftRouter = require("./api/routes/User/draft");
 const CronJob = require('node-cron');
 const fileUpload = require("express-fileupload");
 
@@ -29,7 +31,7 @@ const fileUpload = require("express-fileupload");
 const registerRouter = require("./api/routes/Admin/register");
 const postAdminRouter = require("./api/routes/Admin/post");
 const storyAdminRouter = require("./api/routes/Admin/story");
-const { updateEncryptId, addNotification, addMediaDatatype } = require("./api/helpers/cronjobFunction");
+const { updateEncryptId, addNotification, addMediaDatatype, updateSeenchatSchema } = require("./api/helpers/cronjobFunction");
 //firebaseAdmin
 // global.admin = require("firebase-admin");
 // const serviceAccount = require("./api/serviceAccountkey.json");
@@ -78,7 +80,9 @@ let userRoutes = [].concat(
   chatRouter,
   user_profileRouter,
   blockedRouter,
-  groupRouter
+  groupRouter,
+  groupPostRouter,
+  draftRouter
 );
 //adminRoutes
 let adminRoutes = [].concat(registerRouter, postAdminRouter, storyAdminRouter);
@@ -101,23 +105,26 @@ app.get("/.well-known/apple-app-site-association",(req,res)=>{
       ]
     }
   })
-  
-
 })
-//user router
-// app.use("/api/User/user", userRouter);
-// app.use("/api/User/posts", postRouter);
-// app.use("/api/User/follow_unfollow", follow_unfollowRouter);
-// app.use("/api/User/like", likeRouter);
-// app.use("/api/User/comments", commentRouter);
-// app.use("/api/User/story",storyRouter);
-// app.use("/api/User/hashtag",hashtagRouter);
-// app.use("/api/User/tagPost",TagpostRouter);
-// app.use("/api/User/category",categoryRouter);
-// app.use("/api/User/chat", chatRouter);
 
-//admin router
-// app.use("/api/Admin/register",registerRouter);
+//getServerTime
+app.get('/api/User/getServerTime', (req, res) => {
+  try 
+  {
+    res.send({
+    'success': true,
+    'time': new Date(),
+    'message': 'Current Time'
+    })
+  } 
+  catch (e) 
+  {
+    res.send({
+    'success': false,
+    'message': 'Failed to get Time'
+    })
+  }
+  })
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
@@ -165,13 +172,14 @@ function haltOnTimedout(req, res, next) {
   if (!req.timedout) next();
 }
 
-// CronJob.schedule('0 05 15 * * *', async () => {
+CronJob.schedule('0 11 07 * * *', async () => {
   // console.info(`running cron job a task ${new Date()}`);
 
   // await updateEncryptId();
   // await addNotification();
   // await addMediaDatatype();
-// })
+  // await updateSeenchatSchema();
+})
 
 
 module.exports = app;

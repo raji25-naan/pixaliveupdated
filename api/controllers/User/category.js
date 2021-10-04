@@ -68,7 +68,8 @@ exports.fetchCategory = async (req, res, next) => {
                     category: data.category,
                     privacyType: { $nin: ["onlyMe","private"] },
                     isActive: true,
-                    isDeleted: false
+                    isDeleted: false,
+                    groupPost: false
                 })
             if (findPhoto.length) 
             {

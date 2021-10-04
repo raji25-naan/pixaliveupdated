@@ -13,6 +13,8 @@ const { sendAllPost } = require('../../helpers/post');
 exports.user_allPost = async (req, res, next) => {
         const current_user_id = req.user_id;
         const getpost_user_id = req.query.user_id;
+        const offset = req.query.offset;
+        var row = 50;
         //totalBlockedUser
         let getBlockedUsers1 = await blocked.distinct("Blocked_user", { Blocked_by: current_user_id }).exec();
         let getBlockedUsers2 = await blocked.distinct("Blocked_by", { Blocked_user: current_user_id }).exec();
@@ -20,34 +22,39 @@ exports.user_allPost = async (req, res, next) => {
         //getHidePost
         let getHidePost = await hidePostSchema.distinct("post_id", { hideByid: current_user_id }).exec();
         var get_post;
+
         if ((current_user_id).toString() == (getpost_user_id).toString()) 
         {
-            get_post = await Post.find({
+            get_post = await(await Post.find({
                 _id: {$nin: getHidePost},
                 user_id: getpost_user_id,
                 isActive: true,
-                isDeleted: false
-            }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 }).exec();
+                isDeleted: false,
+                groupPost: false
+            }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 })).splice(offset == undefined ? 0 : offset, row);
         }
         else
         {
             const follower_data = await follow_unfollow.findOne({ followerId: current_user_id, followingId: getpost_user_id, status: 1 });
             if (follower_data) {
-                get_post = await Post.find({
+                get_post = await(await Post.find({
                     _id: {$nin: getHidePost},
                     user_id: { $in: getpost_user_id, $nin: totalBlockedUser },
                     privacyType: { $nin: "onlyMe" },
                     isActive: true,
-                    isDeleted: false
-                }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 }).exec();
+                    isDeleted: false,
+                    groupPost: false
+                }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 })).splice(offset == undefined ? 0 : offset, row);
             }
             else {
-                get_post = await Post.find({
+                get_post = await(await Post.find({
                     _id: {$nin: getHidePost},
                     user_id: { $in: getpost_user_id, $nin: totalBlockedUser },
                     privacyType: { $nin: ["onlyMe", "private"] },
-                    isActive: true, isDeleted: false
-                }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 }).exec();
+                    isActive: true, 
+                    isDeleted: false,    
+                    groupPost: false
+                }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 })).splice(offset == undefined ? 0 : offset, row);
             }
 
         }
@@ -81,6 +88,10 @@ exports.user_allPost = async (req, res, next) => {
                     isLike: 1,
                 }).exec();
                 const liked_Ids = getUser_like.map(String);
+
+                //getSavedPostIds
+                let getSavedPostIds = await User.distinct("savedPosts._id", {_id: current_user_id }).exec();
+                getSavedPostIds = getSavedPostIds.map(String);
                 
                 //check
                 if(getAll_Id.length)
@@ -94,6 +105,10 @@ exports.user_allPost = async (req, res, next) => {
                 else if(liked_Ids.length)
                 {
                     setisLiked();
+                }
+                else if(getSavedPostIds.length)
+                {
+                    setisSaved();
                 }
                 else
                 {
@@ -122,6 +137,10 @@ exports.user_allPost = async (req, res, next) => {
                                 {
                                     setisLiked();
                                 }
+                                else if(getSavedPostIds.length)
+                                {
+                                    setisSaved();
+                                }
                                 else
                                 {
                                     Response();
@@ -149,6 +168,10 @@ exports.user_allPost = async (req, res, next) => {
                                 {
                                     setisLiked();
                                 }
+                                else if(getSavedPostIds.length)
+                                {
+                                    setisSaved();
+                                }
                                 else
                                 {
                                     Response();
@@ -172,8 +195,35 @@ exports.user_allPost = async (req, res, next) => {
                             count3 = count3 + 1;
                             if(totalLength3 == count3)
                             {
-                                Response();
+                                if(getSavedPostIds.length)
+                                {
+                                    setisSaved();  
+                                }
+                                else
+                                {
+                                    Response();
+                                }
                             }
+                        });
+                    });
+                }
+
+                //setisSaved
+                function setisSaved()
+                {
+                    var count4 = 0;
+                    var totalLength4 = arr_post.length * getSavedPostIds.length;
+                    arr_post.forEach((post) => {
+                        getSavedPostIds.forEach((id) => {
+                        if(id == post._id) 
+                        {
+                            post.isSaved = 1;
+                        }
+                        count4 = count4 + 1;
+                        if(totalLength4 == count4)
+                        {
+                            Response();
+                        }
                         });
                     });
                 }
@@ -225,7 +275,9 @@ exports.user_reloopPost = async (req, res, next) => {
             get_post = await Post.find({
                 _id: {$nin: getHidePost},
                 user_id: getpost_user_id,
-                isActive: true, isDeleted: false
+                isActive: true, 
+                isDeleted: false,
+                groupPost: false
             }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 }).exec();
         }
         else {
@@ -235,7 +287,9 @@ exports.user_reloopPost = async (req, res, next) => {
                     _id: {$nin: getHidePost},
                     user_id: { $in: getpost_user_id, $nin: totalBlockedUser },
                     privacyType: { $nin: "onlyMe" },
-                    isActive: true, isDeleted: false
+                    isActive: true, 
+                    isDeleted: false,
+                    groupPost: false
                 }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 }).exec();
             }
             else {
@@ -243,7 +297,9 @@ exports.user_reloopPost = async (req, res, next) => {
                     _id: {$nin: getHidePost},
                     user_id: { $in: getpost_user_id, $nin: totalBlockedUser },
                     privacyType: { $nin: ["onlyMe", "private"] },
-                    isActive: true, isDeleted: false
+                    isActive: true, 
+                    isDeleted: false,
+                    groupPost: false
                 }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 }).exec();
             }
 
@@ -278,6 +334,10 @@ exports.user_reloopPost = async (req, res, next) => {
                 }).exec();
                 const liked_Ids = getUser_like.map(String);
 
+                //getSavedPostIds
+                let getSavedPostIds = await User.distinct("savedPosts._id", {_id: current_user_id }).exec();
+                getSavedPostIds = getSavedPostIds.map(String);
+
                 //check
                 if(getAll_Id.length)
                 {
@@ -290,6 +350,10 @@ exports.user_reloopPost = async (req, res, next) => {
                 else if(liked_Ids.length)
                 {
                     setisLiked();
+                }
+                else if(getSavedPostIds.length)
+                {
+                    setisSaved();
                 }
                 else
                 {
@@ -318,6 +382,10 @@ exports.user_reloopPost = async (req, res, next) => {
                                 {
                                     setisLiked();
                                 }
+                                else if(getSavedPostIds.length)
+                                {
+                                    setisSaved();
+                                }
                                 else
                                 {
                                     sendToResponse();
@@ -345,6 +413,10 @@ exports.user_reloopPost = async (req, res, next) => {
                                 {
                                     setisLiked();
                                 }
+                                else if(getSavedPostIds.length)
+                                {
+                                    setisSaved();
+                                }
                                 else
                                 {
                                     sendToResponse();
@@ -368,8 +440,35 @@ exports.user_reloopPost = async (req, res, next) => {
                             count3 = count3 + 1;
                             if(totalLength3 == count3)
                             {
-                                sendToResponse();
+                                if(getSavedPostIds.length)
+                                {
+                                    setisSaved();
+                                }
+                                else
+                                {
+                                    sendToResponse();
+                                }
                             }
+                        });
+                    });
+                }
+
+                //setisSaved
+                function setisSaved()
+                {
+                    var count4 = 0;
+                    var totalLength4 = arr_post.length * getSavedPostIds.length;
+                    arr_post.forEach((post) => {
+                        getSavedPostIds.forEach((id) => {
+                        if(id == post._id) 
+                        {
+                            post.isSaved = 1;
+                        }
+                        count4 = count4 + 1;
+                        if(totalLength4 == count4)
+                        {
+                            sendToResponse();
+                        }
                         });
                     });
                 }
@@ -422,7 +521,9 @@ exports.user_taggedPost = async (req, res, next) => {
                     _id: {$in: get_taggedPost,$nin: getHidePost},
                     user_id: { $nin: totalBlockedUser },
                     privacyType: { $nin: ["onlyMe"] },
-                    isActive: true, isDeleted: false
+                    isActive: true, 
+                    isDeleted: false,
+                    groupPost: false
                 }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 }).exec();
             }
             else 
@@ -434,7 +535,9 @@ exports.user_taggedPost = async (req, res, next) => {
                         user_id: { $nin: totalBlockedUser },
                         _id: {$in: get_taggedPost,$nin: getHidePost},
                         privacyType: { $nin: ["onlyMe"] },
-                        isActive: true, isDeleted: false
+                        isActive: true, 
+                        isDeleted: false,
+                        groupPost: false
                     }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 }).exec();
                 }
                 else 
@@ -443,7 +546,9 @@ exports.user_taggedPost = async (req, res, next) => {
                         user_id: { $nin: totalBlockedUser },
                         _id: {$in: get_taggedPost,$nin: getHidePost},
                         privacyType: { $nin: ["onlyMe"] },
-                        isActive: true, isDeleted: false
+                        isActive: true, 
+                        isDeleted: false,
+                        groupPost: false
                     }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 }).exec();
                 }
 
@@ -479,6 +584,10 @@ exports.user_taggedPost = async (req, res, next) => {
                     }).exec();
                     const liked_Ids = getUser_like.map(String);
 
+                    //getSavedPostIds
+                    let getSavedPostIds = await User.distinct("savedPosts._id", {_id: current_user_id }).exec();
+                    getSavedPostIds = getSavedPostIds.map(String);
+
                     //check
                     if(getAll_Id.length)
                     {
@@ -491,6 +600,10 @@ exports.user_taggedPost = async (req, res, next) => {
                     else if(liked_Ids.length)
                     {
                         setisLiked();
+                    }
+                    else if(getSavedPostIds.length)
+                    {
+                        setisSaved();
                     }
                     else
                     {
@@ -519,6 +632,10 @@ exports.user_taggedPost = async (req, res, next) => {
                                     {
                                         setisLiked();
                                     }
+                                    else if(getSavedPostIds.length)
+                                    {
+                                        setisSaved();
+                                    }
                                     else
                                     {
                                         Response();
@@ -546,6 +663,10 @@ exports.user_taggedPost = async (req, res, next) => {
                                     {
                                         setisLiked();
                                     }
+                                    else if(getSavedPostIds.length)
+                                    {
+                                        setisSaved();
+                                    }
                                     else
                                     {
                                         Response();
@@ -569,12 +690,39 @@ exports.user_taggedPost = async (req, res, next) => {
                                 count3 = count3 + 1;
                                 if(totalLength3 == count3)
                                 {
-                                    Response();
+                                    if(getSavedPostIds.length)
+                                    {
+                                        setisSaved();
+                                    }
+                                    else
+                                    {
+                                        Response();
+                                    }
                                 }
                             });
                         });
                     }
-                    
+
+                    //setisSaved
+                    function setisSaved()
+                    {
+                        var count4 = 0;
+                        var totalLength4 = arr_post.length * getSavedPostIds.length;
+                        arr_post.forEach((post) => {
+                            getSavedPostIds.forEach((id) => {
+                            if(id == post._id) 
+                            {
+                                post.isSaved = 1;
+                            }
+                            count4 = count4 + 1;
+                            if(totalLength4 == count4)
+                            {
+                                Response();
+                            }
+                            });
+                        });
+                    }
+                        
                     //Response
                     function Response()
                     {
@@ -636,6 +784,7 @@ exports.trending_post = async (req, res, next) => {
         created_at: { $gt: lastTwoDays },
         isActive: true,
         isDeleted: false,
+        groupPost: false,
         privacyType: { $nin: ["onlyMe","private"] }
     }).populate("user_id", "username avatar name private follow followersCount").sort({likeCount : -1 })).splice(offset == undefined ? 0 : offset, row);
     if (get_post.length) 
@@ -661,6 +810,10 @@ exports.trending_post = async (req, res, next) => {
         }).exec();
         const liked_Ids = getUser_like.map(String);
 
+        //getSavedPostIds
+        let getSavedPostIds = await User.distinct("savedPosts._id", {_id: current_user_id }).exec();
+        getSavedPostIds = getSavedPostIds.map(String);
+
         //check
         if(getAll_Id.length)
         {
@@ -673,6 +826,10 @@ exports.trending_post = async (req, res, next) => {
         else if(liked_Ids.length)
         {
             setisLiked();
+        }
+        else if(getSavedPostIds.length)
+        {
+            setisSaved();
         }
         else
         {
@@ -701,6 +858,10 @@ exports.trending_post = async (req, res, next) => {
                         {
                             setisLiked();
                         }
+                        else if(getSavedPostIds.length)
+                        {
+                            setisSaved();
+                        }
                         else
                         {
                             Response();
@@ -728,6 +889,10 @@ exports.trending_post = async (req, res, next) => {
                         {
                             setisLiked();
                         }
+                        else if(getSavedPostIds.length)
+                        {
+                            setisSaved();
+                        }
                         else
                         {
                             Response();
@@ -751,8 +916,36 @@ exports.trending_post = async (req, res, next) => {
                     count3 = count3 + 1;
                     if(totalLength3 == count3)
                     {
-                        Response();
+                        if(getSavedPostIds.length)
+                        {
+                            setisSaved();
+                        }
+                        else
+                        {
+                            Response();
+                        }
+                        
                     }
+                });
+            });
+        }
+
+        //setisSaved
+        function setisSaved()
+        {
+            var count4 = 0;
+            var totalLength4 = get_post.length * getSavedPostIds.length;
+            get_post.forEach((post) => {
+                getSavedPostIds.forEach((id) => {
+                if(id == post._id) 
+                {
+                    post.isSaved = 1;
+                }
+                count4 = count4 + 1;
+                if(totalLength4 == count4)
+                {
+                    Response();
+                }
                 });
             });
         }
@@ -807,6 +1000,7 @@ exports.trending_postByCategory = async (req, res, next) => {
                 reloopPostId: { $nin: reloopPostIds },
                 isActive: true,
                 isDeleted: false,
+                groupPost: false,
                 privacyType: { $nin: ["onlyMe","private"] }
             }).populate("user_id", "username avatar name private follow").sort({ likeCount: -1 })).splice(offset == undefined ? 0 : offset, row);
 
@@ -819,6 +1013,7 @@ exports.trending_postByCategory = async (req, res, next) => {
                 reloopPostId: { $nin: reloopPostIds },
                 isActive: true,
                 isDeleted: false,
+                groupPost: false,
                 privacyType: { $nin: ["onlyMe","private"] }
             }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 })).splice(offset == undefined ? 0 : offset, row);
         }
@@ -846,6 +1041,10 @@ exports.trending_postByCategory = async (req, res, next) => {
             }).exec();
             const liked_Ids = getUser_like.map(String);
 
+            //getSavedPostIds
+            let getSavedPostIds = await User.distinct("savedPosts._id", {_id: current_user_id }).exec();
+            getSavedPostIds = getSavedPostIds.map(String);
+
             //check
             if(getAll_Id.length)
             {
@@ -858,6 +1057,10 @@ exports.trending_postByCategory = async (req, res, next) => {
             else if(liked_Ids.length)
             {
                 setisLiked();
+            }
+            else if(getSavedPostIds.length)
+            {
+                setisSaved();
             }
             else
             {
@@ -885,6 +1088,10 @@ exports.trending_postByCategory = async (req, res, next) => {
                             else if(liked_Ids.length)
                             {
                                 setisLiked();
+                            }
+                            else if(getSavedPostIds.length)
+                            {
+                                setisSaved();
                             }
                             else
                             {
@@ -914,6 +1121,10 @@ exports.trending_postByCategory = async (req, res, next) => {
                             {
                                 setisLiked();
                             }
+                            else if(getSavedPostIds.length)
+                            {
+                                setisSaved();
+                            }
                             else
                             {
                                 Response();
@@ -937,8 +1148,35 @@ exports.trending_postByCategory = async (req, res, next) => {
                         count3 = count3 + 1;
                         if(totalLength3 == count3)
                         {
-                            Response();
+                            if(getSavedPostIds.length)
+                            {
+                                setisSaved();
+                            }
+                            else
+                            {
+                                Response();
+                            }
                         }
+                    });
+                });
+            }
+
+            //setisSaved
+            function setisSaved()
+            {
+                var count4 = 0;
+                var totalLength4 = get_all_post.length * getSavedPostIds.length;
+                get_all_post.forEach((post) => {
+                    getSavedPostIds.forEach((id) => {
+                    if(id == post._id) 
+                    {
+                        post.isSaved = 1;
+                    }
+                    count4 = count4 + 1;
+                    if(totalLength4 == count4)
+                    {
+                        Response();
+                    }
                     });
                 });
             }
@@ -992,6 +1230,7 @@ exports.categoryPostForYou = async (req,res,next)=>{
             post_type: {$nin: 4},
             isActive: true,
             isDeleted: false,
+            groupPost: false,
             privacyType: { $nin: ["onlyMe","private"] }
         }).populate("user_id", "username avatar name private follow").sort({created_at : -1 })).splice(offset == undefined ? 0 : offset, row);
     }
@@ -1005,6 +1244,7 @@ exports.categoryPostForYou = async (req,res,next)=>{
             post_type: type,
             isActive: true,
             isDeleted: false,
+            groupPost: false,
             privacyType: { $nin: ["onlyMe","private"] }
         }).populate("user_id", "username avatar name private follow").sort({created_at : -1 })).splice(offset == undefined ? 0 : offset, row);
     }
@@ -1032,6 +1272,10 @@ exports.categoryPostForYou = async (req,res,next)=>{
         }).exec();
         const liked_Ids = getUser_like.map(String);
 
+        //getSavedPostIds
+        let getSavedPostIds = await User.distinct("savedPosts._id", {_id: user_id }).exec();
+        getSavedPostIds = getSavedPostIds.map(String);
+
         //check
         if(getAll_Id.length)
         {
@@ -1044,6 +1288,10 @@ exports.categoryPostForYou = async (req,res,next)=>{
         else if(liked_Ids.length)
         {
             setisLiked();
+        }
+        else if(getSavedPostIds.length)
+        {
+            setisSaved();
         }
         else
         {
@@ -1072,6 +1320,10 @@ exports.categoryPostForYou = async (req,res,next)=>{
                         {
                             setisLiked();
                         }
+                        else if(getSavedPostIds.length)
+                        {
+                            setisSaved();
+                        }
                         else
                         {
                             Response();
@@ -1099,6 +1351,10 @@ exports.categoryPostForYou = async (req,res,next)=>{
                         {
                             setisLiked();
                         }
+                        else if(getSavedPostIds.length)
+                        {
+                            setisSaved();
+                        }
                         else
                         {
                             Response();
@@ -1122,8 +1378,35 @@ exports.categoryPostForYou = async (req,res,next)=>{
                     count3 = count3 + 1;
                     if(totalLength3 == count3)
                     {
-                        Response();
+                        if(getSavedPostIds.length)
+                        {
+                            setisSaved();
+                        }
+                        else
+                        {
+                            Response();
+                        }
                     }
+                });
+            });
+        }
+
+        //setisSaved
+        function setisSaved()
+        {
+            var count4 = 0;
+            var totalLength4 = get_post.length * getSavedPostIds.length;
+            get_post.forEach((post) => {
+                getSavedPostIds.forEach((id) => {
+                if(id == post._id) 
+                {
+                    post.isSaved = 1;
+                }
+                count4 = count4 + 1;
+                if(totalLength4 == count4)
+                {
+                    Response();
+                }
                 });
             });
         }
@@ -1143,7 +1426,7 @@ exports.categoryPostForYou = async (req,res,next)=>{
         return res.json({
             success: false,
             feeds: [],
-            message: "No loop",
+            message: "No loop"
         });
     }
 
@@ -1180,6 +1463,7 @@ exports.multipleCategoryPost = async (req,res,next)=>{
             post_type: {$nin: 4},
             isActive: true,
             isDeleted: false,
+            groupPost: false,
             privacyType: { $nin: ["onlyMe","private"] }
         }).populate("user_id", "username avatar name private follow").sort({created_at : -1 })).splice(offset == undefined ? 0 : offset, row);
     }
@@ -1193,6 +1477,7 @@ exports.multipleCategoryPost = async (req,res,next)=>{
             post_type: type,
             isActive: true,
             isDeleted: false,
+            groupPost: false,
             privacyType: { $nin: ["onlyMe","private"] }
         }).populate("user_id", "username avatar name private follow").sort({created_at : -1 })).splice(offset == undefined ? 0 : offset, row);
     }
@@ -1221,6 +1506,10 @@ exports.multipleCategoryPost = async (req,res,next)=>{
         }).exec();
         const liked_Ids = getUser_like.map(String);
 
+        //getSavedPostIds
+        let getSavedPostIds = await User.distinct("savedPosts._id", {_id: user_id }).exec();
+        getSavedPostIds = getSavedPostIds.map(String);
+
         //check
         if(getAll_Id.length)
         {
@@ -1233,6 +1522,10 @@ exports.multipleCategoryPost = async (req,res,next)=>{
         else if(liked_Ids.length)
         {
             setisLiked();
+        }
+        else if(getSavedPostIds.length)
+        {
+            setisSaved();
         }
         else
         {
@@ -1261,6 +1554,10 @@ exports.multipleCategoryPost = async (req,res,next)=>{
                         {
                             setisLiked();
                         }
+                        else if(getSavedPostIds.length)
+                        {
+                            setisSaved();
+                        }
                         else
                         {
                             Response();
@@ -1288,6 +1585,10 @@ exports.multipleCategoryPost = async (req,res,next)=>{
                         {
                             setisLiked();
                         }
+                        else if(getSavedPostIds.length)
+                        {
+                            setisSaved();
+                        }
                         else
                         {
                             Response();
@@ -1311,8 +1612,35 @@ exports.multipleCategoryPost = async (req,res,next)=>{
                     count3 = count3 + 1;
                     if(totalLength3 == count3)
                     {
-                        Response();
+                        if(getSavedPostIds.length)
+                        {
+                            setisSaved();
+                        }
+                        else
+                        {
+                            Response();
+                        }
                     }
+                });
+            });
+        }
+
+        //setisSaved
+        function setisSaved()
+        {
+            var count4 = 0;
+            var totalLength4 = get_post.length * getSavedPostIds.length;
+            get_post.forEach((post) => {
+                getSavedPostIds.forEach((id) => {
+                if(id == post._id) 
+                {
+                    post.isSaved = 1;
+                }
+                count4 = count4 + 1;
+                if(totalLength4 == count4)
+                {
+                    Response();
+                }
                 });
             });
         }

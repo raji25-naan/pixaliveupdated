@@ -3,8 +3,10 @@ const Notification = require("../../models/User/Notification");
 module.exports.getAllNotificationByuser = async(req,res,next)=>{
  
     let user_id = req.user_id;
-    const getAllNotify = await Notification.find({receiver_id:user_id}).populate("sender_id","username name avatar follow private")
-    .populate("receiver_id","username name avatar follow private").populate("post_id","thumbnail url").sort({created_at : -1}).exec();
+    const offset = req.query.offset;
+    var row = 20;
+    const getAllNotify = await(await Notification.find({receiver_id:user_id}).populate("sender_id","username name avatar follow private")
+    .populate("receiver_id","username name avatar follow private").populate("post_id","thumbnail url").sort({created_at : -1})).splice(offset == undefined ? 0 : offset, row);
     
     if(getAllNotify.length>0)
     {

@@ -16,13 +16,15 @@ const { sendNotification } = require("../../helpers/notification");
 const notificationSchema = require("../../models/User/Notification");
 const { sendAllPost, checkNotification } = require("../../helpers/post");
 const Hashids = require("hashids");
+const group = require("../../models/User/group");
 const hashids = new Hashids();
+const User = require("../../models/User/Users");
 
 // ************* Create post Using user_Id ***************//
 
 exports.create_postNew = async (req, res, next) => {
 
-  const { text, url, body, thumbnail, type, privacyType, tagged_userId, category,media_datatype } = req.body;
+  const { text, url, body, thumbnail, type, privacyType, tagged_userId, category,media_datatype,comment_option,download_option } = req.body;
   const user_id = req.user_id;
   let place;
   if (req.body.place) {
@@ -69,6 +71,9 @@ exports.create_postNew = async (req, res, next) => {
       tagged_userId,
       category,
       media_datatype,
+      comment_option,
+      download_option,
+      req,
       res
     );
   if (type == 4)
@@ -85,6 +90,9 @@ exports.create_postNew = async (req, res, next) => {
       tagged_userId,
       category,
       media_datatype,
+      comment_option,
+      download_option,
+      req,
       res
     );
 };
@@ -102,10 +110,14 @@ async function update_postwithType(
   tagged_userId,
   category,
   media_datatype,
+  comment_option,
+  download_option,
+  req,
   res
 ) {
   try {
-    const createdPost = await new postSchema({
+    let createdPost;
+    createdPost = await new postSchema({
       user_id: userId,
       url: url,
       text_content: text,
@@ -118,11 +130,14 @@ async function update_postwithType(
       tagged_userId: tagged_userId,
       category: category,
       media_datatype: media_datatype,
+      comment_option: comment_option,
+      download_option: download_option,
       isActive: true,
-      created_at: Date.now(),
+      created_at: Date.now()
     }).save();
+    if(createdPost) 
+    {
 
-    if (createdPost) {
       let userId = createdPost.user_id;
       let postId = String(createdPost._id);
       let encryptdId = hashids.encodeHex(postId);
@@ -134,25 +149,178 @@ async function update_postwithType(
         { new: true }
       ).exec();
 
+      if(req.body.group_id)
+      {
+        // console.log("Request",req.body);
+        //checkApprove
+        const checkApprove = await group.findOne({_id: req.body.group_id});
+        //checkAdmin
+        let checkAdmin = await group.distinct("groupAdminsId._id",{_id: req.body.group_id}).exec();
+        checkAdmin = checkAdmin.toString();
+        if(checkAdmin.includes(createdPost.user_id.toString()))
+        {
+              //updategroupId
+              const updategroupId = await postSchema.findOneAndUpdate(
+                { _id: createdPost._id },
+                {
+                  $set: {
+                      group_id: req.body.group_id,
+                      groupPost: true,
+                      showInFeeds: req.body.showInFeeds
+                    }
+                },
+                { new: true }
+              ).exec();
 
-      increasePost_Point(userId);
-      if (tagged_userId.length > 0) {
-        tagged_userId.forEach(async (element) => {
+              //post_updatedOnTime
+              const post_updatedOnTime = await group.findOneAndUpdate(
+                { _id: req.body.group_id },
+                {
+                  $set: {
+                    post_updatedOn: Date.now()
+                    }
+                },
+                { new: true }
+              ).exec();
 
-          const saveTagged = new userTagpost({
-            post_id: createdPost._id,
-            tagged_userId: element,
-            taggedByuserId: createdPost.user_id
+              if(updategroupId && post_updatedOnTime)
+              {
+                return res.json({
+                  success: true,
+                  result: createdPost,
+                  message: "loop added successfully"
+                });
+              }
+        }
+        else if(checkApprove.adminApproveForPost == true)
+        {
+            //updategroupId
+            const updategroupId = await postSchema.findOneAndUpdate(
+              { _id: createdPost._id },
+              {
+                $set: {
+                    group_id: req.body.group_id,
+                    groupPost: true,
+                    showInFeeds: req.body.showInFeeds,
+                    verified: false
+                  }
+              },
+              { new: true }
+            ).exec();
+
+            const incpendingLoopsCount = await group.findOneAndUpdate(
+              {_id: req.body.group_id},
+              {
+                  $inc:{
+                    pendingLoops: 1
+                  }
+              },
+              {new: true}
+            );
+
+            if(updategroupId && incpendingLoopsCount)
+            {
+              return res.json({
+                success: true,
+                result: createdPost,
+                message: "loop added successfully"
+              });
+            }
+        }
+        else
+        {
+          //updategroupId
+          const updategroupId = await postSchema.findOneAndUpdate(
+            { _id: createdPost._id },
+            {
+              $set: {
+                  group_id: req.body.group_id,
+                  groupPost: true,
+                  showInFeeds: req.body.showInFeeds
+                }
+            },
+            { new: true }
+          ).exec();
+
+          //post_updatedOnTime
+          const post_updatedOnTime = await group.findOneAndUpdate(
+            { _id: req.body.group_id },
+            {
+              $set: {
+                post_updatedOn: Date.now()
+                }
+            },
+            { new: true }
+          ).exec();
+
+          if(updategroupId && post_updatedOnTime)
+          {
+            return res.json({
+              success: true,
+              result: createdPost,
+              message: "loop added successfully"
+            });
+          }
+          
+        }
+
+      }
+      else
+      {
+        increasePost_Point(userId);
+        var count = 0;
+        if(tagged_userId.length > 0) 
+        {
+          tagged_userId.forEach(async (element) => {
+  
+            const saveTagged = new userTagpost({
+              post_id: createdPost._id,
+              tagged_userId: element,
+              taggedByuserId: createdPost.user_id
+            });
+            await saveTagged.save();
+
+            const updateNotification = new notificationSchema({
+              sender_id: createdPost.user_id,
+              receiver_id: element,
+              post_id: createdPost._id,
+              type: 7,
+              seen: false,
+              created_at: Date.now()
+            });
+            const saveNotificationData = await updateNotification.save();
+
+            if(saveNotificationData)
+            {
+              var checkNotify = await checkNotification(element);
+              if(checkNotify == true)
+              {
+                sendNotification(createdPost.user_id, element, 7);
+              }
+              count = count + 1;
+              if(tagged_userId.length == count)
+              {
+                response();
+              }
+            }
+            
+          })
+        }
+        else
+        {
+          response();
+        }
+
+        function response()
+        {
+          return res.json({
+            success: true,
+            result: createdPost,
+            message: "loop added successfully"
           });
-          await saveTagged.save();
-        })
+        }
       }
 
-      return res.json({
-        success: true,
-        result: createdPost,
-        message: "loop added successfully"
-      });
     }
     else {
       return res.json({
@@ -301,7 +469,8 @@ async function updateReloopwithPostType(
         { new: true }
       ).exec();
 
-      if (updateReloopCount) {
+      if(updateReloopCount) 
+      {
         let userId = updateReloopCount.user_id;
         increaseReloop_Point(userId);
         //Notification
@@ -377,7 +546,7 @@ exports.get_post = async (req, res, next) => {
     user_id: { $nin: totalBlockedUser },
     isActive: true,
     isDeleted: false
-  }).populate("user_id", "username avatar name private follow").exec();
+  }).populate("user_id", "username avatar name private follow").populate("group_id","groupTitle").exec();
   if (all_Posts) 
   {
     //data_follower
@@ -399,6 +568,10 @@ exports.get_post = async (req, res, next) => {
     }).exec();
     let likedIds = get_like.map(String);
 
+    //getSavedPostIds
+    let getSavedPostIds = await User.distinct("savedPosts._id", {_id: user_id }).exec();
+    getSavedPostIds = getSavedPostIds.map(String);
+
     //check
     if(getAllId.length)
     {
@@ -411,6 +584,10 @@ exports.get_post = async (req, res, next) => {
     else if(likedIds.length)
     {
       setisLiked();
+    }
+    else if(getSavedPostIds.length)
+    {
+      setisSaved();
     }
     else
     {
@@ -437,6 +614,10 @@ exports.get_post = async (req, res, next) => {
           {
             setisLiked();
           }
+          else if(getSavedPostIds.length)
+          {
+            setisSaved();
+          }
           else
           {
             sendToResponse();
@@ -461,6 +642,10 @@ exports.get_post = async (req, res, next) => {
           {
             setisLiked();
           }
+          else if(getSavedPostIds.length)
+          {
+            setisSaved();
+          }
           else
           {
             sendToResponse();
@@ -481,6 +666,30 @@ exports.get_post = async (req, res, next) => {
         count3 = count3 + 1;
         if(likedIds.length == count3)
         {
+          if(getSavedPostIds.length)
+          {
+            setisSaved();
+          }
+          else
+          {
+            sendToResponse();
+          }
+        }
+      });
+    }
+
+    //setisSaved
+    function setisSaved()
+    {
+      var count4 = 0;
+      getSavedPostIds.forEach((id) => {
+        if(id == all_Posts._id) 
+        {
+          all_Posts.isSaved = 1;
+        }
+        count4 = count4 + 1;
+        if(getSavedPostIds.length == count4)
+        {         
           sendToResponse();
         }
       });
@@ -513,6 +722,9 @@ async function sendreloopedPost(allPost, userId, getAllId, requested, likedIds, 
     const totalBlockedUser = getBlockedUsers1.concat(getBlockedUsers2);
     //getHidePost
     let getHidePost = await hidePostSchema.distinct("post_id", { hideByid: user_id }).exec();
+    //getSavedPostIds
+    let getSavedPostIds = await User.distinct("savedPosts._id", {_id: user_id }).exec();
+    getSavedPostIds = getSavedPostIds.map(String);
     //all_Posts
     const all_Posts = await postSchema.findOne({
       _id: { $in: post_id, $nin: getHidePost },
@@ -554,6 +766,10 @@ async function sendreloopedPost(allPost, userId, getAllId, requested, likedIds, 
       {
         setisLiked();
       }
+      else if(getSavedPostIds.length)
+      {
+        setisSaved();
+      }
       else
       {
         Response();
@@ -579,6 +795,10 @@ async function sendreloopedPost(allPost, userId, getAllId, requested, likedIds, 
             {
               setisLiked();
             }
+            else if(getSavedPostIds.length)
+            {
+              setisSaved();
+            }
             else
             {
               Response();
@@ -603,6 +823,10 @@ async function sendreloopedPost(allPost, userId, getAllId, requested, likedIds, 
             {
               setisLiked();
             }
+            else if(getSavedPostIds.length)
+            {
+              setisSaved();
+            }
             else
             {
               Response();
@@ -622,6 +846,30 @@ async function sendreloopedPost(allPost, userId, getAllId, requested, likedIds, 
           }
           count3 = count3 + 1;
           if(likedIds.length == count3)
+          {
+            if(getSavedPostIds.length)
+            {
+              setisSaved();
+            }
+            else
+            {
+              Response();
+            }
+          }
+        });
+      }
+
+      //setisSaved
+      function setisSaved()
+      {
+        var count4 = 0;
+        getSavedPostIds.forEach((id) => {
+          if(id == all_Posts._id) 
+          {
+            all_Posts.isSaved = 1;
+          }
+          count4 = count4 + 1;
+          if(getSavedPostIds.length == count4)
           {
             Response();
           }
@@ -688,14 +936,19 @@ exports.feeds = async (req, res, next) => {
     let getBlockedUsers2 = await blocked.distinct("Blocked_by", { Blocked_user: user_id }).exec();
     let totalBlockedUser = getBlockedUsers1.concat(getBlockedUsers2);
 
+    //getSavedPostIds
+    let getSavedPostIds = await User.distinct("savedPosts._id", {_id: user_id }).exec();
+    getSavedPostIds = getSavedPostIds.map(String);
+
     const all_feeds = await(await postSchema
       .find({
         user_id: { $in: getAllId, $nin: totalBlockedUser },
         _id: { $nin: totalHideandBlockPostId },
         privacyType: { $nin: "onlyMe" },
         isActive: true,
-        isDeleted: false
-      }).populate("user_id", "username name avatar private follow").sort({ created_at: -1 })).splice(offset == undefined ? 0 : offset, row);
+        isDeleted: false,
+        showInFeeds: true
+      }).populate("user_id", "username name avatar private follow").populate("group_id","groupTitle").sort({ created_at: -1 })).splice(offset == undefined ? 0 : offset, row);
   // const all_feeds = await postSchema.find({
   //   user_id: { $in: getAllId, $nin: totalBlockedUser },
   //   _id: { $nin: totalHideandBlockPostId },
@@ -723,6 +976,10 @@ exports.feeds = async (req, res, next) => {
       {
         setisLiked();
       }
+      else if(getSavedPostIds.length)
+      {
+        setisSaved();
+      }
       else
       {
         sendtoResponse();
@@ -748,6 +1005,10 @@ exports.feeds = async (req, res, next) => {
               else if(likedIds.length)
               {
                 setisLiked();
+              }
+              else if(getSavedPostIds.length)
+              {
+                setisSaved();
               }
               else
               {
@@ -775,6 +1036,10 @@ exports.feeds = async (req, res, next) => {
               {
                 setisLiked();
               }
+              else if(getSavedPostIds.length)
+              {
+                setisSaved();
+              }
               else
               {
                 sendtoResponse();
@@ -797,6 +1062,34 @@ exports.feeds = async (req, res, next) => {
             }
             count3 = count3 + 1;
             if(totalLength3 == count3)
+            {
+              if(getSavedPostIds.length)
+              {
+                setisSaved();
+              }
+              else
+              {
+                sendtoResponse();
+
+              }
+            }
+          });
+        });
+      }
+
+      //setisSaved
+      function setisSaved()
+      {
+        var count4 = 0;
+        var totalLength4 = all_feeds.length * getSavedPostIds.length;
+        all_feeds.forEach((post) => {
+          getSavedPostIds.forEach((id) => {
+            if(id == post._id) 
+            {
+              post.isSaved = 1;
+            }
+            count4 = count4 + 1;
+            if(totalLength4 == count4)
             {
               sendtoResponse();
             }
@@ -933,14 +1226,12 @@ exports.updateviewpost = async (req, res, next) => {
   let { post_id, postUserId } = req.body;
   let user_id = req.user_id;
   //getViewdata
-  const getViewdata = await viewPost
-    .find({
-      post_id: post_id,
-      viewed_userId: user_id,
-      post_userID: postUserId,
-    })
-    .exec();
-  if (getViewdata.length > 0) {
+  const getViewdata = await viewPost.find({
+            post_id: post_id,
+            viewed_userId: user_id,
+            post_userID: postUserId,
+          }).exec();
+  if (getViewdata.length) {
     return res.json({
       success: false,
       message: "Already viewed",
@@ -952,7 +1243,8 @@ exports.updateviewpost = async (req, res, next) => {
       post_userID: postUserId,
     });
     const saveData = await data.save();
-    if (saveData) {
+    if (saveData) 
+    {
       return res.json({
         success: true,
         message: "Post viewed successfully",
@@ -1071,7 +1363,7 @@ exports.hidePost = async (req, res, next) => {
 exports.editPost = async (req, res, next) => {
 
   let user_id = req.user_id;
-  let { post_id, body, tagged_userId, privacyType, category, media_datatype } = req.body;
+  let { post_id, body, tagged_userId, privacyType, category, media_datatype,comment_option,download_option } = req.body;
 
   let arr_hash;
   if (body) {
@@ -1113,7 +1405,9 @@ exports.editPost = async (req, res, next) => {
         tagged_userId: tagged_userId,
         privacyType: privacyType,
         category: category,
-        media_datatype: media_datatype
+        media_datatype: media_datatype,
+        comment_option: comment_option,
+        download_option: download_option
       }
     }, { new: true }).exec();
 
@@ -1179,6 +1473,7 @@ exports.edit_privacy = async (req, res, next) => {
 
 // Delete the post
 exports.delete_post_New = async (req, res, next) => {
+
   const post_id = req.body.post_id;
   //updateDeleted
   const updateDeleted = await postSchema.updateOne(
@@ -1188,14 +1483,15 @@ exports.delete_post_New = async (req, res, next) => {
     },
     { new: true }
   ).exec();
-  if (updateDeleted) {
-    res.json({
+  if(updateDeleted) 
+  {
+    return res.json({
       success: true,
       message: "Loop deleted successfully"
     })
   }
   else {
-    res.json({
+    return res.json({
       success: false,
       message: "Loop not delete"
     })
@@ -1281,4 +1577,349 @@ exports.createShare = async (req, res, next) => {
     })
   }
 
+}
+
+//saveUnsavePosts
+exports.saveUnsavePosts = async(req,res,next)=>{
+
+  let user_id = req.user_id;
+  let {post_id,type} = req.body;
+
+  //getSavedPosts
+  let getSavedPosts = await User.distinct("savedPosts._id",{_id: user_id}).exec();
+  getSavedPosts = getSavedPosts.toString();
+
+  if(type == 1)
+  {
+    //check
+    if(getSavedPosts.includes(post_id.toString()))
+    {
+      return res.json({
+        success: false,
+        message: "This loop already saved"
+      })
+    }
+    else
+    {
+      const savePostId = await User.findOneAndUpdate(
+        {_id: user_id},
+        {
+            $push: {
+                "savedPosts":{_id: post_id}
+            }
+        },
+        {new: true}
+      );
+
+      if(savePostId)
+      {
+        return res.json({
+          success: true,
+          message: "Loop saved successfully"
+        })
+      }
+      else
+      {
+        return res.json({
+          success: false,
+          message: "Error occured"
+        })
+      }
+
+    }
+  }
+  else if(type == 0)
+  {
+    //check
+    if(getSavedPosts.includes(post_id.toString()))
+    {
+      const unsavePostId = await User.findOneAndUpdate(
+        {_id: user_id},
+        {
+            $pull: {
+                "savedPosts":{_id: post_id}
+            }
+        },
+        {new: true}
+      );
+
+      if(unsavePostId)
+      {
+        return res.json({
+          success: true,
+          message: "Successfully unsaved"
+        })
+      }
+      else
+      {
+        return res.json({
+          success: false,
+          message: "Error occured"
+        })
+      }
+    }
+    else
+    {
+      return res.json({
+        success: false,
+        message: "This loop not saved"
+      })
+    }
+
+  }
+
+}
+
+//getSavedPosts
+exports.getSavedPosts = async (req, res, next) => {
+
+  const user_id = req.user_id;
+  const offset = req.query.offset;
+  var row = 10;
+  //data_follower
+  const data_follower = await follow_unfollow.distinct("followingId", { followerId: user_id, status: 1 }).exec();
+  var array1 = data_follower.map(String);
+  var stringFollowerId = [...new Set(array1)];
+  //data_request
+  const data_request = await follow_unfollow.distinct("followingId", { followerId: user_id, status: 0 }).exec();
+  var array2 = data_request.map(String);
+  var requested = [...new Set(array2)];
+
+  //getHidePost
+  let getHidePost = await hidePostSchema.distinct("post_id", { hideByid: user_id }).exec();
+  //getBlockedUsers
+  let getBlockedUsers1 = await blocked.distinct("Blocked_user", { Blocked_by: user_id }).exec();
+  let getBlockedUsers2 = await blocked.distinct("Blocked_by", { Blocked_user: user_id }).exec();
+  let totalBlockedUser = getBlockedUsers1.concat(getBlockedUsers2);
+
+  //getSavedPostIds
+  let getSavedPostIds = await User.distinct("savedPosts._id", {_id: user_id }).exec();
+
+  const allPost = await(await postSchema
+    .find({
+      user_id: {$nin: totalBlockedUser },
+      _id: { $in: getSavedPostIds, $nin: getHidePost },
+      privacyType: { $nin: ["onlyMe","private"] },
+      isActive: true,
+      isDeleted: false
+    }).populate("user_id", "username name avatar private follow").populate("group_id","groupTitle").sort({ created_at: -1 })).splice(offset == undefined ? 0 : offset, row);
+
+  if(allPost.length)
+  {
+    let get_like = await likeSchema.distinct("post_id", {
+      user_id: user_id,
+      isLike: 1,
+    }).exec();
+    let likedIds = get_like.map(String);
+    setisSaved();
+    //isSaved
+    function setisSaved()
+    {
+      var count4 = 0;
+      allPost.forEach((post) => {
+        post.isSaved = 1;
+        count4 = count4 + 1;
+        if(allPost.length == count4)
+        {
+          if(stringFollowerId.length)
+          {
+            setFollow1();
+          }
+          else if(requested.length)
+          {
+            setFollow2();
+          }
+          else if(likedIds.length)
+          {
+            setisLiked();
+          }
+          else
+          {
+            sendtoResponse();
+          }
+        }
+      })
+    }
+    
+    //setFollow1
+    function setFollow1()
+    {
+      var count1 = 0;
+      var totalLength1 = allPost.length * stringFollowerId.length;
+      allPost.forEach((data) => {
+        stringFollowerId.forEach((followId) => {
+          if (followId == data.user_id._id) 
+          {
+            data.user_id.follow = 1;
+          }
+          count1 = count1 + 1;
+          if(totalLength1 == count1)
+          {
+            if(requested.length)
+            {
+              setFollow2();
+            }
+            else if(likedIds.length)
+            {
+              setisLiked();
+            }
+            else
+            {
+              sendtoResponse();
+            }
+          }
+        })
+      })
+    }
+    //setFollow2
+    function setFollow2()
+    {
+      var count2 = 0;
+      var totalLength2 = allPost.length * requested.length;
+      allPost.forEach((data) => {
+        requested.forEach((followId) => {
+          if (followId == data.user_id._id) 
+          {
+            data.user_id.follow = 2;
+          }
+          count2 = count2 + 1;
+          if(totalLength2 == count2)
+          {
+            if(likedIds.length)
+            {
+              setisLiked();
+            }
+            else
+            {
+              sendtoResponse();
+            }
+          }
+        })
+      })
+    }
+    
+    //setisLiked
+    function setisLiked()
+    {
+      var count3 = 0;
+      var totalLength3 = allPost.length * likedIds.length;
+      allPost.forEach((post) => {
+        likedIds.forEach((id) => {
+          if (id == post._id) 
+          {
+            post.isLiked = 1;
+          }
+          count3 = count3 + 1;
+          if(totalLength3 == count3)
+          {
+            sendtoResponse();
+          }
+        });
+      });
+    }
+
+    //sendtoResponse
+    function sendtoResponse()
+    {
+      sendAllPost(allPost, user_id, res)
+    }
+  }
+  else 
+  {
+    return res.json({
+      success: true,
+      feeds: allPost,
+      message: "No saved loops"
+
+    });
+  }
+};
+
+//increaseViewCount
+exports.increaseViewCount = async(req,res,next)=>{
+
+    let post_id = req.body.post_id;
+
+    const increaseCount = await postSchema.findOneAndUpdate(
+      {_id: post_id},
+      {
+        $inc: {viewCount: 1}
+      },
+      {new: true}
+    );
+
+    if(increaseCount)
+    {
+      return res.json({
+        success: true,
+        message: "successfully increased"
+      })
+    }
+    else if(error)
+    {
+      return res.json({
+        success: false,
+        message: "Error occured"+error
+      })
+    }
+
+}
+
+//increaseShareCount
+exports.increaseShareCount = async(req,res,next)=>{
+
+    let post_id = req.body.post_id;
+
+    const increaseCount = await postSchema.findOneAndUpdate(
+      {_id: post_id},
+      {
+        $inc: {shareCount: 1}
+      },
+      {new: true}
+    );
+
+    if(increaseCount)
+    {
+      return res.json({
+        success: true,
+        message: "successfully increased"
+      })
+    }
+    else if(error)
+    {
+      return res.json({
+        success: false,
+        message: "Error occured"+error
+      })
+    }
+
+}
+
+//increaseDownloadCount
+exports.increaseDownloadCount = async(req,res,next)=>{
+
+    let post_id = req.body.post_id;
+
+    const increaseCount = await postSchema.findOneAndUpdate(
+      {_id: post_id},
+      {
+        $inc: {downloadCount: 1}
+      },
+      {new: true}
+    );
+
+    if(increaseCount)
+    {
+      return res.json({
+        success: true,
+        message: "successfully increased"
+      })
+    }
+    else if(error)
+    {
+      return res.json({
+        success: false,
+        message: "Error occured"+error
+      })
+    }
 }

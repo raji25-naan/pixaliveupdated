@@ -9,6 +9,10 @@ const commentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "users"
   },
+  group_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "groups"
+  },
   Reply: [
     {
       user_id :{

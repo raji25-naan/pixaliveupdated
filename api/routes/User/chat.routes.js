@@ -9,7 +9,7 @@ const {
   checkQuery,
 } = require("../../middlewares/validator");
 
-const { messages, user_messages, deleteSingleChat, find_block, reportIndividualUser, deleteAllChat, block_chatuser, unblock_chatuser, suggestionChat, notificationChat } = require("../../controllers/User/chat");
+const { messages, user_messages, deleteSingleChat, find_block, reportIndividualUser, deleteAllChat, block_chatuser, unblock_chatuser, suggestionChat, notificationChat, getTotalUnreadCount } = require("../../controllers/User/chat");
 const { checkSession } = require("../../middlewares/checkAuth");
 const { checkIsactive } = require("../../middlewares/checkActive");
 
@@ -95,6 +95,13 @@ router.get("/notificationChat",
   checkSession,
   checkIsactive,
   notificationChat
+)
+
+//getTotalUnreadCount
+router.get("/getTotalUnreadCount",
+  checkSession,
+  checkIsactive,
+  getTotalUnreadCount
 )
 
 module.exports = router;

@@ -2,6 +2,7 @@ const Post = require("../models/User/Post");
 const Users = require("../models/User/Users");
 const Hashids = require("hashids");
 const hashids = new Hashids();
+const chatSchema = require("../models/User/chat");
 
 exports.updateEncryptId = async function(){
 
@@ -32,6 +33,24 @@ exports.addNotification = async (req,res,next)=>{
 
 exports.addMediaDatatype = async (req,res,next)=>{
 
-    await Post.updateMany({media_datatype: ""});
+    // await Post.updateMany({media_datatype: ""});
+    
+    // await Post.updateMany({
+    //     comment_option: true,
+    //     download_option: true
+    // });
 
+    // await Post.updateMany({
+    //     groupPost: false,
+    //     showInFeeds: true
+    // });
+
+    await Post.updateMany({
+        verified: true
+    });
+}
+
+exports.updateSeenchatSchema = async (req,res,next)=>{
+     
+    await chatSchema.updateMany({isSeen: true});
 }

@@ -574,3 +574,46 @@ exports.notificationChat = async (req, res, next) => {
     }
 
 }
+
+//getTotalUnreadCount
+exports.getTotalUnreadCount = async (req,res,next)=>{
+
+    try
+    {
+        let user_id = req.user_id;
+        const unreadCount = await chatSchema.find({ receiver_id: user_id,
+                                                    isDeletedbyReceiver: false,
+                                                    isBlocked: false,
+                                                    isSeen: false}).exec();
+
+        if(unreadCount.length)
+        {
+            return res.json({
+               success: true,
+               count: unreadCount.length,
+               message: "Successfully fetched"
+
+            })
+        }
+        else
+        {
+            return res.json({
+                success: true,
+                count: 0,
+                message: "No unseen message"
+ 
+             })
+        }
+
+    }
+    catch(error)
+    {
+        return res.json({
+            success: false,
+            message: "Error getting UnreadCount" + error
+        });
+    }
+
+}
+
+

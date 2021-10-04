@@ -10,6 +10,10 @@ const likes = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "users"
   },
+  group_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "groups"
+  },
   isLike: {
     type: Number,
     default: 0

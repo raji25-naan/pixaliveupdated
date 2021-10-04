@@ -155,6 +155,7 @@ exports.fetch_hashtag = async (req, res, next) => {
                  user_id: { $nin: totalBlockedUser },
                  isActive: true,
                  isDeleted: false,
+                 groupPost: false,
                  privacyType: { $nin: ["onlyMe", "private"] } }).exec();
             data.posts = postCount.length;
             counter1 = counter1 + 1;
@@ -229,6 +230,7 @@ exports.getvideo_hashtag = async (req, res, next) => {
         user_id: { $in: follower_data, $nin: totalBlockedUser },
         isDeleted: false,
         isActive: true,
+        groupPost: false,
         post_type: 1,
         privacyType: { $nin: ["onlyMe"] }
     }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 }).exec();
@@ -238,6 +240,7 @@ exports.getvideo_hashtag = async (req, res, next) => {
         user_id: { $nin: blockedAndFollowing },
         isDeleted: false,
         isActive: true,
+        groupPost: false,
         post_type: 1,
         privacyType: { $nin: ["onlyMe", "private"] }
     }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 }).exec();
@@ -262,6 +265,10 @@ exports.getvideo_hashtag = async (req, res, next) => {
         }).exec();
         const liked_Ids = getUser_like.map(String);
 
+        //getSavedPostIds
+        let getSavedPostIds = await User.distinct("savedPosts._id", {_id: current_user_id }).exec();
+        getSavedPostIds = getSavedPostIds.map(String);
+
         //check
         if(getAll_Id.length)
         {
@@ -274,6 +281,10 @@ exports.getvideo_hashtag = async (req, res, next) => {
         else if(liked_Ids.length)
         {
             setisLiked();
+        }
+        else if(getSavedPostIds.length)
+        {
+            setisSaved();
         }
         else
         {
@@ -302,6 +313,10 @@ exports.getvideo_hashtag = async (req, res, next) => {
                         {
                             setisLiked();
                         }
+                        else if(getSavedPostIds.length)
+                        {
+                            setisSaved();
+                        }
                         else
                         {
                             sendToResponse();
@@ -325,14 +340,18 @@ exports.getvideo_hashtag = async (req, res, next) => {
                     count2 = count2 + 1;
                     if(totalLength2 == count2)
                     {
-                       if(liked_Ids.length) 
-                       {
+                        if(liked_Ids.length) 
+                        {
                          setisLiked();
-                       }
-                       else
-                       {
+                        }
+                        else if(getSavedPostIds.length)
+                        {
+                            setisSaved();
+                        }
+                        else
+                        {
                          sendToResponse();
-                       }
+                        }
                     }
                 })
             });
@@ -352,11 +371,39 @@ exports.getvideo_hashtag = async (req, res, next) => {
                     count3 = count3 + 1;
                     if(totalLength3 == count3)
                     {
-                        sendToResponse();
+                        if(getSavedPostIds.length)
+                        {
+                            setisSaved();
+                        }
+                        else
+                        {
+                         sendToResponse();
+                        }
                     }
                 });
             });
         }
+
+        //setisSaved
+        function setisSaved()
+        {
+            var count4 = 0;
+            var totalLength4 = getvideo_post.length * getSavedPostIds.length;
+            getvideo_post.forEach((post) => {
+                getSavedPostIds.forEach((id) => {
+                if(id == post._id) 
+                {
+                    post.isSaved = 1;
+                }
+                count4 = count4 + 1;
+                if(totalLength4 == count4)
+                {
+                    sendToResponse();
+                }
+                });
+            });
+        }
+        
         
         function sendToResponse()
         {
@@ -402,6 +449,7 @@ exports.getPostByhashtag = async (req, res, next) => {
         user_id: { $nin: totalBlockedUser },
         isDeleted: false,
         isActive: true,
+        groupPost: false,
         privacyType: { $nin: ["onlyMe", "private"] }
     }).populate("user_id", "username avatar name private follow").sort({ created_at: -1 }).exec();
 
@@ -425,6 +473,10 @@ exports.getPostByhashtag = async (req, res, next) => {
         }).exec();
         const liked_Ids = getUser_like.map(String);
 
+        //getSavedPostIds
+        let getSavedPostIds = await User.distinct("savedPosts._id", {_id: current_user_id }).exec();
+        getSavedPostIds = getSavedPostIds.map(String);
+
         //check
         if(getAll_Id.length)
         {
@@ -437,6 +489,10 @@ exports.getPostByhashtag = async (req, res, next) => {
         else if(liked_Ids.length)
         {
             setisLiked();
+        }
+        else if(getSavedPostIds.length)
+        {
+            setisSaved();
         }
         else
         {
@@ -465,6 +521,10 @@ exports.getPostByhashtag = async (req, res, next) => {
                         {
                             setisLiked();
                         }
+                        else if(getSavedPostIds.length)
+                        {
+                            setisSaved();
+                        }
                         else
                         {
                             sendToResponse();
@@ -492,6 +552,10 @@ exports.getPostByhashtag = async (req, res, next) => {
                        {
                          setisLiked();
                        }
+                       else if(getSavedPostIds.length)
+                       {
+                           setisSaved();
+                       }
                        else
                        {
                          sendToResponse();
@@ -515,8 +579,35 @@ exports.getPostByhashtag = async (req, res, next) => {
                     count3 = count3 + 1;
                     if(totalLength3 == count3)
                     {
-                        sendToResponse();
+                        if(getSavedPostIds.length)
+                        {
+                            setisSaved();
+                        }
+                        else
+                        {
+                         sendToResponse();
+                        }
                     }
+                });
+            });
+        }
+
+        //setisSaved
+        function setisSaved()
+        {
+            var count4 = 0;
+            var totalLength4 = getAll_post.length * getSavedPostIds.length;
+            getAll_post.forEach((post) => {
+                getSavedPostIds.forEach((id) => {
+                if(id == post._id) 
+                {
+                    post.isSaved = 1;
+                }
+                count4 = count4 + 1;
+                if(totalLength4 == count4)
+                {
+                    sendToResponse();
+                }
                 });
             });
         }

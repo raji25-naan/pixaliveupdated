@@ -19,6 +19,22 @@ const groupPost = new mongoose.Schema({
         type: String,
         default: ""
     },
+    body: {
+        type: String,
+        default: ""
+    },
+    thumbnail: {
+        type: String,
+        default: ""
+    },
+    likeCount: {
+        type: Number,
+        default: 0
+    },
+    commentCount: {
+        type: Number,
+        default: 0
+    },
     isActive: {
         type: Boolean,
         default: true

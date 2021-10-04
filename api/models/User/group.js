@@ -38,6 +38,10 @@ const group = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    isDeleted: {
+        type: Boolean,
+        default: false
+    },
     members: {
         type: Number,
         default: 0
@@ -51,6 +55,10 @@ const group = new mongoose.Schema({
         default: 0
     },
     blockedMembers: {
+        type: Number,
+        default: 0
+    },
+    pendingLoops: {
         type: Number,
         default: 0
     },
@@ -103,6 +111,13 @@ const group = new mongoose.Schema({
     created_at: {
         type: Date,
         default: Date.now()
+    },
+    post_updatedOn: {
+        type: Date
+    },
+    count: {
+        type: Number,
+        default: 0
     }
 });
 

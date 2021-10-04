@@ -55,6 +55,11 @@ module.exports.sendNotification = async function (sender, receiver, type) {
         message = '  started Relooped you';
         message1 = ' Others Relooped you'
     }
+    else if (type == 7) {
+        title = 'Tagged you';
+        message = 'tagged you';
+        message1 = ' Others tagged you'
+    }
     //getUserInfo
     const array = [];
     const receiverInfo = await Users.findOne({ _id: receiver });

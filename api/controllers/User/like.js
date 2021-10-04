@@ -11,7 +11,8 @@ const { checkNotification } = require('../../helpers/post');
 exports.add_like = async (req, res, next) => {
 
       let user_id = req.user_id;
-      let {post_id } = req.body; 
+      let post_id  = req.body.post_id; 
+      let saveData;
       //checkLiked
       const checkLiked = await Like.findOne({
         post_id: post_id,
@@ -30,14 +31,30 @@ exports.add_like = async (req, res, next) => {
         }
         else
         {
-          //Update like
-          const updateLike = new Like({
-            post_id: post_id,
-            user_id: user_id,
-            isLike : 1,
-            created_at: Date.now(),
-            });
-            const saveData = await updateLike.save();
+            if(req.body.group_id)
+            {
+              //Update like
+              const updateLike = new Like({
+                post_id: post_id,
+                user_id: user_id,
+                group_id: req.body.group_id,
+                isLike : 1,
+                created_at: Date.now(),
+                });
+              saveData = await updateLike.save();
+            }
+            else
+            {
+              //Update like
+              const updateLike = new Like({
+                post_id: post_id,
+                user_id: user_id,
+                isLike : 1,
+                created_at: Date.now(),
+                });
+              saveData = await updateLike.save();
+            }
+
             if(saveData)
             {
                 //update likeCount
@@ -50,7 +67,7 @@ exports.add_like = async (req, res, next) => {
                 {
                   const LikePost = await Post.findOne({ _id: post_id });
                   if (user_id != LikePost.user_id) 
-                    {
+                  {
                     const senderDetails1 = await Like.find({post_id:post_id},{_id:0,user_id:1}).sort({created_at:-1})
                     const arraysorting = [];
                     senderDetails1.forEach((values)=>{
