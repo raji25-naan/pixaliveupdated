@@ -512,11 +512,18 @@ exports.joinGroup = async (req,res,next)=>{
     let user_id = req.user_id;
     let group_id = req.body.group_id;
 
+    //groupMembersUserIds
+    let groupMembersUserIds = await group.distinct("groupMembersId._id",{_id: group_id}).exec();
+    groupMembersUserIds = groupMembersUserIds.toString();
+
+    //pendingUserIds
+    let pendingUserIds = await group.distinct("pendingMembersId._id",{_id: group_id}).exec();
+    pendingUserIds = pendingUserIds.toString();
+
+    //groupInfo
     const groupInfo = await group.findOne({_id: group_id}).exec();
     if(groupInfo.allowAdminAccept == true)
     {
-        let pendingUserIds = await group.distinct("pendingMembersId._id",{_id: group_id}).exec();
-        pendingUserIds = pendingUserIds.toString();
 
         if(pendingUserIds.includes(user_id.toString()))
         {
@@ -524,6 +531,13 @@ exports.joinGroup = async (req,res,next)=>{
                 success: false,
                 message: "Already you are in pending list"
             })  
+        }
+        else if(groupMembersUserIds.includes(user_id.toString()))
+        {
+            return res.json({
+                success: false,
+                message: "Already you are a member"
+            })
         }
         else
         {
@@ -568,8 +582,6 @@ exports.joinGroup = async (req,res,next)=>{
     }
     else
     {
-        let groupMembersUserIds = await group.distinct("groupMembersId._id",{_id: group_id}).exec();
-        groupMembersUserIds = groupMembersUserIds.toString();
 
         if(groupMembersUserIds.includes(user_id.toString()))
         {
@@ -577,6 +589,13 @@ exports.joinGroup = async (req,res,next)=>{
                 success: false,
                 message: "Already you are a member"
             })
+        }
+        else if(pendingUserIds.includes(user_id.toString()))
+        {
+            return res.json({
+                success: false,
+                message: "Already you are in pending list"
+            })  
         }
         else
         {
