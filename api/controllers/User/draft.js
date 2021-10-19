@@ -6,11 +6,15 @@ exports.savePostToDraft = async(req,res,next)=>{
 
     const user_id = req.user_id;
     const { text, url, body, thumbnail, type, privacyType, tagged_userId, category,comment_option,download_option } = req.body;
+    let Poll = [] = req.body.Poll;
+    let pollDuration = req.body.pollDuration;
 
-    if (type == 1 || type == 2 || type == 3)
+    if (type == 1 || type == 2 || type == 3 || type == 5)
       update_draftpostwithType(
         user_id,
         url,
+        "",
+        [],
         "",
         thumbnail,
         body,
@@ -22,11 +26,30 @@ exports.savePostToDraft = async(req,res,next)=>{
         download_option,
         res
       );
-    if (type == 4)
+  if (type == 4)
     update_draftpostwithType(
         user_id,
         "",
         text,
+        [],
+        "",
+        thumbnail,
+        body,
+        type,
+        privacyType,
+        tagged_userId,
+        category,
+        comment_option,
+        download_option,
+        res
+      );
+  if (type == 6)
+    update_draftpostwithType(
+        user_id,
+        "",
+        text,
+        Poll,
+        pollDuration,
         thumbnail,
         body,
         type,
@@ -44,6 +67,8 @@ async function update_draftpostwithType(
     userId,
     url,
     text,
+    Poll,
+    pollDuration,
     thumbnail,
     body,
     type,
@@ -59,6 +84,8 @@ async function update_draftpostwithType(
         user_id: userId,
         url: url,
         text_content: text,
+        Poll: Poll,
+        pollDuration: pollDuration,
         thumbnail: thumbnail,
         body: body,
         post_type: type,
@@ -99,11 +126,15 @@ async function update_draftpostwithType(
 exports.editDraftPost = async(req,res,next)=>{
 
     const { draft_id, text, url, body, thumbnail, type, privacyType, tagged_userId, category,comment_option,download_option } = req.body;
+    let Poll = [] = req.body.Poll;
+    let pollDuration = req.body.pollDuration;
 
-    if (type == 1 || type == 2 || type == 3)
+    if (type == 1 || type == 2 || type == 3 || type == 5)
       edit_draftpostwithType(
         draft_id,
         url,
+        "",
+        [],
         "",
         thumbnail,
         body,
@@ -120,6 +151,8 @@ exports.editDraftPost = async(req,res,next)=>{
         draft_id,
         "",
         text,
+        [],
+        "",
         thumbnail,
         body,
         type,
@@ -130,6 +163,23 @@ exports.editDraftPost = async(req,res,next)=>{
         download_option,
         res
       );
+    if (type == 6)
+      edit_draftpostwithType(
+          draft_id,
+          "",
+          text,
+          Poll,
+          pollDuration,
+          thumbnail,
+          body,
+          type,
+          privacyType,
+          tagged_userId,
+          category,
+          comment_option,
+          download_option,
+          res
+        );
 
 }
 
@@ -137,6 +187,8 @@ async function edit_draftpostwithType(
     draft_id,
     url,
     text,
+    Poll,
+    pollDuration,
     thumbnail,
     body,
     type,
@@ -156,6 +208,8 @@ async function edit_draftpostwithType(
           $set: {
             url : url,
             text : text,
+            Poll : Poll,
+            pollDuration : pollDuration,
             thumbnail : thumbnail,
             body : body,
             post_type: type,

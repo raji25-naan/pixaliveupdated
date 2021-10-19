@@ -8,6 +8,7 @@ const sleep = require('sleep-promise');
 const blocked = require("../../models/User/blocked");
 const hidePostSchema = require("../../models/User/HidePost");
 const { sendAllPost } = require('../../helpers/post');
+const poll_voted = require("../../models/User/poll_voted");
 
 // All post of the user except reloop
 exports.user_allPost = async (req, res, next) => {
@@ -92,6 +93,12 @@ exports.user_allPost = async (req, res, next) => {
                 //getSavedPostIds
                 let getSavedPostIds = await User.distinct("savedPosts._id", {_id: current_user_id }).exec();
                 getSavedPostIds = getSavedPostIds.map(String);
+
+                //voted
+                let get_vote = await poll_voted.distinct("post_id", {
+                    user_id: getpost_user_id
+                }).exec();
+                let votedIds = get_vote.map(String);
                 
                 //check
                 if(getAll_Id.length)
@@ -109,6 +116,10 @@ exports.user_allPost = async (req, res, next) => {
                 else if(getSavedPostIds.length)
                 {
                     setisSaved();
+                }
+                else if(votedIds.length)
+                {
+                    setisVoted();
                 }
                 else
                 {
@@ -141,6 +152,10 @@ exports.user_allPost = async (req, res, next) => {
                                 {
                                     setisSaved();
                                 }
+                                else if(votedIds.length)
+                                {
+                                    setisVoted();
+                                }
                                 else
                                 {
                                     Response();
@@ -172,6 +187,10 @@ exports.user_allPost = async (req, res, next) => {
                                 {
                                     setisSaved();
                                 }
+                                else if(votedIds.length)
+                                {
+                                    setisVoted();
+                                }
                                 else
                                 {
                                     Response();
@@ -199,6 +218,10 @@ exports.user_allPost = async (req, res, next) => {
                                 {
                                     setisSaved();  
                                 }
+                                else if(votedIds.length)
+                                {
+                                    setisVoted();
+                                }
                                 else
                                 {
                                     Response();
@@ -222,9 +245,38 @@ exports.user_allPost = async (req, res, next) => {
                         count4 = count4 + 1;
                         if(totalLength4 == count4)
                         {
-                            Response();
+                            if(votedIds.length)
+                            {
+                                setisVoted();
+                            }
+                            else
+                            {
+                                Response();
+                            }
                         }
                         });
+                    });
+                }
+
+                //setisVoted
+                function setisVoted()
+                {
+                    var count5 = 0;
+                    var totalLength5 = arr_post.length * votedIds.length;
+                    arr_post.forEach((post) => {
+                    votedIds.forEach(async(id) => {
+                        if(id == post._id) 
+                        {
+                            const votedObj = await poll_voted.findOne({post_id: post._id,user_id: getpost_user_id });
+                            post.selectedOptionId  = votedObj.option_id;
+                            post.isVoted = 1;
+                        }
+                        count5 = count5 + 1;
+                        if(totalLength5 == count5)
+                        {
+                            Response();
+                        }
+                    });
                     });
                 }
 
@@ -275,6 +327,7 @@ exports.user_reloopPost = async (req, res, next) => {
             get_post = await Post.find({
                 _id: {$nin: getHidePost},
                 user_id: getpost_user_id,
+                post_type: {$nin: 6},
                 isActive: true, 
                 isDeleted: false,
                 groupPost: false
@@ -287,6 +340,7 @@ exports.user_reloopPost = async (req, res, next) => {
                     _id: {$nin: getHidePost},
                     user_id: { $in: getpost_user_id, $nin: totalBlockedUser },
                     privacyType: { $nin: "onlyMe" },
+                    post_type: {$nin: 6},
                     isActive: true, 
                     isDeleted: false,
                     groupPost: false
@@ -297,6 +351,7 @@ exports.user_reloopPost = async (req, res, next) => {
                     _id: {$nin: getHidePost},
                     user_id: { $in: getpost_user_id, $nin: totalBlockedUser },
                     privacyType: { $nin: ["onlyMe", "private"] },
+                    post_type: {$nin: 6},
                     isActive: true, 
                     isDeleted: false,
                     groupPost: false
@@ -521,6 +576,7 @@ exports.user_taggedPost = async (req, res, next) => {
                     _id: {$in: get_taggedPost,$nin: getHidePost},
                     user_id: { $nin: totalBlockedUser },
                     privacyType: { $nin: ["onlyMe"] },
+                    post_type: {$nin: 6},
                     isActive: true, 
                     isDeleted: false,
                     groupPost: false
@@ -535,6 +591,7 @@ exports.user_taggedPost = async (req, res, next) => {
                         user_id: { $nin: totalBlockedUser },
                         _id: {$in: get_taggedPost,$nin: getHidePost},
                         privacyType: { $nin: ["onlyMe"] },
+                        post_type: {$nin: 6},
                         isActive: true, 
                         isDeleted: false,
                         groupPost: false
@@ -546,6 +603,7 @@ exports.user_taggedPost = async (req, res, next) => {
                         user_id: { $nin: totalBlockedUser },
                         _id: {$in: get_taggedPost,$nin: getHidePost},
                         privacyType: { $nin: ["onlyMe"] },
+                        post_type: {$nin: 6},
                         isActive: true, 
                         isDeleted: false,
                         groupPost: false
@@ -782,6 +840,7 @@ exports.trending_post = async (req, res, next) => {
         user_id: { $nin: totalBlockedUser },
         reloopPostId: { $nin: reloopPostIds },
         created_at: { $gt: lastTwoDays },
+        post_type: {$nin: 6},
         isActive: true,
         isDeleted: false,
         groupPost: false,
@@ -998,6 +1057,7 @@ exports.trending_postByCategory = async (req, res, next) => {
                 user_id: { $nin: totalBlockedUser },
                 category: category_name,
                 reloopPostId: { $nin: reloopPostIds },
+                post_type: {$nin: 6},
                 isActive: true,
                 isDeleted: false,
                 groupPost: false,
@@ -1011,6 +1071,7 @@ exports.trending_postByCategory = async (req, res, next) => {
                 user_id: { $nin: totalBlockedUser },
                 category: category_name,
                 reloopPostId: { $nin: reloopPostIds },
+                post_type: {$nin: 6},
                 isActive: true,
                 isDeleted: false,
                 groupPost: false,
@@ -1227,7 +1288,7 @@ exports.categoryPostForYou = async (req,res,next)=>{
             _id: {$nin: getHidePost},
             user_id: { $nin: totalBlockedUser },
             reloopPostId: { $nin: reloopPostIds },
-            post_type: {$nin: 4},
+            post_type: {$nin: [4,6]},
             isActive: true,
             isDeleted: false,
             groupPost: false,
@@ -1460,7 +1521,7 @@ exports.multipleCategoryPost = async (req,res,next)=>{
             _id: {$nin: getHidePost},
             user_id: { $nin: totalBlockedUser },
             reloopPostId: { $nin: reloopPostIds },
-            post_type: {$nin: 4},
+            post_type: {$nin: [4,5,6]},
             isActive: true,
             isDeleted: false,
             groupPost: false,

@@ -10,6 +10,10 @@ const group = new mongoose.Schema({
         type: String,
         default: ""
     },
+    groupType: {
+        type: String,
+        default: ""
+    },
     groupDescription: {
         type: String,
         default: ""
@@ -118,7 +122,20 @@ const group = new mongoose.Schema({
     count: {
         type: Number,
         default: 0
+    },
+    groupPrivacyType: {
+        type: String,
+        default: ""
+    },
+    categoryTitle: {
+        type: String,
+        default: ""
+    },
+    category: {
+        type: String,
+        default: ""
     }
+
 });
 
 module.exports = db_Main.model("groups", group)

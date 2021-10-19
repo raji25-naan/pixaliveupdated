@@ -25,7 +25,9 @@ const {
   getSavedPosts,
   increaseViewCount,
   increaseShareCount,
-  increaseDownloadCount
+  increaseDownloadCount,
+  increasePollVote,
+  allPolls
 } = require("../../controllers/User/Post");
 const { checkSession } = require("../../middlewares/checkAuth");
 const { checkIsactive } = require("../../middlewares/checkActive");
@@ -228,5 +230,24 @@ router.post(
   validateRequest,
   catch_error(increaseDownloadCount) 
 )
+
+//increasePollVote
+router.post(
+  "/increasePollVote",
+  checkSession,
+  checkIsactive,
+  checkRequestBodyParams("option_id"),
+  checkRequestBodyParams("post_id"),
+  validateRequest,
+  catch_error(increasePollVote) 
+)
+
+//allPolls
+router.get(
+  "/allPolls",
+  checkSession,
+  checkIsactive,
+  catch_error(allPolls)
+);
 
 module.exports = router;

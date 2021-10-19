@@ -4,6 +4,7 @@ const postSchema = require("../models/User/Post");
 const follow_unfollow = require("../models/User/follow_unfollow");
 const Users = require("../models/User/Users");
 const likeSchema = require("../models/User/like");
+const poll_voted = require("../models/User/poll_voted");
 const sleep = require('sleep-promise');
 
 //checkNotification
@@ -34,12 +35,19 @@ module.exports.sendAllPost = async function(allPost, userId, res) {
         //getHidePost
         let getHidePost = await hidePostSchema.distinct("post_id", { hideByid: user_id }).exec();
         //all_Posts
-        const all_Posts = await postSchema.findOne({
+        const all_Posts = await postSchema.findOne(
+          {
           _id: { $in: post_id, $nin: getHidePost },
           user_id: { $nin: totalBlockedUser },
           isActive: true,
           isDeleted: false
-        },{_id:1,body:1,url:1,post_type:1,text_content:1,thumbnail:1,user_id:1,isLiked:1,media_datatype:1,created_at:1}).populate("user_id", "username avatar name private follow").exec();
+        },
+        {_id:1,body:1,url:1,
+        post_type:1,text_content:1,
+        thumbnail:1,user_id:1,isLiked:1,
+        isSaved:1,Poll:1,pollDuration:1,
+        isVoted:1,selectedOptionId:1,
+        media_datatype:1,created_at:1}).populate("user_id", "username avatar name private follow").exec();
         if (all_Posts) {
           //data_follower
           const data_follower = await follow_unfollow.distinct("followingId", {
@@ -83,6 +91,20 @@ module.exports.sendAllPost = async function(allPost, userId, res) {
           getSavedPostIds.forEach((id) => {
             if (id == all_Posts._id) {
               all_Posts.isSaved = 1;
+            }
+          });
+
+          //voted
+          let get_vote = await poll_voted.distinct("post_id", {
+            user_id: user_id
+          }).exec();
+          let votedIds = get_vote.map(String);
+          votedIds.forEach(async(id) => {
+            if(id == all_Posts._id) 
+            {
+              const votedObj = await poll_voted.findOne({post_id: all_Posts._id,user_id: user_id });
+              all_Posts.selectedOptionId  = votedObj.option_id;
+              all_Posts.isVoted = 1;
             }
           });
   

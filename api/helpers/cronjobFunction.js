@@ -3,6 +3,7 @@ const Users = require("../models/User/Users");
 const Hashids = require("hashids");
 const hashids = new Hashids();
 const chatSchema = require("../models/User/chat");
+const Group = require("../models/User/group");
 
 exports.updateEncryptId = async function(){
 
@@ -53,4 +54,37 @@ exports.addMediaDatatype = async (req,res,next)=>{
 exports.updateSeenchatSchema = async (req,res,next)=>{
      
     await chatSchema.updateMany({isSeen: true});
+}
+
+exports.getIdWrkExp = async (req,res)=>{
+
+    let ids = await Users.distinct("_id",{WorkExperience:{$elemMatch:{Designation:""}}});
+    console.log(ids);
+
+    await Users.updateMany(
+        {_id: ids},
+        {
+            $set: {WorkExperience: []}
+        },
+        {new: true}
+    )
+
+    // let ids = await Users.distinct("_id",{Qualification:{$elemMatch:{InstituteName:""}}});
+    // console.log(ids);
+
+    // await Users.updateMany(
+    //     {_id: ids},
+    //     {
+    //         $set: {Qualification: []}
+    //     },
+    //     {new: true}
+    // )
+
+} 
+
+exports.updateGroupCategory = async function(){
+    await Group.updateMany({
+        category: "Others",
+        categoryTitle: "Official"
+    });
 }

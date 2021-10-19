@@ -113,6 +113,28 @@ const postSchema = new mongoose.Schema({
   downloadCount: {
     type: Number,
     default: 0
+  },
+  Poll: [{
+      option:{
+            type: String,
+            default:""
+        },
+      vote:{
+            type: Number,
+            default: 0
+        }
+    }],
+  pollDuration: {
+    type: String,
+    default: ""
+  },
+  isVoted: {
+    type: Number,
+    default: 0
+  },
+  selectedOptionId: {
+    type: String,
+    default: ""
   }
 
 });

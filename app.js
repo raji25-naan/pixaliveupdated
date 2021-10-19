@@ -31,7 +31,7 @@ const fileUpload = require("express-fileupload");
 const registerRouter = require("./api/routes/Admin/register");
 const postAdminRouter = require("./api/routes/Admin/post");
 const storyAdminRouter = require("./api/routes/Admin/story");
-const { updateEncryptId, addNotification, addMediaDatatype, updateSeenchatSchema } = require("./api/helpers/cronjobFunction");
+const { updateEncryptId, addNotification, addMediaDatatype, updateSeenchatSchema, getIdWrkExp, updateGroupCategory } = require("./api/helpers/cronjobFunction");
 //firebaseAdmin
 // global.admin = require("firebase-admin");
 // const serviceAccount = require("./api/serviceAccountkey.json");
@@ -172,13 +172,15 @@ function haltOnTimedout(req, res, next) {
   if (!req.timedout) next();
 }
 
-CronJob.schedule('0 11 07 * * *', async () => {
+CronJob.schedule('0 41 17 * * *', async () => {
   // console.info(`running cron job a task ${new Date()}`);
 
   // await updateEncryptId();
   // await addNotification();
   // await addMediaDatatype();
   // await updateSeenchatSchema();
+  // await getIdWrkExp();
+  // await updateGroupCategory();
 })
 
 

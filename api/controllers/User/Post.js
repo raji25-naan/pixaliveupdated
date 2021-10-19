@@ -19,12 +19,15 @@ const Hashids = require("hashids");
 const group = require("../../models/User/group");
 const hashids = new Hashids();
 const User = require("../../models/User/Users");
+const poll_voted = require("../../models/User/poll_voted");
 
 // ************* Create post Using user_Id ***************//
 
 exports.create_postNew = async (req, res, next) => {
 
   const { text, url, body, thumbnail, type, privacyType, tagged_userId, category,media_datatype,comment_option,download_option } = req.body;
+  let Poll = [] = req.body.Poll;
+  let pollDuration = req.body.pollDuration;
   const user_id = req.user_id;
   let place;
   if (req.body.place) {
@@ -57,10 +60,12 @@ exports.create_postNew = async (req, res, next) => {
   }
 
 
-  if (type == 1 || type == 2 || type == 3)
+  if (type == 1 || type == 2 || type == 3 || type == 5)
     update_postwithType(
       user_id,
       url,
+      "",
+      [],
       "",
       thumbnail,
       body,
@@ -81,6 +86,29 @@ exports.create_postNew = async (req, res, next) => {
       user_id,
       "",
       text,
+      [],
+      "",
+      thumbnail,
+      body,
+      place,
+      type,
+      hash_tag,
+      privacyType,
+      tagged_userId,
+      category,
+      media_datatype,
+      comment_option,
+      download_option,
+      req,
+      res
+    );
+  if (type == 6)
+    update_postwithType(
+      user_id,
+      "",
+      text,
+      Poll,
+      pollDuration,
       thumbnail,
       body,
       place,
@@ -101,6 +129,8 @@ async function update_postwithType(
   userId,
   url,
   text,
+  Poll,
+  pollDuration,
   thumbnail,
   body,
   place,
@@ -121,6 +151,8 @@ async function update_postwithType(
       user_id: userId,
       url: url,
       text_content: text,
+      Poll: Poll,
+      pollDuration: pollDuration,
       thumbnail: thumbnail,
       body: body,
       place: place,
@@ -315,7 +347,7 @@ async function update_postwithType(
         {
           return res.json({
             success: true,
-            result: createdPost,
+            // result: createdPost,
             message: "loop added successfully"
           });
         }
@@ -345,7 +377,8 @@ exports.reloopPost = async (req, res, next) => {
   let reloopPostId = req.body.post_id;
   //checkIspublic
   const checkIspublic = await postSchema.findOne({ _id: reloopPostId }).exec();
-  if (checkIspublic.privacyType == "public") {
+  if (checkIspublic.privacyType == "public") 
+  {
     let place;
     if (req.body.place) {
       place = req.body.place.toLowerCase();
@@ -377,7 +410,7 @@ exports.reloopPost = async (req, res, next) => {
       });
     }
 
-    if (type == 1 || type == 2 || type == 3)
+    if (type == 1 || type == 2 || type == 3 || type == 5)
       updateReloopwithPostType(
         user_id,
         url,
@@ -392,7 +425,7 @@ exports.reloopPost = async (req, res, next) => {
         category,
         res
       );
-    if (type == 4)
+    if (type == 4 || type == 6)
       updateReloopwithPostType(
         user_id,
         "",
@@ -924,13 +957,14 @@ exports.feeds = async (req, res, next) => {
     const data_request = await follow_unfollow.distinct("followingId", { followerId: user_id, status: 0 }).exec();
     var array2 = data_request.map(String);
     var requested = [...new Set(array2)];
+
     //getReloopPostIdswithoutBody
-    let reloopPostIds = await postSchema.distinct("reloopPostId", { user_id: user_id }).exec();
-    let relooppostIdsWithoutbody = await postSchema.distinct("_id", { user_id: user_id, reloopPostId: reloopPostIds, body: "" }).exec();
+    // let reloopPostIds = await postSchema.distinct("reloopPostId", { user_id: user_id }).exec();
+    // let relooppostIdsWithoutbody = await postSchema.distinct("_id", { user_id: user_id, reloopPostId: reloopPostIds, body: "" }).exec();
 
     //getHidePost
     let getHidePost = await hidePostSchema.distinct("post_id", { hideByid: user_id }).exec();
-    let totalHideandBlockPostId = relooppostIdsWithoutbody.concat(getHidePost);
+    // let totalHideandBlockPostId = relooppostIdsWithoutbody.concat(getHidePost);
     //getBlockedUsers
     let getBlockedUsers1 = await blocked.distinct("Blocked_user", { Blocked_by: user_id }).exec();
     let getBlockedUsers2 = await blocked.distinct("Blocked_by", { Blocked_user: user_id }).exec();
@@ -943,7 +977,7 @@ exports.feeds = async (req, res, next) => {
     const all_feeds = await(await postSchema
       .find({
         user_id: { $in: getAllId, $nin: totalBlockedUser },
-        _id: { $nin: totalHideandBlockPostId },
+        _id: { $nin: getHidePost },
         privacyType: { $nin: "onlyMe" },
         isActive: true,
         isDeleted: false,
@@ -963,6 +997,13 @@ exports.feeds = async (req, res, next) => {
         isLike: 1,
       }).exec();
       let likedIds = get_like.map(String);
+
+      //voted
+      let get_vote = await poll_voted.distinct("post_id", {
+        user_id: user_id
+      }).exec();
+      let votedIds = get_vote.map(String);
+
       //follow1
       if(stringFollowerId.length)
       {
@@ -979,6 +1020,10 @@ exports.feeds = async (req, res, next) => {
       else if(getSavedPostIds.length)
       {
         setisSaved();
+      }
+      else if(votedIds.length)
+      {
+        setisVoted();
       }
       else
       {
@@ -1010,6 +1055,10 @@ exports.feeds = async (req, res, next) => {
               {
                 setisSaved();
               }
+              else if(votedIds.length)
+              {
+                setisVoted();
+              }
               else
               {
                 sendtoResponse();
@@ -1040,6 +1089,10 @@ exports.feeds = async (req, res, next) => {
               {
                 setisSaved();
               }
+              else if(votedIds.length)
+              {
+                setisVoted();
+              }
               else
               {
                 sendtoResponse();
@@ -1067,6 +1120,10 @@ exports.feeds = async (req, res, next) => {
               {
                 setisSaved();
               }
+              else if(votedIds.length)
+              {
+                setisVoted();
+              }
               else
               {
                 sendtoResponse();
@@ -1091,7 +1148,36 @@ exports.feeds = async (req, res, next) => {
             count4 = count4 + 1;
             if(totalLength4 == count4)
             {
-              sendtoResponse();
+              if(votedIds.length)
+              {
+                setisVoted();
+              }
+              else
+              {
+                sendtoResponse();
+              }
+            }
+          });
+        });
+      }
+
+      //setisVoted
+      function setisVoted()
+      {
+        var count5 = 0;
+        var totalLength5 = all_feeds.length * votedIds.length;
+        all_feeds.forEach((post) => {
+          votedIds.forEach(async(id) => {
+            if(id == post._id) 
+            {
+              const votedObj = await poll_voted.findOne({post_id: post._id,user_id: user_id });
+              post.selectedOptionId  = votedObj.option_id;
+              post.isVoted = 1;
+            }
+            count5 = count5 + 1;
+            if(totalLength5 == count5)
+            {
+               sendtoResponse();
             }
           });
         });
@@ -1364,7 +1450,46 @@ exports.editPost = async (req, res, next) => {
 
   let user_id = req.user_id;
   let { post_id, body, tagged_userId, privacyType, category, media_datatype,comment_option,download_option } = req.body;
+  let Poll = [];
+  let pollDuration = "";
+  let url;
+  let text;
+  if(req.body.Poll)
+  {
+    Poll = req.body.Poll;
+  }
+  else
+  {
+    Poll = [];
+  }
 
+  if(req.body.pollDuration)
+  {
+    pollDuration = req.body.pollDuration;
+  }
+  else
+  {
+    pollDuration = "";
+  }
+
+  if(req.body.url)
+  {
+    url = req.body.url;
+  }
+  else
+  {
+    url = "";
+  }
+
+  if(req.body.text)
+  {
+    text = req.body.text;
+  }
+  else
+  {
+    text = "";
+  }
+  
   let arr_hash;
   if (body) {
     arr_hash = body.match(/(^|\s)#(\w+)/g);
@@ -1394,7 +1519,8 @@ exports.editPost = async (req, res, next) => {
       }).save();
     });
   }
-
+  
+  //postEdited
   const postEdited = await postSchema.findOneAndUpdate(
     { _id: post_id },
     {
@@ -1404,6 +1530,10 @@ exports.editPost = async (req, res, next) => {
         hashtag: hash_tag,
         tagged_userId: tagged_userId,
         privacyType: privacyType,
+        text_content: text,
+        url: url,
+        Poll: Poll,
+        pollDuration: pollDuration,
         category: category,
         media_datatype: media_datatype,
         comment_option: comment_option,
@@ -1922,4 +2052,307 @@ exports.increaseDownloadCount = async(req,res,next)=>{
         message: "Error occured"+error
       })
     }
+}
+
+//increasePollVote
+exports.increasePollVote = async(req,res,next)=>{
+  
+    let user_id = req.user_id;
+    let {post_id,option_id} = req.body;
+
+    let getVoted = await poll_voted.distinct("user_id",{post_id: post_id}).exec();
+    getVoted = getVoted.toString();
+
+    if(getVoted.includes(user_id.toString()))
+    {
+      return res.json({
+        success: false,
+        message: "You already voted this poll"
+      })
+    }
+    else
+    {
+        //increaseVote
+        const increaseVote = await postSchema.findOneAndUpdate(
+          {"Poll._id":option_id},
+          {
+              $inc:{"Poll.$.vote": 1}
+          },
+          {new: true}
+          );
+
+        const addVote = new poll_voted({
+          post_id: post_id,
+          user_id: user_id,
+          option_id: option_id
+        });
+        const voted = await addVote.save();
+
+        if(increaseVote && voted)
+        {
+          return res.json({
+            success: true,
+            message: "Successfully Voted"
+          })
+        }
+        else if(error)
+        {
+          return res.json({
+            success: false,
+            message: "Error occured"+error
+          })
+        }
+    }
+    
+}
+
+//allPolls
+exports.allPolls = async(req,res,next)=>{
+
+  const user_id = req.user_id;
+  const offset = req.query.offset;
+  var row = 10;
+  //data_follower
+  const data_follower = await follow_unfollow.distinct("followingId", { followerId: user_id, status: 1 }).exec();
+  var array1 = data_follower.map(String);
+  var stringFollowerId = [...new Set(array1)];
+  //data_request
+  const data_request = await follow_unfollow.distinct("followingId", { followerId: user_id, status: 0 }).exec();
+  var array2 = data_request.map(String);
+  var requested = [...new Set(array2)];
+
+  //getHidePost
+  let getHidePost = await hidePostSchema.distinct("post_id", { hideByid: user_id }).exec();
+  //getBlockedUsers
+  let getBlockedUsers1 = await blocked.distinct("Blocked_user", { Blocked_by: user_id }).exec();
+  let getBlockedUsers2 = await blocked.distinct("Blocked_by", { Blocked_user: user_id }).exec();
+  let totalBlockedUser = getBlockedUsers1.concat(getBlockedUsers2);
+
+  //getSavedPostIds
+  let getSavedPostIds = await User.distinct("savedPosts._id", {_id: user_id }).exec();
+  getSavedPostIds = getSavedPostIds.map(String);
+  console.log(totalBlockedUser);
+  const all_polls = await(await postSchema
+    .find({
+      user_id: { $nin: totalBlockedUser },
+      _id: { $nin: getHidePost },
+      privacyType: { $nin: ["onlyMe","private"] },
+      post_type: {$in: 6},
+      isActive: true,
+      isDeleted: false
+    }).populate("user_id", "username name avatar private follow").sort({ created_at: -1 })).splice(offset == undefined ? 0 : offset, row);
+
+
+    if(all_polls.length > 0) 
+    {
+      let get_like = await likeSchema.distinct("post_id", {
+        user_id: user_id,
+        isLike: 1,
+      }).exec();
+      let likedIds = get_like.map(String);
+
+      //voted
+      let get_vote = await poll_voted.distinct("post_id", {
+        user_id: user_id,
+      }).exec();
+      let votedIds = get_vote.map(String);
+
+      //follow1
+      if(stringFollowerId.length)
+      {
+        setFollow1();
+      }
+      else if(requested.length)
+      {
+        setFollow2();
+      }
+      else if(likedIds.length)
+      {
+        setisLiked();
+      }
+      else if(getSavedPostIds.length)
+      {
+        setisSaved();
+      }
+      else if(votedIds.length)
+      {
+        setisVoted();
+      }
+      else
+      {
+        sendtoResponse();
+      }
+      //setFollow1
+      function setFollow1()
+      {
+        var count1 = 0;
+        var totalLength1 = all_polls.length * stringFollowerId.length;
+        all_polls.forEach((data) => {
+          stringFollowerId.forEach((followId) => {
+            if (followId == data.user_id._id) 
+            {
+              data.user_id.follow = 1;
+            }
+            count1 = count1 + 1;
+            if(totalLength1 == count1)
+            {
+              if(requested.length)
+              {
+                setFollow2();
+              }
+              else if(likedIds.length)
+              {
+                setisLiked();
+              }
+              else if(getSavedPostIds.length)
+              {
+                setisSaved();
+              }
+              else if(votedIds.length)
+              {
+                setisVoted();
+              }
+              else
+              {
+                sendtoResponse();
+              }
+            }
+          })
+        })
+      }
+      //setFollow2
+      function setFollow2()
+      {
+        var count2 = 0;
+        var totalLength2 = all_polls.length * requested.length;
+        all_polls.forEach((data) => {
+          requested.forEach((followId) => {
+            if (followId == data.user_id._id) 
+            {
+              data.user_id.follow = 2;
+            }
+            count2 = count2 + 1;
+            if(totalLength2 == count2)
+            {
+              if(likedIds.length)
+              {
+                setisLiked();
+              }
+              else if(getSavedPostIds.length)
+              {
+                setisSaved();
+              }
+              else if(votedIds.length)
+              {
+                setisVoted();
+              }
+              else
+              {
+                sendtoResponse();
+              }
+            }
+          })
+        })
+      }
+      
+      //setisLiked
+      function setisLiked()
+      {
+        var count3 = 0;
+        var totalLength3 = all_polls.length * likedIds.length;
+        all_polls.forEach((post) => {
+          likedIds.forEach((id) => {
+            if (id == post._id) 
+            {
+              post.isLiked = 1;
+            }
+            count3 = count3 + 1;
+            if(totalLength3 == count3)
+            {
+              if(getSavedPostIds.length)
+              {
+                setisSaved();
+              }
+              else if(votedIds.length)
+              {
+                setisVoted();
+              }
+              else
+              {
+                sendtoResponse();
+
+              }
+            }
+          });
+        });
+      }
+
+      //setisSaved
+      function setisSaved()
+      {
+        var count4 = 0;
+        var totalLength4 = all_polls.length * getSavedPostIds.length;
+        all_polls.forEach((post) => {
+          getSavedPostIds.forEach((id) => {
+            if(id == post._id) 
+            {
+              post.isSaved = 1;
+            }
+            count4 = count4 + 1;
+            if(totalLength4 == count4)
+            {
+              if(votedIds.length)
+              {
+                setisVoted();
+              }
+              else
+              {
+                sendtoResponse();
+              }
+            }
+          });
+        });
+      }
+
+      //setisVoted
+      function setisVoted()
+      {
+        var count5 = 0;
+        var totalLength5 = all_polls.length * votedIds.length;
+        all_polls.forEach((post) => {
+          votedIds.forEach(async(id) => {
+            if(id == post._id) 
+            {
+              const votedObj = await poll_voted.findOne({post_id: post._id,user_id: user_id });
+              post.selectedOptionId  = votedObj.option_id;
+              post.isVoted = 1;
+            }
+            count5 = count5 + 1;
+            if(totalLength5 == count5)
+            {
+               sendtoResponse();
+            }
+          });
+        });
+      }
+
+      function sendtoResponse()
+      {
+        sendAllPost(all_polls, user_id, res)
+        // return res.json({
+        //   success: true,
+        //   feeds: all_polls,
+        //   message: "Polls fetched successfully"
+        // })
+      }
+    }
+    else 
+    {
+      return res.json({
+        success: true,
+        feeds: [],
+        message: "No polls"
+      });
+    }
+
 }

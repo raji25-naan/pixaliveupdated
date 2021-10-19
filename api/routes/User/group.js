@@ -1,5 +1,5 @@
 const express = require("express");
-const { createGroup, updateGroup, groupInfo, getMembers, getAdmins, muteGroup, getPendings, getGroups, searchGroup, joinGroup, makeMemberfromPendingList, makeAdmin, blockUnblockMembers, getBlockedMembers, getDiscoverGroups, searchDiscoverGroups, exitGroupByUser, deleteGroup, removeMember } = require("../../controllers/User/group");
+const { createGroup, updateGroup, groupInfo, getMembers, getAdmins, muteGroup, getPendings, getGroups, searchGroup, joinGroup, makeMemberfromPendingList, makeAdmin, blockUnblockMembers, getBlockedMembers, getDiscoverGroups, searchDiscoverGroups, exitGroupByUser, deleteGroup, removeMember, insertGroupCategory, getGroupCategory, getGroupsByCategory } = require("../../controllers/User/group");
 const router = express.Router();
 const { checkIsactive } = require("../../middlewares/checkActive");
 const { checkSession } = require("../../middlewares/checkAuth");
@@ -162,5 +162,25 @@ router.post("/removeMember",
             catch_error(removeMember)
         )
 
+//insertGroupCategory
+router.post("/insertGroupCategory",
+            catch_error(insertGroupCategory)
+            )
+
+//getGroupCategory
+router.get("/getGroupCategory",
+            checkSession,
+            checkIsactive,
+            catch_error(getGroupCategory)
+            )
+
+//getGroupsByCategory
+router.get("/getGroupsByCategory",
+            checkSession,
+            checkIsactive,
+            checkQuery('categoryTitle'),
+            catch_error(getGroupsByCategory)
+            )
         
+            
 module.exports = router

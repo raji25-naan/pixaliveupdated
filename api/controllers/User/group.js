@@ -5,6 +5,7 @@ const Post = require("../../models/User/Post");
 const sleep = require('sleep-promise');
 const like = require("../../models/User/like");
 const Comment = require("../../models/User/Comment");
+const group_category = require("../../models/User/group_category");
 
 
 //createGroup
@@ -13,6 +14,7 @@ exports.createGroup = async(req,res,next)=>{
     let user_id = req.user_id;
     let{groupTitle,
         groupImage,
+        groupType,
         groupDescription,
         location,
         allowAnyoneToFindGroup,
@@ -21,7 +23,10 @@ exports.createGroup = async(req,res,next)=>{
         allowAdminAccept,
         startDateTime,
         endDateTime,
-        allowShare
+        allowShare,
+        categoryTitle,
+        category,
+        groupPrivacyType
        } = req.body;
     console.log(req.body);
     //findGroupname
@@ -38,6 +43,7 @@ exports.createGroup = async(req,res,next)=>{
     const groupData = new group({
         groupTitle: groupTitle,
         groupImage: groupImage,
+        groupType: groupType,
         groupDescription: groupDescription,
         location: location,
         allowAnyoneToFindGroup: allowAnyoneToFindGroup,
@@ -48,7 +54,10 @@ exports.createGroup = async(req,res,next)=>{
         createdByUserId: user_id,
         createdByName: getUserInfo.name,
         startDateTime: startDateTime,
-        endDateTime: endDateTime
+        endDateTime: endDateTime,
+        categoryTitle: categoryTitle,
+        category: category,
+        groupPrivacyType: groupPrivacyType
     });
     const saveData = await groupData.save();
     console.log("saveData",saveData);
@@ -97,6 +106,7 @@ exports.updateGroup = async(req,res,next)=>{
     let{group_id,
         groupTitle,
         groupImage,
+        groupType,
         groupDescription,
         location,
         allowAnyoneToFindGroup,
@@ -113,6 +123,7 @@ exports.updateGroup = async(req,res,next)=>{
             $set:{
                 groupTitle: groupTitle,
                 groupImage: groupImage,
+                groupType: groupType,
                 groupDescription: groupDescription,
                 location: location,
                 allowAnyoneToFindGroup: allowAnyoneToFindGroup,
@@ -160,7 +171,7 @@ exports.groupInfo = async(req,res,next)=>{
     else
     {
         groupDetails = await group.findOne({_id: group_id},
-            {groupTitle: 1,groupImage: 1,groupDescription: 1,members: 1,mute: 1,groupMembersId: 1,groupAdminsId: 1,pendingMembersId: 1,blockedMembersId: 1,allowAdminAccept: 1,allowShare: 1}).exec();
+            {groupTitle: 1,groupImage: 1,groupType: 1,groupDescription: 1,members: 1,mute: 1,groupMembersId: 1,groupAdminsId: 1,pendingMembersId: 1,blockedMembersId: 1,allowAdminAccept: 1,allowShare: 1}).exec();
     }
 
     //groupDetails
@@ -1292,6 +1303,172 @@ exports.removeMember = async(req,res,next)=>{
         return res.json({
             success: false,
             message: "Error occured"
+        })
+    }
+
+}
+
+//insertGroupCategory
+exports.insertGroupCategory = async(req,res,next)=>{
+
+    let categoryTitle = "Official";
+
+    let category = [
+        "Actor","Blog","Journalist","Book","Comedian","Music group","Musician","Cartoon","Public figure","Singer",
+        "Writer","Character","Politician","Poet","Director","Producer","Series","Sport team","Athlete","Dancer","Scientist","Artist","Film"
+    ];
+
+    const saveData = await group_category.create({
+        categoryTitle: categoryTitle,
+        category: category
+    });
+
+    if(saveData)
+    {
+        return res.json({success: true})
+    }
+
+}
+
+//getGroupCategory
+exports.getGroupCategory = async(req,res,next)=>{
+
+    let categoryList = await group_category.find().exec();
+    
+    if(req.query.type == 0) // groupCategory 
+    {
+        if(categoryList.length)
+        {
+            return res.json({
+                success: true,
+                category: categoryList,
+                message: "Successfully fetched"
+            })
+        }
+        else
+        {
+            return res.json({
+                success: false,
+                category: [],
+                message: "No category"
+            })
+        }
+    }
+    else if(req.query.type == 1) //groupCategory by count
+    {
+        var arr = [];
+        var count = 0;
+        categoryList.forEach(async(data)=>{
+
+            const getGroup = await group.find({categoryTitle: data.categoryTitle,isDeleted: false}).exec();
+            if(getGroup.length)
+            {
+                arr.push({
+                    "_id": data._id,
+                    "category": data.category,
+                    "categoryTitle": data.categoryTitle,
+                    "count": getGroup.length
+                })
+            }
+            count = count + 1;
+            if(categoryList.length == count)
+            {
+                Response();
+            }
+
+        })
+
+        //Response
+        function Response()
+        {
+            let allGroupCategory = arr.sort((a, b) => parseFloat(b.count) - parseFloat(a.count));
+            return res.json({
+                success: true,
+                category: allGroupCategory,
+                message: "Category fetched successfully"
+            });
+        }
+    }
+    
+
+}
+
+//getGroupsByCategory
+exports.getGroupsByCategory = async(req,res,next)=>{
+
+    let categoryTitle = req.query.categoryTitle;
+    let user_id = req.user_id;  
+    //blockedGroupIds
+    let blockedGroupIds = await group.distinct("_id",{blockedMembersId:{_id:user_id}}).exec();
+
+    //getAllGroups
+    let getAllGroups = await group.find({categoryTitle: categoryTitle,isDeleted: false,_id:{$nin: blockedGroupIds}}).exec();
+    if(getAllGroups.length)
+    {
+        if(req.query.search_group)
+        {
+            const search_group = req.query.search_group;
+            const all_groups = getAllGroups.filter(data => new RegExp(search_group, "ig").test(data.groupTitle)).sort((a, b) => {
+                let re = new RegExp("^" + search_group, "i")
+                return re.test(a.groupTitle) ? re.test(b.groupTitle) ? a.groupTitle.localeCompare(b.groupTitle) : -1 : 1
+              });
+        
+            if(all_groups.length)
+            {
+                return res.json({
+                    success: true,
+                    result: all_groups,
+                    message: "Successfully fetched"
+                })
+            }
+            else
+            {
+                return res.json({
+                    success: false,
+                    result: [],
+                    message: "No data"
+                })
+            }
+        
+        }
+        else
+        {
+            var count1 = 0;
+            getAllGroups.forEach(async(data)=>{
+    
+                //blockedUserIds
+                let blockedUserIds = await group.distinct("blockedMembersId._id",{_id: data._id}).exec();
+                //getCount
+                const getCount = await Post.find({group_id: data._id,user_id:{$nin: blockedUserIds},
+                                                  isActive: true,
+                                                  isDeleted: false,
+                                                  verified: true}).exec();
+                data.count = getCount.length;
+                count1 = count1 + 1;
+                if(getAllGroups.length == count1)
+                {
+                    Response();
+                }
+            })
+    
+            //Response
+            function Response()
+            {
+                return res.json({
+                    success: true,
+                    result: getAllGroups,
+                    message: "Successfully fetched"
+                })
+            }
+        }
+        
+    }
+    else
+    {
+        return res.json({
+            success: true,
+            result: [],
+            message: "No data"
         })
     }
 
