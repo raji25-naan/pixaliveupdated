@@ -248,5 +248,4 @@ CronJob.schedule('0 59 13 * * *', async () => {
 })
 
 
-
 module.exports = app;
