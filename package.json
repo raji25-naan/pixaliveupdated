@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node ./bin/www.js",
+    "start": "nodemon ./bin/www.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -12,6 +12,7 @@
   "dependencies": {
     "bcrypt": "^5.0.1",
     "body-parser": "^1.19.0",
+    "child_process": "^1.0.2",
     "connect-timeout": "^1.9.0",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
@@ -22,7 +23,8 @@
     "express": "^4.17.1",
     "express-fileupload": "^1.2.1",
     "express-validator": "^6.10.1",
-    "firebase-admin": "^9.8.0",
+    "firebase-admin": "^10.0.0",
+    "fs": "0.0.1-security",
     "hashids": "^2.2.8",
     "http": "0.0.1-security",
     "https": "^1.0.0",
@@ -35,9 +37,10 @@
     "node-cron": "^3.0.0",
     "node-pre-gyp": "^0.17.0",
     "nodemailer": "^6.6.0",
-    "nodemon": "^2.0.7",
+    "nodemon": "^2.0.14",
     "sleep-promise": "^9.1.0",
     "socket.io": "^2.3.0",
-    "twilio": "^3.62.0"
+    "twilio": "^3.62.0",
+    "uniqid": "^5.4.0"
   }
 }

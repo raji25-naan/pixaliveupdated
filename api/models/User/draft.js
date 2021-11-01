@@ -50,6 +50,14 @@ const draft = new mongoose.Schema({
   groupPost: {
     type: Boolean,
     default: false
+  },
+  ended_at: {
+    type: String,
+    default: ""
+  },
+  title: {
+    type: String,
+    default: ""
   }
 
 });

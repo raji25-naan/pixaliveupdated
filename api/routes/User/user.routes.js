@@ -25,7 +25,9 @@ const {
   findUsername,
   notificationEnableDisable,
   updateCategorytoUser,
-  recentJoined
+  recentJoined,
+  referAndEarnCoins,
+  createprofileCategory
 } = require("../../controllers/User/User");
 const { checkIsactive } = require("../../middlewares/checkActive");
 const { checkSession } = require("../../middlewares/checkAuth");
@@ -274,5 +276,17 @@ router.get("/recentJoined",
   catch_error(recentJoined)
 )
 
+//referAndEarnCoins
+router.post("/referAndEarnCoins",
+  checkSession,
+  checkIsactive,
+  checkRequestBodyParams("referalCode"),
+  validateRequest,
+  catch_error(referAndEarnCoins)
+
+)
+
+//createprofileCategory
+router.post("/createprofileCategory",createprofileCategory)
 
 module.exports = router;

@@ -135,7 +135,24 @@ const postSchema = new mongoose.Schema({
   selectedOptionId: {
     type: String,
     default: ""
+  },
+  goingCount: {
+    type: Number,
+    default: 0
+  },
+  isGoing: {
+    type: Number,
+    default: 0
+  },
+  ended_at: {
+    type: String,
+    default: ""
+  },
+  title: {
+    type: String,
+    default: ""
   }
+
 
 });
 

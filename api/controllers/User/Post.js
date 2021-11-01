@@ -20,12 +20,35 @@ const group = require("../../models/User/group");
 const hashids = new Hashids();
 const User = require("../../models/User/Users");
 const poll_voted = require("../../models/User/poll_voted");
+const GoingEvent = require("../../models/User/GoingEvent");
+const { increase_coins } = require("./Donate");
 
 // ************* Create post Using user_Id ***************//
 
 exports.create_postNew = async (req, res, next) => {
 
   const { text, url, body, thumbnail, type, privacyType, tagged_userId, category,media_datatype,comment_option,download_option } = req.body;
+  //ended_at
+  let ended_at;
+  if(req.body.ended_at)
+  {
+    ended_at = req.body.ended_at;
+  }
+  else
+  {
+    ended_at = "";
+  }
+  //title
+  let title;
+  if(req.body.title)
+  {
+    title = req.body.title;
+  }
+  else
+  {
+    title = "";
+  }
+  //Poll
   let Poll = [] = req.body.Poll;
   let pollDuration = req.body.pollDuration;
   const user_id = req.user_id;
@@ -60,7 +83,7 @@ exports.create_postNew = async (req, res, next) => {
   }
 
 
-  if (type == 1 || type == 2 || type == 3 || type == 5)
+  if (type == 1 || type == 2 || type == 3 || type == 5 || type == 7)
     update_postwithType(
       user_id,
       url,
@@ -78,6 +101,8 @@ exports.create_postNew = async (req, res, next) => {
       media_datatype,
       comment_option,
       download_option,
+      ended_at,
+      title,
       req,
       res
     );
@@ -99,6 +124,8 @@ exports.create_postNew = async (req, res, next) => {
       media_datatype,
       comment_option,
       download_option,
+      ended_at,
+      title,
       req,
       res
     );
@@ -120,6 +147,8 @@ exports.create_postNew = async (req, res, next) => {
       media_datatype,
       comment_option,
       download_option,
+      ended_at,
+      title,
       req,
       res
     );
@@ -142,6 +171,8 @@ async function update_postwithType(
   media_datatype,
   comment_option,
   download_option,
+  ended_at,
+  title,
   req,
   res
 ) {
@@ -165,7 +196,9 @@ async function update_postwithType(
       comment_option: comment_option,
       download_option: download_option,
       isActive: true,
-      created_at: Date.now()
+      created_at: Date.now(),
+      ended_at: ended_at,
+      title: title
     }).save();
     if(createdPost) 
     {
@@ -183,7 +216,6 @@ async function update_postwithType(
 
       if(req.body.group_id)
       {
-        // console.log("Request",req.body);
         //checkApprove
         const checkApprove = await group.findOne({_id: req.body.group_id});
         //checkAdmin
@@ -299,6 +331,8 @@ async function update_postwithType(
       }
       else
       {
+        var coin = 10;
+        increase_coins(userId,coin);
         increasePost_Point(userId);
         var count = 0;
         if(tagged_userId.length > 0) 
@@ -375,6 +409,16 @@ exports.reloopPost = async (req, res, next) => {
   const { text, url, body, thumbnail, type, privacyType, category } = req.body;
   const user_id = req.user_id;
   let reloopPostId = req.body.post_id;
+  //title
+  let title;
+  if(req.body.title)
+  {
+    title = req.body.title;
+  }
+  else
+  {
+    title = "";
+  }
   //checkIspublic
   const checkIspublic = await postSchema.findOne({ _id: reloopPostId }).exec();
   if (checkIspublic.privacyType == "public") 
@@ -405,12 +449,12 @@ exports.reloopPost = async (req, res, next) => {
       arr_hash.forEach(async (element) => {
         const hashtag = new hashtagSchema({
           hashtag: element,
-          created_at: new Date(),
+          created_at: new Date()
         }).save();
       });
     }
 
-    if (type == 1 || type == 2 || type == 3 || type == 5)
+    if (type == 1 || type == 2 || type == 3 || type == 5 || type == 7)
       updateReloopwithPostType(
         user_id,
         url,
@@ -423,6 +467,7 @@ exports.reloopPost = async (req, res, next) => {
         privacyType,
         reloopPostId,
         category,
+        title,
         res
       );
     if (type == 4 || type == 6)
@@ -438,6 +483,7 @@ exports.reloopPost = async (req, res, next) => {
         privacyType,
         reloopPostId,
         category,
+        title,
         res
       );
   }
@@ -462,6 +508,7 @@ async function updateReloopwithPostType(
   privacyType,
   reloopPostId,
   category,
+  title,
   res
 ) {
   try {
@@ -478,6 +525,7 @@ async function updateReloopwithPostType(
       reloopPostId: reloopPostId,
       category: category,
       isActive: true,
+      title: title,
       created_at: Date.now(),
     }).save();
 
@@ -504,8 +552,10 @@ async function updateReloopwithPostType(
 
       if(updateReloopCount) 
       {
-        let userId = updateReloopCount.user_id;
-        increaseReloop_Point(userId);
+        let orginalPostuserId = updateReloopCount.user_id;
+        increaseReloop_Point(orginalPostuserId);
+        var coin = 10;
+        increase_coins(userId,coin);
         //Notification
         const senderDetails1 = await postSchema.find({ reloopPostId: reloopPostId }, { _id: 0, user_id: 1 }).sort({ created_at: -1 });
         const arraysorting = [];
@@ -605,6 +655,10 @@ exports.get_post = async (req, res, next) => {
     let getSavedPostIds = await User.distinct("savedPosts._id", {_id: user_id }).exec();
     getSavedPostIds = getSavedPostIds.map(String);
 
+    //getGoing
+    let getGoing = await GoingEvent.distinct("post_id",{user_id: user_id}).exec();
+    getGoing = getGoing.map(String);
+
     //check
     if(getAllId.length)
     {
@@ -621,6 +675,10 @@ exports.get_post = async (req, res, next) => {
     else if(getSavedPostIds.length)
     {
       setisSaved();
+    }
+    else if(getGoing.length)
+    {
+      setisGoing();
     }
     else
     {
@@ -651,6 +709,10 @@ exports.get_post = async (req, res, next) => {
           {
             setisSaved();
           }
+          else if(getGoing.length)
+          {
+            setisGoing();
+          }
           else
           {
             sendToResponse();
@@ -679,6 +741,10 @@ exports.get_post = async (req, res, next) => {
           {
             setisSaved();
           }
+          else if(getGoing.length)
+          {
+            setisGoing();
+          }
           else
           {
             sendToResponse();
@@ -703,6 +769,10 @@ exports.get_post = async (req, res, next) => {
           {
             setisSaved();
           }
+          else if(getGoing.length)
+          {
+            setisGoing();
+          }
           else
           {
             sendToResponse();
@@ -723,15 +793,39 @@ exports.get_post = async (req, res, next) => {
         count4 = count4 + 1;
         if(getSavedPostIds.length == count4)
         {         
-          sendToResponse();
+          if(getGoing.length)
+          {
+            setisGoing();
+          }
+          else
+          {
+            sendToResponse();
+          }
         }
       });
     }
     
+    //setisGoing
+    function setisGoing()
+    {
+        var count5 = 0;
+        getGoing.forEach((id) => {
+          if(id == all_Posts._id) 
+          {
+            all_Posts.isGoing = 1;
+          }
+          count5 = count5 + 1;
+          if(getGoing.length == count5)
+          {
+            sendToResponse();
+          }
+        })
+    }
+
     //sendToResponse
     function sendToResponse()
     {
-      sendreloopedPost(all_Posts, user_id, getAllId, requested, likedIds, res);
+      sendreloopedPost(all_Posts, user_id, getAllId, requested, likedIds, getGoing, res);
     }
   }
   else 
@@ -743,8 +837,9 @@ exports.get_post = async (req, res, next) => {
   }
 };
 
-async function sendreloopedPost(allPost, userId, getAllId, requested, likedIds, res) {
-  if (allPost.reloopPostId) 
+async function sendreloopedPost(allPost, userId, getAllId, requested, likedIds, getGoing, res) {
+
+  if (allPost.reloopPostId !== undefined) 
   {
     const user_id = userId;
     let post_id = allPost.reloopPostId
@@ -758,6 +853,7 @@ async function sendreloopedPost(allPost, userId, getAllId, requested, likedIds, 
     //getSavedPostIds
     let getSavedPostIds = await User.distinct("savedPosts._id", {_id: user_id }).exec();
     getSavedPostIds = getSavedPostIds.map(String);
+    
     //all_Posts
     const all_Posts = await postSchema.findOne({
       _id: { $in: post_id, $nin: getHidePost },
@@ -803,6 +899,10 @@ async function sendreloopedPost(allPost, userId, getAllId, requested, likedIds, 
       {
         setisSaved();
       }
+      else if(getGoing.length)
+      {
+        setisGoing();
+      }
       else
       {
         Response();
@@ -832,6 +932,10 @@ async function sendreloopedPost(allPost, userId, getAllId, requested, likedIds, 
             {
               setisSaved();
             }
+            else if(getGoing.length)
+            {
+              setisGoing();
+            }
             else
             {
               Response();
@@ -860,6 +964,10 @@ async function sendreloopedPost(allPost, userId, getAllId, requested, likedIds, 
             {
               setisSaved();
             }
+            else if(getGoing.length)
+            {
+              setisGoing();
+            }
             else
             {
               Response();
@@ -884,6 +992,10 @@ async function sendreloopedPost(allPost, userId, getAllId, requested, likedIds, 
             {
               setisSaved();
             }
+            else if(getGoing.length)
+            {
+              setisGoing();
+            }
             else
             {
               Response();
@@ -904,9 +1016,33 @@ async function sendreloopedPost(allPost, userId, getAllId, requested, likedIds, 
           count4 = count4 + 1;
           if(getSavedPostIds.length == count4)
           {
-            Response();
+            if(getGoing.length)
+            {
+              setisGoing();
+            }
+            else
+            {
+              Response();
+            }           
           }
         });
+      }
+
+      //setisGoing
+      function setisGoing()
+      {
+          var count5 = 0;
+          getGoing.forEach((id) => {
+            if(id == all_Posts._id) 
+            {
+              all_Posts.isGoing = 1;
+            }
+            count5 = count5 + 1;
+            if(getGoing.length == count5)
+            {
+              Response();
+            }
+          })
       }
 
       //Response
@@ -936,7 +1072,7 @@ async function sendreloopedPost(allPost, userId, getAllId, requested, likedIds, 
       success: true,
       feeds: allPost,
       message: "Feeds fetched successfuly.."
-    });
+    })
   }
 }
 
@@ -1004,6 +1140,10 @@ exports.feeds = async (req, res, next) => {
       }).exec();
       let votedIds = get_vote.map(String);
 
+      //getGoing
+      let getGoing = await GoingEvent.distinct("post_id",{user_id: user_id}).exec();
+      getGoing = getGoing.map(String);
+
       //follow1
       if(stringFollowerId.length)
       {
@@ -1024,6 +1164,10 @@ exports.feeds = async (req, res, next) => {
       else if(votedIds.length)
       {
         setisVoted();
+      }
+      else if(getGoing.length)
+      {
+        setisGoing();
       }
       else
       {
@@ -1059,6 +1203,10 @@ exports.feeds = async (req, res, next) => {
               {
                 setisVoted();
               }
+              else if(getGoing.length)
+              {
+                setisGoing();
+              }
               else
               {
                 sendtoResponse();
@@ -1093,6 +1241,10 @@ exports.feeds = async (req, res, next) => {
               {
                 setisVoted();
               }
+              else if(getGoing.length)
+              {
+                setisGoing();
+              }
               else
               {
                 sendtoResponse();
@@ -1124,6 +1276,10 @@ exports.feeds = async (req, res, next) => {
               {
                 setisVoted();
               }
+              else if(getGoing.length)
+              {
+                setisGoing();
+              }
               else
               {
                 sendtoResponse();
@@ -1152,6 +1308,10 @@ exports.feeds = async (req, res, next) => {
               {
                 setisVoted();
               }
+              else if(getGoing.length)
+              {
+                setisGoing();
+              }
               else
               {
                 sendtoResponse();
@@ -1177,12 +1337,42 @@ exports.feeds = async (req, res, next) => {
             count5 = count5 + 1;
             if(totalLength5 == count5)
             {
+              if(getGoing.length)
+              {
+                setisGoing();
+              }
+              else
+              {
+                sendtoResponse();
+              }
+               
+            }
+          });
+        });
+      }
+
+      //setisGoing
+      function setisGoing()
+      {
+        var count6 = 0;
+        var totalLength6 = all_feeds.length * getGoing.length;
+        all_feeds.forEach((post) => {
+          getGoing.forEach((id) => {
+            if(id == post._id) 
+            {
+              post.isGoing = 1;
+            }
+            count6 = count6 + 1;
+            if(totalLength6 == count6)
+            {
                sendtoResponse();
             }
           });
         });
       }
 
+
+      //sendtoResponse
       function sendtoResponse()
       {
         sendAllPost(all_feeds, user_id, res)
@@ -1454,6 +1644,7 @@ exports.editPost = async (req, res, next) => {
   let pollDuration = "";
   let url;
   let text;
+  //Poll
   if(req.body.Poll)
   {
     Poll = req.body.Poll;
@@ -1462,7 +1653,7 @@ exports.editPost = async (req, res, next) => {
   {
     Poll = [];
   }
-
+  //pollDuration
   if(req.body.pollDuration)
   {
     pollDuration = req.body.pollDuration;
@@ -1471,7 +1662,7 @@ exports.editPost = async (req, res, next) => {
   {
     pollDuration = "";
   }
-
+  //url
   if(req.body.url)
   {
     url = req.body.url;
@@ -1480,7 +1671,7 @@ exports.editPost = async (req, res, next) => {
   {
     url = "";
   }
-
+  //text
   if(req.body.text)
   {
     text = req.body.text;
@@ -1488,6 +1679,17 @@ exports.editPost = async (req, res, next) => {
   else
   {
     text = "";
+  }
+
+  //title
+  let title;
+  if(req.body.title)
+  {
+    title = req.body.title;
+  }
+  else
+  {
+    title = "";
   }
   
   let arr_hash;
@@ -1537,7 +1739,8 @@ exports.editPost = async (req, res, next) => {
         category: category,
         media_datatype: media_datatype,
         comment_option: comment_option,
-        download_option: download_option
+        download_option: download_option,
+        title: title
       }
     }, { new: true }).exec();
 
@@ -1998,6 +2201,7 @@ exports.increaseViewCount = async(req,res,next)=>{
 //increaseShareCount
 exports.increaseShareCount = async(req,res,next)=>{
 
+    let userId = req.user_id;
     let post_id = req.body.post_id;
 
     const increaseCount = await postSchema.findOneAndUpdate(
@@ -2007,6 +2211,9 @@ exports.increaseShareCount = async(req,res,next)=>{
       },
       {new: true}
     );
+
+    var coin = 10;
+    increase_coins(userId,coin);
 
     if(increaseCount)
     {
@@ -2354,5 +2561,346 @@ exports.allPolls = async(req,res,next)=>{
         message: "No polls"
       });
     }
+
+}
+
+//allEvents
+exports.allEvents = async(req,res,next)=>{
+
+  const user_id = req.user_id;
+  const offset = req.query.offset;
+  var row = 10;
+  //data_follower
+  const data_follower = await follow_unfollow.distinct("followingId", { followerId: user_id, status: 1 }).exec();
+  var array1 = data_follower.map(String);
+  var stringFollowerId = [...new Set(array1)];
+  //data_request
+  const data_request = await follow_unfollow.distinct("followingId", { followerId: user_id, status: 0 }).exec();
+  var array2 = data_request.map(String);
+  var requested = [...new Set(array2)];
+
+  //getHidePost
+  let getHidePost = await hidePostSchema.distinct("post_id", { hideByid: user_id }).exec();
+  //getBlockedUsers
+  let getBlockedUsers1 = await blocked.distinct("Blocked_user", { Blocked_by: user_id }).exec();
+  let getBlockedUsers2 = await blocked.distinct("Blocked_by", { Blocked_user: user_id }).exec();
+  let totalBlockedUser = getBlockedUsers1.concat(getBlockedUsers2);
+
+  //getSavedPostIds
+  let getSavedPostIds = await User.distinct("savedPosts._id", {_id: user_id }).exec();
+  getSavedPostIds = getSavedPostIds.map(String);
+  console.log(totalBlockedUser);
+  const all_polls = await(await postSchema
+    .find({
+      user_id: { $nin: totalBlockedUser },
+      _id: { $nin: getHidePost },
+      privacyType: { $nin: ["onlyMe","private"] },
+      post_type: {$in: 7},
+      isActive: true,
+      isDeleted: false
+    }).populate("user_id", "username name avatar private follow").sort({ created_at: -1 })).splice(offset == undefined ? 0 : offset, row);
+
+
+    if(all_polls.length > 0) 
+    {
+      let get_like = await likeSchema.distinct("post_id", {
+        user_id: user_id,
+        isLike: 1,
+      }).exec();
+      let likedIds = get_like.map(String);
+
+      //getGoing
+      let getGoing = await GoingEvent.distinct("post_id",{user_id: user_id}).exec();
+      getGoing = getGoing.map(String);
+
+      //follow1
+      if(stringFollowerId.length)
+      {
+        setFollow1();
+      }
+      else if(requested.length)
+      {
+        setFollow2();
+      }
+      else if(likedIds.length)
+      {
+        setisLiked();
+      }
+      else if(getSavedPostIds.length)
+      {
+        setisSaved();
+      }
+      else if(getGoing.length)
+      {
+        setisGoing();
+      }
+      else
+      {
+        sendtoResponse();
+      }
+      //setFollow1
+      function setFollow1()
+      {
+        var count1 = 0;
+        var totalLength1 = all_polls.length * stringFollowerId.length;
+        all_polls.forEach((data) => {
+          stringFollowerId.forEach((followId) => {
+            if (followId == data.user_id._id) 
+            {
+              data.user_id.follow = 1;
+            }
+            count1 = count1 + 1;
+            if(totalLength1 == count1)
+            {
+              if(requested.length)
+              {
+                setFollow2();
+              }
+              else if(likedIds.length)
+              {
+                setisLiked();
+              }
+              else if(getSavedPostIds.length)
+              {
+                setisSaved();
+              }
+              else if(getGoing.length)
+              {
+                setisGoing();
+              }
+              else
+              {
+                sendtoResponse();
+              }
+            }
+          })
+        })
+      }
+      //setFollow2
+      function setFollow2()
+      {
+        var count2 = 0;
+        var totalLength2 = all_polls.length * requested.length;
+        all_polls.forEach((data) => {
+          requested.forEach((followId) => {
+            if (followId == data.user_id._id) 
+            {
+              data.user_id.follow = 2;
+            }
+            count2 = count2 + 1;
+            if(totalLength2 == count2)
+            {
+              if(likedIds.length)
+              {
+                setisLiked();
+              }
+              else if(getSavedPostIds.length)
+              {
+                setisSaved();
+              }
+              else if(getGoing.length)
+              {
+                setisGoing();
+              }
+              else
+              {
+                sendtoResponse();
+              }
+            }
+          })
+        })
+      }
+      
+      //setisLiked
+      function setisLiked()
+      {
+        var count3 = 0;
+        var totalLength3 = all_polls.length * likedIds.length;
+        all_polls.forEach((post) => {
+          likedIds.forEach((id) => {
+            if (id == post._id) 
+            {
+              post.isLiked = 1;
+            }
+            count3 = count3 + 1;
+            if(totalLength3 == count3)
+            {
+              if(getSavedPostIds.length)
+              {
+                setisSaved();
+              }
+              else if(getGoing.length)
+              {
+                setisGoing();
+              }
+              else
+              {
+                sendtoResponse();
+
+              }
+            }
+          });
+        });
+      }
+
+      //setisSaved
+      function setisSaved()
+      {
+        var count4 = 0;
+        var totalLength4 = all_polls.length * getSavedPostIds.length;
+        all_polls.forEach((post) => {
+          getSavedPostIds.forEach((id) => {
+            if(id == post._id) 
+            {
+              post.isSaved = 1;
+            }
+            count4 = count4 + 1;
+            if(totalLength4 == count4)
+            {
+              if(getGoing.length)
+              {
+                setisGoing();
+              }
+              else
+              {
+                sendtoResponse();
+              }
+            }
+          });
+        });
+      }
+
+      //setisGoing
+      function setisGoing()
+      {
+        var count5 = 0;
+        var totalLength5 = all_polls.length * getGoing.length;
+        all_polls.forEach((post) => {
+          getGoing.forEach((id) => {
+            if(id == post._id) 
+            {
+              post.isGoing = 1;
+            }
+            count5 = count5 + 1;
+            if(totalLength5 == count5)
+            {
+               sendtoResponse();
+            }
+          });
+        });
+      }
+
+      function sendtoResponse()
+      {
+        sendAllPost(all_polls, user_id, res)
+        // return res.json({
+        //   success: true,
+        //   feeds: all_polls,
+        //   message: "Polls fetched successfully"
+        // })
+      }
+    }
+    else 
+    {
+      return res.json({
+        success: true,
+        feeds: [],
+        message: "No polls"
+      });
+    }
+
+}
+
+//increaseGoingCount
+exports.increaseGoingCount = async(req,res,next)=>{
+
+  let {post_id,type} = req.body;
+  let user_id = req.user_id;
+
+  //getGoing
+  let getGoing = await GoingEvent.distinct("post_id",{user_id: user_id}).exec();
+  getGoing = getGoing.toString();
+
+  if(type == 1)
+  {
+      if(getGoing.includes(user_id.toString()))
+      {
+        return res.json({
+          success: false,
+          message: "you are already going"
+        });
+      }
+      
+      const updateGoing = new GoingEvent({
+        post_id: post_id,
+        user_id: user_id
+      });
+
+      const saveData = await updateGoing.save();
+
+      const increase = await postSchema.updateOne(
+        {_id: post_id},
+        {
+          $inc: {goingCount: 1}
+        },
+        {new: true}
+      );
+
+      if(increase && saveData)
+      {
+        return res.json({
+          success: true,
+          message: "Increased successfully"
+        })
+      }
+      else
+      {
+        return res.json({
+          success: false,
+          message: "Error occured"
+        })
+      }
+  }
+  else if(type == 0)
+  {
+    if(getGoing.includes(user_id.toString()))
+    {
+      const deleteGoing = await GoingEvent.findOneAndDelete({
+        post_id: post_id,
+        user_id: user_id
+      });
+
+      const decrease = await postSchema.updateOne(
+        {_id: post_id},
+        {
+          $inc: {goingCount: -1}
+        },
+        {new: true}
+      );
+
+      if(decrease && deleteGoing)
+      {
+        return res.json({
+          success: true,
+          message: "Decreased successfully"
+        })
+      }
+      else
+      {
+        return res.json({
+          success: false,
+          message: "Error occured"
+        })
+      }
+    }
+    else
+    {
+      return res.json({
+        success: false,
+        message: "You are not going"
+      })
+    }
+      
+  }
 
 }

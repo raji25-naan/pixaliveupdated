@@ -8,8 +8,28 @@ exports.savePostToDraft = async(req,res,next)=>{
     const { text, url, body, thumbnail, type, privacyType, tagged_userId, category,comment_option,download_option } = req.body;
     let Poll = [] = req.body.Poll;
     let pollDuration = req.body.pollDuration;
+    //title
+    let title;
+    if(req.body.title)
+    {
+      title = req.body.title;
+    }
+    else
+    {
+      title = "";
+    }
+    //ended_at
+    let ended_at;
+    if(req.body.ended_at)
+    {
+      ended_at = req.body.ended_at;
+    }
+    else
+    {
+      ended_at = "";
+    }
 
-    if (type == 1 || type == 2 || type == 3 || type == 5)
+    if (type == 1 || type == 2 || type == 3 || type == 5 || type == 7)
       update_draftpostwithType(
         user_id,
         url,
@@ -24,6 +44,8 @@ exports.savePostToDraft = async(req,res,next)=>{
         category,
         comment_option,
         download_option,
+        ended_at,
+        title,
         res
       );
   if (type == 4)
@@ -41,6 +63,8 @@ exports.savePostToDraft = async(req,res,next)=>{
         category,
         comment_option,
         download_option,
+        ended_at,
+        title,
         res
       );
   if (type == 6)
@@ -58,6 +82,8 @@ exports.savePostToDraft = async(req,res,next)=>{
         category,
         comment_option,
         download_option,
+        ended_at,
+        title,
         res
       );
 
@@ -77,6 +103,8 @@ async function update_draftpostwithType(
     category,
     comment_option,
     download_option,
+    ended_at,
+    title,
     res
   ) {
     try {
@@ -94,7 +122,9 @@ async function update_draftpostwithType(
         category: category,
         comment_option: comment_option,
         download_option: download_option,
-        created_at: Date.now(),
+        ended_at: ended_at,
+        title: title,
+        created_at: Date.now()
       }).save();
   
       if(createdDraftPost) 
@@ -128,8 +158,28 @@ exports.editDraftPost = async(req,res,next)=>{
     const { draft_id, text, url, body, thumbnail, type, privacyType, tagged_userId, category,comment_option,download_option } = req.body;
     let Poll = [] = req.body.Poll;
     let pollDuration = req.body.pollDuration;
+    //title
+    let title;
+    if(req.body.title)
+    {
+      title = req.body.title;
+    }
+    else
+    {
+      title = "";
+    }
+    //ended_at
+    let ended_at;
+    if(req.body.ended_at)
+    {
+      ended_at = req.body.ended_at;
+    }
+    else
+    {
+      ended_at = "";
+    }
 
-    if (type == 1 || type == 2 || type == 3 || type == 5)
+    if (type == 1 || type == 2 || type == 3 || type == 5 || type == 7)
       edit_draftpostwithType(
         draft_id,
         url,
@@ -144,6 +194,8 @@ exports.editDraftPost = async(req,res,next)=>{
         category,
         comment_option,
         download_option,
+        ended_at,
+        title,
         res
       );
     if (type == 4)
@@ -161,6 +213,8 @@ exports.editDraftPost = async(req,res,next)=>{
         category,
         comment_option,
         download_option,
+        ended_at,
+        title,
         res
       );
     if (type == 6)
@@ -178,6 +232,8 @@ exports.editDraftPost = async(req,res,next)=>{
           category,
           comment_option,
           download_option,
+          ended_at,
+          title,
           res
         );
 
@@ -197,6 +253,8 @@ async function edit_draftpostwithType(
     category,
     comment_option,
     download_option,
+    ended_at,
+    title,
     res
 ) {
 
@@ -217,7 +275,9 @@ async function edit_draftpostwithType(
             tagged_userId: tagged_userId,
             category: category,
             comment_option: comment_option,
-            download_option: download_option
+            download_option: download_option,
+            ended_at: ended_at,
+            title: title
           }
         },{new : true}
       );

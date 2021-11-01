@@ -17,6 +17,9 @@ const emailValidator = require("email-validator");
 const sleep = require('sleep-promise');
 const pointSchema = require("../../models/User/points");
 const blocked = require("../../models/User/blocked");
+const { increase_coins } = require("./Donate");
+const uniqid = require("uniqid");
+const profileCategory = require("../../models/User/profile_category");
 
 //checkPhoneVerify
 exports.checkPhoneVerify = async (req, res, next) => {
@@ -102,7 +105,8 @@ exports.signup = async (req, res, next) => {
     google_signin
   } = req.body;
 
-  if (req.body.email) {
+  if (req.body.email) 
+  {
     //validEmail
     const validEmail = emailValidator.validate(email);
     if (!validEmail) {
@@ -113,7 +117,8 @@ exports.signup = async (req, res, next) => {
     }
     //checkUserinfo
     const userInfo = await Users.findOne({ email: email });
-    if (userInfo) {
+    if (userInfo) 
+    {
       if (email == userInfo.email) {
         return res.json({
           success: false,
@@ -121,10 +126,13 @@ exports.signup = async (req, res, next) => {
         });
       }
     }
-    else {
-      // let a = new Date().valueOf();
-      // let userRandom = a.toString().slice(-3);
-      // let username = name + userRandom;
+    else 
+    {
+      // var code = uniqid.time();
+      // var referalCode = code.slice(0,-2);
+      let code = Math.floor(1000 + Math.random() * 9000);
+      const referalCode = uniqid(code);
+      
       let userData;
       userData = {
         name: name,
@@ -139,6 +147,7 @@ exports.signup = async (req, res, next) => {
         facebook_signin: facebook_signin,
         google_signin: google_signin,
         isActive: true,
+        referalCode: referalCode.slice(0,-13),
         created_At: Date.now()
       };
       const data = new Users(userData);
@@ -147,6 +156,8 @@ exports.signup = async (req, res, next) => {
         //createPointSchema
         const createPointSchema = new pointSchema({ _id: saveData._id });
         await createPointSchema.save();
+        var coin = 100;
+        increase_coins(saveData._id,coin);
         //updateverifiedEmail
         const updateverifiedEmail = await verifiedPhoneEmail.updateOne({
           $push: { verifiedEmail: saveData.email }
@@ -170,7 +181,7 @@ exports.signup = async (req, res, next) => {
     if (phone.length != 10) {
       return res.json({
         success: false,
-        message: "Please enter valid phone number",
+        message: "Please enter valid phone number"
       });
     }
     //checkuserInfo
@@ -183,10 +194,13 @@ exports.signup = async (req, res, next) => {
         });
       }
     }
-    else {
-      // let a = new Date().valueOf();
-      // let userRandom = a.toString().slice(-3);
-      // let username = name + userRandom;
+    else 
+    {
+      // var code = uniqid.time();
+      // var referalCode = code.slice(0,-2);
+      let code = Math.floor(1000 + Math.random() * 9000);
+      const referalCode = uniqid(code);
+
       let userData;
       userData = {
         name: name,
@@ -202,6 +216,7 @@ exports.signup = async (req, res, next) => {
         facebook_signin: facebook_signin,
         google_signin: google_signin,
         isActive: true,
+        referalCode: referalCode.slice(0,-13),
         created_At: Date.now(),
       };
       const data = new Users(userData);
@@ -248,7 +263,7 @@ exports.login = async (req, res, next) => {
       if (!matched) {
         return res.json({
           success: false,
-          message: "Invalid credentials!",
+          message: "Invalid credentials!"
         });
       } else {
         const payload = {
@@ -260,7 +275,8 @@ exports.login = async (req, res, next) => {
           expiresIn: "90d",
         });
 
-        if (token) {
+        if (token) 
+        {
           return res.json({
             success: true,
             user: {
@@ -274,6 +290,7 @@ exports.login = async (req, res, next) => {
               gender: data.gender,
               DOB: data.DOB,
               bio: data.bio,
+              referalCode: data.referalCode,
               category: data.category,
               followingCount: data.followingCount,
               Notification: data.Notification
@@ -331,6 +348,7 @@ exports.login = async (req, res, next) => {
               gender: data.gender,
               DOB: data.DOB,
               bio: data.bio,
+              referalCode: data.referalCode,
               category: data.category,
               followingCount: data.followingCount,
               Notification: data.Notification
@@ -387,6 +405,7 @@ exports.socialLogin = async (req, res, next) => {
             gender: data.gender,
             DOB: data.DOB,
             bio: data.bio,
+            referalCode: data.referalCode,
             category: data.category,
             followingCount: data.followingCount,
             Notification: data.Notification
@@ -436,6 +455,7 @@ exports.socialLogin = async (req, res, next) => {
             gender: data.gender,
             DOB: data.DOB,
             bio: data.bio,
+            referalCode: data.referalCode,
             category: data.category,
             followingCount: data.followingCount,
             Notification: data.Notification
@@ -490,7 +510,7 @@ exports.changepassword = async (req, res, next) => {
     } else {
       return res.json({
         success: false,
-        message: "Passwords are doesn't matched",
+        message: "Passwords are doesn't matched"
       });
     }
   }
@@ -1552,5 +1572,70 @@ exports.recentJoined = async(req,res,next)=>{
     });
   }
   
+}
+
+//referAndEarnCoins
+exports.referAndEarnCoins = async(req,res,next)=>{
+
+  const referalCode = req.body.referalCode;
+  const user_id = req.user_id;
+
+  //userInfo
+  const userInfo = await Users.findOne({referalCode: referalCode});
+
+  //increaseCoinsToRefId
+  const increaseCoinsToRefId = await Users.findOneAndUpdate(
+    {_id: userInfo._id},
+    {
+      $inc: {coins: 100}
+    },
+    {new: true}
+  );
+
+  //increaseCoinsToUserId
+  const increaseCoinsToUserId = await Users.findOneAndUpdate(
+    {_id: user_id},
+    {
+      $inc: {coins: 50}
+    },
+    {new: true}
+  );
+
+  if(increaseCoinsToRefId && increaseCoinsToUserId)
+  {
+    return res.json({
+      success: true,
+      message: "Successfully increased"
+    });
+  }
+  else
+  {
+    return res.json({
+      success: false,
+      message: "Error Occured!"
+    });
+  }
+
+}
+
+//createprofileCategory
+exports.createprofileCategory = async(req,res)=>{
+
+    const categoryList = [
+      {category: "Celibirity"},
+      {category: "Politician"},
+      {category: "Brand"},
+      {category: "Government"},
+      {category: "Private sector"},
+      {category: "News / Media"},
+      {category: "Entertainment"},
+      {category: "Blogger / Influencer"},
+      {category: "Business"},
+      {category: "Organization"},
+      {category: "Entertainer"},
+      {category: "Other"}
+    ];
+
+    await profileCategory.create(categoryList);
 
 }

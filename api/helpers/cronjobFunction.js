@@ -4,6 +4,7 @@ const Hashids = require("hashids");
 const hashids = new Hashids();
 const chatSchema = require("../models/User/chat");
 const Group = require("../models/User/group");
+const uniqid = require("uniqid");
 
 exports.updateEncryptId = async function(){
 
@@ -87,4 +88,25 @@ exports.updateGroupCategory = async function(){
         category: "Others",
         categoryTitle: "Official"
     });
+}
+
+exports.addReferelCode = async function(){
+
+    const userList = await Users.find();
+    userList.forEach(async(data)=>{
+        // var code = uniqid.time();
+        // var referalCode = code.slice(0,-2);
+        let otp = Math.floor(1000 + Math.random() * 9000);
+        const referalCode = uniqid(otp);
+        await Users.findOneAndUpdate(
+            {_id: data._id},
+            {
+                $set: {
+                    referalCode: referalCode.slice(0,-13)
+                }
+            },
+            {new: true}
+        );
+    })
+
 }

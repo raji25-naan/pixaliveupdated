@@ -44,11 +44,11 @@ const user_schema = new mongoose.Schema({
   },
   otp: {
     type: String,
-    default: "",
+    default: ""
   },
   passwordResetToken: {
     type: String,
-    default: "",
+    default: ""
   },
   phone_verified: {
     type: Boolean,
@@ -164,7 +164,15 @@ const user_schema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Posts" 
     }
-}],
+  }],
+  coins: {
+    type: Number,
+    default: 0
+  },
+  referalCode: {
+    type:String,
+    default: ""
+  }
 
 });
 const user = db_Main.model("users", user_schema);

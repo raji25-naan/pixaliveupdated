@@ -24,14 +24,29 @@ const blockedRouter = require("./api/routes/User/blockedUser.routes");
 const groupRouter = require("./api/routes/User/group");
 const groupPostRouter = require("./api/routes/User/groupPost");
 const draftRouter = require("./api/routes/User/draft");
+const donateRouter = require("./api/routes/User/Donate");
 const CronJob = require('node-cron');
 const fileUpload = require("express-fileupload");
+
+//forWatermark
+const fs = require('fs')
+const exec = require('child_process').exec;
+const admin = require('firebase-admin')
+
+const bucket = admin.storage().bucket();
+
+// const pixaliveFlutter = require("./api/pixalive-flutter-e4ec2fb77421.json")
+
+// admin.initializeApp({
+//   credential: admin.credential.cert(pixaliveFlutter),
+//   storageBucket: 'pixalive-flutter.appspot.com'
+// })
 
 //admin router
 const registerRouter = require("./api/routes/Admin/register");
 const postAdminRouter = require("./api/routes/Admin/post");
 const storyAdminRouter = require("./api/routes/Admin/story");
-const { updateEncryptId, addNotification, addMediaDatatype, updateSeenchatSchema, getIdWrkExp, updateGroupCategory } = require("./api/helpers/cronjobFunction");
+const { updateEncryptId, addNotification, addMediaDatatype, updateSeenchatSchema, getIdWrkExp, updateGroupCategory, addReferelCode } = require("./api/helpers/cronjobFunction");
 //firebaseAdmin
 // global.admin = require("firebase-admin");
 // const serviceAccount = require("./api/serviceAccountkey.json");
@@ -82,13 +97,61 @@ let userRoutes = [].concat(
   blockedRouter,
   groupRouter,
   groupPostRouter,
-  draftRouter
+  draftRouter,
+  donateRouter
 );
 //adminRoutes
 let adminRoutes = [].concat(registerRouter, postAdminRouter, storyAdminRouter);
 
 app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);
+
+//forWatermark
+app.get('/process_watermark', async (req, res) => {
+  const file = fs.createWriteStream(`${new Date().getTime()}.mp4`);
+  let fileUrl = req.body.url;
+  let post_id = req.body.post_id;
+  https.get(fileUrl, async function (response) {
+    await response.pipe(file);
+    try {
+      var watermarkPath = 'watermark.png',
+        newFilepath = `${post_id}.mp4`
+      try {
+        fs.unlinkSync(newFilepath)
+      } catch (error) { }
+      exec(`ffmpeg -i ${file.path} -i ${watermarkPath} -filter_complex "[1]scale=iw*0.2:-1[wm];[0][wm]overlay=x=(main_w-overlay_w)/(main_w-overlay_w):y=(main_h-overlay_h)/(main_h-overlay_h)" ${newFilepath}`,
+        (err, stdout, stderr) => {
+          if (err) {
+            console.error(err);
+            res.send({ success: false, message: 'Failed Proccessed', error: err })
+            return;
+          } else {
+            console.log('SUCCESS');
+            console.log(file.path)
+            const blob = bucket.file(`water/${file.path}`);
+            const blobStream = blob.createWriteStream().end(fs.readFileSync(newFilepath));
+            blobStream.on('finish', () => {
+              const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
+              try {
+                fs.unlinkSync(newFilepath)
+                fs.unlinkSync(file.path)
+              } catch (error) { }
+              console.log(publicUrl)
+              res.send({url: publicUrl, success: true, message: 'Video Proccessed'});
+            });
+
+            blobStream.on('error', (e) => {
+              console.log(e)
+              res.send({ success: false, message: 'Failed Proccessed', error: e })
+            })
+          }
+          console.log(stdout);
+        });
+    } catch (e) {
+      res.send({ success: false, message: 'Failed Proccessed', error: e })
+    }
+  });
+})
 
 //apple-app-site
 app.get("/.well-known/apple-app-site-association",(req,res)=>{
@@ -172,7 +235,7 @@ function haltOnTimedout(req, res, next) {
   if (!req.timedout) next();
 }
 
-CronJob.schedule('0 41 17 * * *', async () => {
+CronJob.schedule('0 59 13 * * *', async () => {
   // console.info(`running cron job a task ${new Date()}`);
 
   // await updateEncryptId();
@@ -181,6 +244,7 @@ CronJob.schedule('0 41 17 * * *', async () => {
   // await updateSeenchatSchema();
   // await getIdWrkExp();
   // await updateGroupCategory();
+  // await addReferelCode();
 })
 
 

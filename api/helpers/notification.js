@@ -5,6 +5,7 @@ const serviceAccount = require("../serviceAccountkey.json");
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: "https://pixalive-fa208-default-rtdb.firebaseio.com/",
+    storageBucket: 'pixalive-flutter.appspot.com'
 });
 
 
