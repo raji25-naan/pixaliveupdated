@@ -178,7 +178,7 @@ router.get("/getGroupCategory",
 router.get("/getGroupsByCategory",
             checkSession,
             checkIsactive,
-            checkQuery('categoryTitle'),
+            checkQuery('category'),
             catch_error(getGroupsByCategory)
             )
         

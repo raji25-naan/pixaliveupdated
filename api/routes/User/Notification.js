@@ -1,5 +1,5 @@
 const express = require("express");
-const { getUnreadCount, updateReadCount, updateNotification, getAllNotificationByuser } = require("../../controllers/User/Notification");
+const { getUnreadCount, updateReadCount, updateNotification, getAllNotificationByuser, getFollowReqNotificationByuser } = require("../../controllers/User/Notification");
 const { checkIsactive } = require("../../middlewares/checkActive");
 const { checkSession } = require("../../middlewares/checkAuth");
 const {checkRequestBodyParams, checkQuery, validateRequest } = require("../../middlewares/validator");
@@ -10,6 +10,12 @@ router.get("/getAllNotificationByuser",
             checkIsactive,
             getAllNotificationByuser
         )
+
+router.get("/getFollowReqNotificationByuser",
+        checkSession,
+        checkIsactive,
+        getFollowReqNotificationByuser
+    )
 
 router.post("/updateNotification",
 updateNotification

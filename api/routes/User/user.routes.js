@@ -27,7 +27,10 @@ const {
   updateCategorytoUser,
   recentJoined,
   referAndEarnCoins,
-  createprofileCategory
+  createprofileCategory,
+  fetchprofileCategory,
+  createProfileVerificationRequest,
+  fetchUsersByCategory
 } = require("../../controllers/User/User");
 const { checkIsactive } = require("../../middlewares/checkActive");
 const { checkSession } = require("../../middlewares/checkAuth");
@@ -283,10 +286,36 @@ router.post("/referAndEarnCoins",
   checkRequestBodyParams("referalCode"),
   validateRequest,
   catch_error(referAndEarnCoins)
-
 )
 
 //createprofileCategory
 router.post("/createprofileCategory",createprofileCategory)
+
+//fetchprofileCategory
+router.get("/fetchprofileCategory",
+  checkSession,
+  checkIsactive,
+  catch_error(fetchprofileCategory)
+)
+
+//createProfileVerificationRequest
+router.post("/createProfileVerificationRequest",
+  checkSession,
+  checkIsactive,
+  checkRequestBodyParams("category"),
+  checkRequestBodyParams("proofVideo"),
+  checkRequestBodyParams("aadharCardImage"),
+  validateRequest,
+  catch_error(createProfileVerificationRequest)
+)
+
+//fetchUsersByCategory
+router.get("/fetchUsersByCategory",
+  checkSession,
+  checkIsactive,
+  checkQuery("category"),
+  validateRequest,
+  catch_error(fetchUsersByCategory)
+)
 
 module.exports = router;

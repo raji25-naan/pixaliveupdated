@@ -235,7 +235,7 @@ function haltOnTimedout(req, res, next) {
   if (!req.timedout) next();
 }
 
-CronJob.schedule('0 59 13 * * *', async () => {
+CronJob.schedule('0 35 12 * * *', async () => {
   // console.info(`running cron job a task ${new Date()}`);
 
   // await updateEncryptId();

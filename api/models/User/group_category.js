@@ -3,10 +3,12 @@ const { db_Main } = require("../../db/database");
 
 const groupCategory = new mongoose.Schema({
 
-    categoryTitle:{
-        type: String
+    category: {
+        type: String,
     },
-    category:[]
+    image: {
+        type: String
+    }
 
   
 });

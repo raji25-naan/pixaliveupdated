@@ -85,8 +85,8 @@ exports.getIdWrkExp = async (req,res)=>{
 
 exports.updateGroupCategory = async function(){
     await Group.updateMany({
-        category: "Others",
-        categoryTitle: "Official"
+        // category: "Others",
+        category: "Official"
     });
 }
 

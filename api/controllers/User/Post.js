@@ -28,8 +28,11 @@ const { increase_coins } = require("./Donate");
 exports.create_postNew = async (req, res, next) => {
 
   const { text, url, body, thumbnail, type, privacyType, tagged_userId, category,media_datatype,comment_option,download_option } = req.body;
+  var user_id = req.user_id;
+
   //ended_at
   let ended_at;
+  
   if(req.body.ended_at)
   {
     ended_at = req.body.ended_at;
@@ -48,11 +51,17 @@ exports.create_postNew = async (req, res, next) => {
   {
     title = "";
   }
+
   //Poll
-  let Poll = [] = req.body.Poll;
+  let Poll = [];
+  if(req.body.Poll)
+  {
+    Poll = req.body.Poll;
+  }
   let pollDuration = req.body.pollDuration;
-  const user_id = req.user_id;
   let place;
+  console.log(req.body);
+
   if (req.body.place) {
     place = req.body.place.toLowerCase();
   }
@@ -62,7 +71,9 @@ exports.create_postNew = async (req, res, next) => {
     arr_hash = body.match(/(^|\s)#(\w+)/g);
   }
   var hash_tag = [];
-  if (arr_hash) {
+  
+  if (arr_hash) 
+  {
     arr_hash = arr_hash.map(function (v) {
       return v.trim().substring(1);
     });
@@ -80,6 +91,7 @@ exports.create_postNew = async (req, res, next) => {
         created_at: new Date(),
       }).save();
     });
+
   }
 
 
@@ -202,7 +214,7 @@ async function update_postwithType(
     }).save();
     if(createdPost) 
     {
-
+      console.log(createdPost)
       let userId = createdPost.user_id;
       let postId = String(createdPost._id);
       let encryptdId = hashids.encodeHex(postId);

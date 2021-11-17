@@ -20,6 +20,7 @@ const blocked = require("../../models/User/blocked");
 const { increase_coins } = require("./Donate");
 const uniqid = require("uniqid");
 const profileCategory = require("../../models/User/profile_category");
+const profileVerification = require("../../models/Admin/profile_verification");
 
 //checkPhoneVerify
 exports.checkPhoneVerify = async (req, res, next) => {
@@ -1638,4 +1639,162 @@ exports.createprofileCategory = async(req,res)=>{
 
     await profileCategory.create(categoryList);
 
+}
+
+//fetchprofileCategory
+exports.fetchprofileCategory = async(req,res,next)=>{
+
+  let categoryList = await profileCategory.find();
+  if(categoryList.length)
+  {
+    return res.json({
+      success: true,
+      result: categoryList,
+      message: "Successfully fetched"
+    });
+  }
+  else
+  {
+    return res.json({
+      success: false,
+      result: [],
+      message: "No category"
+    });
+  }
+
+}
+
+//createProfileVerificationRequest
+exports.createProfileVerificationRequest = async(req,res,next)=>{
+
+  let user_id = req.user_id;
+  let {category,proofVideo,aadharCardImage} = req.body;
+
+  const data = new profileVerification({
+    user_id: user_id,
+    category: category,
+    proofVideo: proofVideo,
+    aadharCardImage: aadharCardImage
+  });
+
+  const saveData = await data.save();
+  if(saveData)
+  {
+    return res.json({
+      success: true,
+      message: "Successfully sent request"
+    });
+  }
+  else if(error)
+  {
+    return res.json({
+      success: false,
+      message: "error occured"+error
+    });
+  }
+
+}
+
+//fetchUsersByCategory
+exports.fetchUsersByCategory = async(req,res,next)=>{
+
+    let user_id = req.user_id;
+    const category = req.query.category;
+
+    let userList = await Users.find({category: category,isActive: true}).exec();
+    if(userList.length)
+    {
+      //data_follower
+      const data_follower = await followSchema.distinct("followingId", {
+        followerId: user_id,
+        status: 1
+      });
+      var array1 = data_follower.map(String);
+      var uniq_id = [...new Set(array1)];
+      //data_request
+      const data_request = await followSchema.distinct("followingId", {
+        followerId: user_id,
+        status: 0
+      });
+      var array2 = data_request.map(String);
+      var requested = [...new Set(array2)];
+      //check
+      if(uniq_id.length)
+      {
+        setFollow1();
+      }
+      else if(requested.length)
+      {
+        setFollow2();
+      }
+      else
+      {
+        Response();
+      }
+
+      //setFollow1
+      function setFollow1()
+      {
+        var count1 = 0;
+        var totalLength1 = userList.length * uniq_id.length;
+        uniq_id.forEach((main_data) => {
+          userList.forEach((data) => {
+          if (main_data == data._id) 
+          {
+            data.follow = 1;
+          }
+          count1 = count1 + 1;
+          if(totalLength1 == count1)
+          {
+            if(requested.length)
+            {
+              setFollow2();
+            }
+            else
+            {
+              Response();
+            }
+          }
+        });
+        });
+      }
+
+      //setFollow2
+      function setFollow2()
+      {
+        var count2 = 0;
+        var totalLength2 = userList.length * requested.length;
+        requested.forEach((main_data) => {
+          userList.forEach((data) => {
+          if (main_data == data._id) 
+          {
+            data.follow = 2;
+          }
+          count2 = count2 + 1;
+          if(totalLength2 == count2)
+          {
+            Response();
+          }
+        });
+        });
+      }
+
+      function Response()
+      {
+        return res.json({
+          success: true,
+          result: userList,
+          message: "Successfully fetched"
+        })
+      }
+
+    }
+    else
+    {
+      return res.json({
+        success: false,
+        result: [],
+        message: "No data "
+      })
+    }
 }

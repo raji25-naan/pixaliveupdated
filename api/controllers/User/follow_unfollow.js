@@ -27,7 +27,8 @@ exports.createFollowNew = async (req, res, next) => {
           message: "Already existing... Check !!!"
         })
       }
-      else {
+      else 
+      {
         const check_Private = await Users.findOne({ _id: followingId }).exec();
         if (check_Private.private == true) {
           const dataStatus = new follow_unfollow({
@@ -57,11 +58,11 @@ exports.createFollowNew = async (req, res, next) => {
             const saveNotificationData_private = await updateNotification_private.save()
             if (saveNotificationData_private) 
             {
-              var checkNotify = await checkNotification(followingId);
-              if(checkNotify == true)
-              {
-                sendNotification(totalId, followingId, 3);
-              }
+              // var checkNotify = await checkNotification(followingId);
+              // if(checkNotify == true)
+              // {
+              //   sendNotification(totalId, followingId, 3);
+              // }
               return res.json({
                 success: true,
                 message: 'successfully following and notification Sent'

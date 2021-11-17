@@ -6,6 +6,7 @@ const Posts = require("../../models/User/Post");
 const follow_unfollow = require("../../models/User/follow_unfollow");
 const Like = require("../../models/User/like");
 const Comment = require("../../models/User/Comment");
+const profileVerification = require("../../models/Admin/profile_verification");
 
 exports.signup = async (req, res) => {
   console.log(1);
@@ -233,3 +234,65 @@ exports.getUserDetail = async (req, res, next) => {
     });
   }
 };
+
+//getVerifyProfiles
+exports.getVerifyProfiles = async(req,res,next)=>{
+
+  let profiles = await profileVerification.find({profileVerified: false});
+
+  if(profiles.length)
+  {
+    return res.json({
+      success: true,
+      result: profiles,
+      message: "successfully fetched"
+    });
+  }
+  else
+  {
+    return res.json({
+      success: false,
+      result: [],
+      message: "No profiles"
+    });
+  }
+
+}
+
+//updateVerify
+exports.updateVerify = async(req,res,next)=>{
+
+  let user_id = req.body;
+
+  const verified1 = await profileVerification.updateOne(
+    {user_id: user_id},
+    {
+      $set: {profileVerified: true}
+    },
+    {new: true}
+  );
+
+  const verified2 = await Users.updateOne(
+    {_id: user_id},
+    {
+      $set: {profileVerified: true}
+    },
+    {new: true}
+  );
+
+  if(verified1 && verified2)
+  {
+    return res.json({
+      success: true,
+      message: "Successfully verified"
+    });
+  }
+  else if(error)
+  {
+    return res.json({
+      success: false,
+      message: "Error occured!" + error
+    });
+  }
+
+}

@@ -6,7 +6,7 @@ const { validateRequest,checkRequestBodyParams } = require("../../middlewares/va
 const router = express.Router();
 const catch_error = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
-// router.post("/createCategory",catch_error(createCategory));
+router.post("/createCategory",catch_error(createCategory));
 
 router.get("/fetchCategory",
     checkSession,

@@ -172,6 +172,10 @@ const user_schema = new mongoose.Schema({
   referalCode: {
     type:String,
     default: ""
+  },
+  profileVerified: {
+    type: Boolean,
+    default: false
   }
 
 });

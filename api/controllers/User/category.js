@@ -2,6 +2,65 @@ const Category = require("../../models/User/category");
 const nodemailer = require("nodemailer");
 const sleep = require('sleep-promise');
 const postSchema = require('../../models/User/Post');
+const Users = require("../../models/User/Users");
+
+exports.createCategory = async(req,res,next)=>{
+
+    let totalCategory = [
+        // {category: "Accounting",image: ""},
+        // {category: "Adventure",image: ""},
+        // {category: "Aeronautics",image: ""},
+        // {category: "Agriculture",image: ""},
+        // {category: "Archeology",image: ""},
+        // {category: "Architecture and Design",image: ""},
+        // {category: "Artificial Intelligence",image: ""},
+        // {category: "Astronomy",image: ""},
+        // {category: "Automobiles",image: ""},
+        // {category: "Actor",image: ""},
+        // {category: "Actress",image: ""},
+        // {category: "Books",image: ""},
+        // {category: "Business",image: ""},
+        // {category: "Cryptocurrency",image: ""},
+        // {category: "Cyber security",image: ""},
+        // {category: "Celebrity",image: ""},
+        // {category: "Data science",image: ""},
+        // {category: "Electronics",image: ""},
+        // {category: "Enterpreneurship",image: ""},
+        // {category: "Fashion",image: ""},
+        // {category: "Finance",image: ""},
+        // {category: "Fitness",image: ""},
+        // {category: "Food",image: ""},
+        // {category: "Freelance",image: ""},
+        // {category: "Gaming",image: ""},
+        // {category: "Gardening",image: ""},
+        // {category: "Health",image: ""},
+        // {category: "History",image: ""},
+        // {category: "Investing",image: ""},
+        // {category: "Journalism",image: ""},
+        // {category: "Languages",image: ""},
+        // {category: "Law",image: ""},
+        // {category: "Literature",image: ""},
+        // {category: "Media",image: ""},
+        // {category: "Medica Science",image: ""},
+        // {category: "Nature",image: ""},
+        // {category: "Philosophy",image: ""},
+        // {category: "Photography",image: ""},
+        // {category: "Programming",image: ""},
+        // {category: "Psychology",image: ""},
+        // {category: "Robotics",image: ""},
+        // {category: "Sales and Marketing",image: ""},
+        // {category: "Science",image: ""},
+        // {category: "Space",image: ""},
+        // {category: "Sports",image: ""},
+        // {category: "Startups",image: ""},
+        // {category: "Visual Design",image: ""},
+        // {category: "Web Design and Devlopment",image: ""},
+        // {category: "Writing",image: ""},
+        // {category: "Official",image: ""}
+
+    ];
+    await Category.create(totalCategory);
+}
 
 // exports.createCategory = async (req, res, next) => {
 
@@ -56,13 +115,15 @@ const postSchema = require('../../models/User/Post');
 //         }
 // }
 
+
 exports.fetchCategory = async (req, res, next) => {
     const getAllcategory = await Category.find({}).exec();
- 
-    if (req.query.explore == 'true')
+
+    var arr = [];
+    var count = 0;
+    
+    if(req.query.explore == "true")
     {
-        var arr = [];
-        var count = 0;
         getAllcategory.forEach(async data => {
             const findPhoto = await postSchema.find({
                     category: data.category,
@@ -70,32 +131,41 @@ exports.fetchCategory = async (req, res, next) => {
                     isActive: true,
                     isDeleted: false,
                     groupPost: false
-                })
-            if (findPhoto.length) 
+                });
+            
+            const userList = await Users.find({
+                    category: data.category,
+                    isActive: true
+                });
+            if(findPhoto.length || userList.length) 
             {
                 arr.push({
                     "_id": data._id,
                     "category": data.category,
                     "image": data.image,
-                    "count": findPhoto.length
+                    "count": findPhoto.length,
+                    "userCount": userList.length
                 })
             }
             count = count + 1;
             if(getAllcategory.length == count)
             {
-                let getTrending = await Category.findOne({category:"Trending"}).exec();
-                arr.push({
-                    "_id": getTrending._id,
-                    "category": getTrending.category,
-                    "image": getTrending.image,
-                    "count": 0
-                })
                 Response();
             }
         })
+
         //Response
         function Response()
         {
+            let getTrending = Category.findOne({category:"Trending"}).exec();
+            arr.push({
+                "_id": getTrending._id,
+                "category": getTrending.category,
+                "image": getTrending.image,
+                "count": 0,
+                "userCount": 0
+            })
+        
             let categoryList = arr.sort((a, b) => parseFloat(b.count) - parseFloat(a.count));
             return res.json({
                 success: true,
@@ -103,20 +173,63 @@ exports.fetchCategory = async (req, res, next) => {
                 message: "Category fetched successfully"
             });
         }
- 
+        
     }
-    else 
+    else
     {
-        if (getAllcategory) {
+        getAllcategory.forEach(async data => {
+            const findPhoto = await postSchema.find({
+                    category: data.category,
+                    privacyType: { $nin: ["onlyMe","private"] },
+                    isActive: true,
+                    isDeleted: false,
+                    groupPost: false
+                });
+            
+            const userList = await Users.find({
+                    category: data.category,
+                    isActive: true
+                });
+            if(findPhoto.length || userList.length) 
+            {
+                arr.push({
+                    "_id": data._id,
+                    "category": data.category,
+                    "image": data.image,
+                    "count": findPhoto.length,
+                    "userCount": userList.length
+                })
+            }
+            else
+            {
+                arr.push({
+                    "_id": data._id,
+                    "category": data.category,
+                    "image": data.image,
+                    "count": 0,
+                    "userCount": 0
+                })
+            }
+            count = count + 1;
+            if(getAllcategory.length == count)
+            {
+                Response();
+            }
+        })
+
+        //Response
+        function Response()
+        {
             return res.json({
                 success: true,
-                category: getAllcategory,
+                category: arr,
                 message: "Category fetched successfully"
-            })
+            });
         }
+        
     }
+   
 }
-
 
 //feedBack
 module.exports.sendFeedback = async (req, res, next) => {

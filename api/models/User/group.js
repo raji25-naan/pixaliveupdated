@@ -127,10 +127,6 @@ const group = new mongoose.Schema({
         type: String,
         default: ""
     },
-    categoryTitle: {
-        type: String,
-        default: ""
-    },
     category: {
         type: String,
         default: ""

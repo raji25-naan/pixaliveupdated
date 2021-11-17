@@ -24,7 +24,6 @@ exports.createGroup = async(req,res,next)=>{
         startDateTime,
         endDateTime,
         allowShare,
-        categoryTitle,
         category,
         groupPrivacyType
        } = req.body;
@@ -55,7 +54,6 @@ exports.createGroup = async(req,res,next)=>{
         createdByName: getUserInfo.name,
         startDateTime: startDateTime,
         endDateTime: endDateTime,
-        categoryTitle: categoryTitle,
         category: category,
         groupPrivacyType: groupPrivacyType
     });
@@ -1309,26 +1307,26 @@ exports.removeMember = async(req,res,next)=>{
 }
 
 //insertGroupCategory
-exports.insertGroupCategory = async(req,res,next)=>{
+// exports.insertGroupCategory = async(req,res,next)=>{
 
-    let categoryTitle = "Official";
+//     let categoryTitle = "Official";
 
-    let category = [
-        "Actor","Blog","Journalist","Book","Comedian","Music group","Musician","Cartoon","Public figure","Singer",
-        "Writer","Character","Politician","Poet","Director","Producer","Series","Sport team","Athlete","Dancer","Scientist","Artist","Film"
-    ];
+//     let category = [
+//         "Actor","Blog","Journalist","Book","Comedian","Music group","Musician","Cartoon","Public figure","Singer",
+//         "Writer","Character","Politician","Poet","Director","Producer","Series","Sport team","Athlete","Dancer","Scientist","Artist","Film"
+//     ];
 
-    const saveData = await group_category.create({
-        categoryTitle: categoryTitle,
-        category: category
-    });
+//     const saveData = await group_category.create({
+//         categoryTitle: categoryTitle,
+//         category: category
+//     });
 
-    if(saveData)
-    {
-        return res.json({success: true})
-    }
+//     if(saveData)
+//     {
+//         return res.json({success: true})
+//     }
 
-}
+// }
 
 //getGroupCategory
 exports.getGroupCategory = async(req,res,next)=>{
@@ -1360,13 +1358,12 @@ exports.getGroupCategory = async(req,res,next)=>{
         var count = 0;
         categoryList.forEach(async(data)=>{
 
-            const getGroup = await group.find({categoryTitle: data.categoryTitle,isDeleted: false}).exec();
+            const getGroup = await group.find({category: data.category,isDeleted: false}).exec();
             if(getGroup.length)
             {
                 arr.push({
                     "_id": data._id,
                     "category": data.category,
-                    "categoryTitle": data.categoryTitle,
                     "count": getGroup.length
                 })
             }
@@ -1396,13 +1393,13 @@ exports.getGroupCategory = async(req,res,next)=>{
 //getGroupsByCategory
 exports.getGroupsByCategory = async(req,res,next)=>{
 
-    let categoryTitle = req.query.categoryTitle;
+    let category = req.query.category;
     let user_id = req.user_id;  
     //blockedGroupIds
     let blockedGroupIds = await group.distinct("_id",{blockedMembersId:{_id:user_id}}).exec();
 
     //getAllGroups
-    let getAllGroups = await group.find({categoryTitle: categoryTitle,isDeleted: false,_id:{$nin: blockedGroupIds}}).exec();
+    let getAllGroups = await group.find({category: category,isDeleted: false,_id:{$nin: blockedGroupIds}}).exec();
     if(getAllGroups.length)
     {
         if(req.query.search_group)
